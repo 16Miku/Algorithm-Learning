@@ -1697,9 +1697,453 @@ public:
 
 
 
+### 234. 回文链表
+已解答
+简单
+相关标签
+premium lock icon
+相关企业
+给你一个单链表的头节点 head ，请你判断该链表是否为回文链表。如果是，返回 true ；否则，返回 false 。
+
+ 
+
+示例 1：
+
+
+输入：head = [1,2,2,1]
+输出：true
+示例 2：
+
+
+输入：head = [1,2]
+输出：false
+ 
+
+提示：
+
+链表中节点数目在范围[1, 10^5] 内
+0 <= Node.val <= 9
+ 
+
+进阶：你能否用 O(n) 时间复杂度和 O(1) 空间复杂度解决此题？
 
 
 
+
+
+
+#### 讲解
+
+
+
+
+好的，我将为您详细讲解 LeetCode 234 题“回文链表”，并提供 Java 和 Python 两种语言的解法代码，最后结合示例演示代码的执行过程。
+
+---
+
+
+
+**题目描述：**
+
+给你一个单链表的头节点 `head` ，请你判断该链表是否为回文链表。如果是，返回 `true` ；否则，返回 `false` 。
+
+**示例 1：**
+
+输入：`head = [1,2,2,1]`
+输出：`true`
+
+**示例 2：**
+
+输入：`head = [1,2]`
+输出：`false`
+
+**提示：**
+
+*   链表中节点数目在范围 `[1, 10^5]` 内
+*   `0 <= Node.val <= 9`
+
+**进阶：**
+
+你能否用 `O(n)` 时间复杂度和 `O(1)` 空间复杂度解决此题？
+
+---
+
+题目解析与思路分析
+
+一个回文链表指的是从前向后读和从后向前读都一样的链表。例如 `1->2->2->1` 是回文，`1->2->3` 不是回文。
+
+我们来分析解决这个问题的几种方法。
+
+1. 方法一：转换为数组/列表 (O(N) 空间复杂度)
+
+**思路：**
+最直观的方法是遍历链表，将所有节点的值存储到一个数组或列表中。然后，判断这个数组或列表是否是回文。判断数组回文非常简单，可以使用双指针从两端向中间移动进行比较。
+
+**步骤：**
+1.  遍历链表，将所有节点的值依次添加到 `ArrayList` (Java) 或 `list` (Python) 中。
+2.  使用两个指针 `left` 和 `right`，分别指向数组的开头和结尾。
+3.  当 `left < right` 时，比较 `array[left]` 和 `array[right]`。
+    *   如果 `array[left] != array[right]`，则不是回文，返回 `false`。
+    *   否则，`left` 向右移动，`right` 向左移动。
+4.  如果循环结束，说明所有比较都匹配，是回文，返回 `true`。
+
+**时间复杂度：** O(N)，遍历链表 O(N)，判断数组回文 O(N)。
+**空间复杂度：** O(N)，需要额外的空间存储链表所有节点的值。
+
+虽然这种方法简单易懂，但它不满足题目进阶要求 `O(1)` 空间复杂度。
+
+2. 方法二：快慢指针 + 反转链表 (O(1) 空间复杂度)
+
+**思路：**
+为了达到 `O(1)` 空间复杂度，我们不能存储整个链表。回文的特性是前半部分和后半部分（反转后）是相同的。这启发我们可以将链表分成两半，然后反转其中一半，再进行比较。
+
+**核心思想：**
+1.  **找到链表的中间节点。** 这可以使用快慢指针（`fast` 和 `slow`）来实现。`fast` 每次移动两步，`slow` 每次移动一步。当 `fast` 到达链表末尾时，`slow` 恰好在链表的中间。
+2.  **反转链表的后半部分。** 从中间节点的下一个节点开始，到链表末尾的所有节点进行反转。
+3.  **比较前半部分和反转后的后半部分。** 同时从链表头和反转后的后半部分头部开始遍历，逐一比较节点的值。
+4.  **（可选但推荐）恢复链表。** 为了保持链表的原始结构，将反转的后半部分再次反转，并重新连接到前半部分。
+
+**详细步骤：**
+
+**Step 1: 找到链表的中间节点**
+*   初始化 `slow` 和 `fast` 指针都指向 `head`。
+*   当 `fast` 和 `fast.next` 都不为空时，`fast` 走两步 (`fast = fast.next.next`)，`slow` 走一步 (`slow = slow.next`)。
+*   当循环结束时：
+    *   如果链表长度为偶数（例如 `1->2->2->1`），`fast` 会指向 `null`，`slow` 会停留在前半部分的最后一个节点（例如第一个 `2`）。
+    *   如果链表长度为奇数（例如 `1->2->3->2->1`），`fast.next` 会指向 `null`，`slow` 会停留在中间节点（例如 `3`）。
+
+**Step 2: 反转链表的后半部分**
+*   确定后半部分的起始节点：`second_half_head = slow.next`。
+*   **断开前半部分和后半部分的连接：** `slow.next = null`。这一步非常关键，它将链表一分为二。
+*   使用一个单独的函数来反转 `second_half_head` 开始的链表。反转链表的基本方法是使用三个指针：`prev` (前一个节点), `curr` (当前节点), `next_temp` (下一个节点)。
+    *   `prev` 初始化为 `null`。
+    *   `curr` 初始化为 `second_half_head`。
+    *   在循环中，保存 `curr.next` 到 `next_temp`，然后将 `curr.next` 指向 `prev`，更新 `prev = curr`，`curr = next_temp`。
+    *   循环结束后，`prev` 就是反转后链表的头节点。
+
+**Step 3: 比较前半部分和反转后的后半部分**
+*   现在我们有链表的前半部分（从 `head` 开始）和反转后的后半部分（从 `reversed_second_half_head` 开始）。
+*   初始化两个指针 `p1 = head` 和 `p2 = reversed_second_half_head`。
+*   同时遍历 `p1` 和 `p2`。
+*   在每次遍历中，比较 `p1.val` 和 `p2.val`。
+    *   如果 `p1.val != p2.val`，则不是回文，返回 `false`。
+    *   否则，`p1 = p1.next`，`p2 = p2.next`。
+*   如果 `p2` 遍历到 `null` (或 `p1` 遍历到 `null`，取决于链表长度，对于回文链表，两者会同时或其中一个先到 `null`)，说明所有节点都匹配，是回文，返回 `true`。
+
+**Step 4: 恢复链表（可选但推荐）**
+*   为了不改变原链表结构（虽然题目没有明确要求，但在面试中这通常是加分项），我们需要将反转后的后半部分再次反转，并重新连接到前半部分。
+*   再次调用反转函数：`original_second_half_head = reverseList(reversed_second_half_head)`。
+*   将 `slow.next` 重新指向 `original_second_half_head`。
+
+**时间复杂度：** O(N)。
+*   寻找中间节点：O(N)。
+*   反转后半部分：O(N/2) -> O(N)。
+*   比较两部分：O(N/2) -> O(N)。
+*   恢复链表：O(N/2) -> O(N)。
+总和为 O(N)。
+
+**空间复杂度：** O(1)，因为我们只使用了常数个指针变量。
+
+---
+
+流程图 (Mermaid)
+
+
+
+---
+
+代码实现
+
+首先定义 `ListNode` 类（如果环境没有提供的话）：
+
+**Java 版 `ListNode` 定义：**
+
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+```
+
+**Python 版 `ListNode` 定义：**
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+```
+
+Java 解法 (O(1) 空间复杂度)
+
+```java
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public boolean isPalindrome(ListNode head) {
+        // 1. 特殊情况处理：空链表或只有一个节点的链表都是回文
+        if (head == null || head.next == null) {
+            return true;
+        }
+
+        // 2. 使用快慢指针找到链表的中间节点
+        // slow 最终会停在前半部分的末尾（偶数长度）或中间节点（奇数长度）
+        ListNode slow = head;
+        ListNode fast = head;
+        while (fast.next != null && fast.next.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+
+        // 3. 反转链表的后半部分
+        // secondHalfHead 是后半部分的起始节点
+        ListNode secondHalfHead = slow.next;
+        // 断开前半部分和后半部分的连接，这一步非常关键！
+        // 这样前半部分就成为了一个独立的链表，方便后续比较
+        slow.next = null; 
+        ListNode reversedSecondHalfHead = reverseList(secondHalfHead);
+
+        // 4. 比较前半部分和反转后的后半部分
+        ListNode p1 = head;
+        ListNode p2 = reversedSecondHalfHead;
+        boolean isPal = true; // 假设是回文
+
+        while (p1 != null && p2 != null) {
+            if (p1.val != p2.val) {
+                isPal = false; // 发现不匹配，不是回文
+                break;
+            }
+            p1 = p1.next;
+            p2 = p2.next;
+        }
+
+        // 5. 恢复链表（可选但推荐，保持链表原始结构）
+        // 再次反转后半部分，将其恢复到原始顺序
+        ListNode originalSecondHalfHead = reverseList(reversedSecondHalfHead);
+        // 重新连接前半部分和后半部分
+        slow.next = originalSecondHalfHead;
+
+        return isPal;
+    }
+
+    /**
+     * 辅助函数：反转链表
+     *
+     * @param head 待反转链表的头节点
+     * @return 反转后链表的头节点
+     */
+    private ListNode reverseList(ListNode head) {
+        ListNode prev = null;
+        ListNode curr = head;
+        while (curr != null) {
+            ListNode nextTemp = curr.next; // 临时保存下一个节点
+            curr.next = prev;              // 当前节点的 next 指向前一个节点
+            prev = curr;                   // prev 移动到当前节点
+            curr = nextTemp;               // curr 移动到下一个节点
+        }
+        return prev; // prev 最终就是反转后链表的头节点
+    }
+}
+
+```
+
+Python 解法 (O(1) 空间复杂度)
+
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+class Solution:
+    def isPalindrome(self, head: ListNode) -> bool:
+        # 1. 特殊情况处理：空链表或只有一个节点的链表都是回文
+        if not head or not head.next:
+            return True
+
+        # 2. 使用快慢指针找到链表的中间节点
+        # slow 最终会停在前半部分的末尾（偶数长度）或中间节点（奇数长度）
+        slow = head
+        fast = head
+        while fast.next and fast.next.next:
+            slow = slow.next
+            fast = fast.next.next
+        
+        # 3. 反转链表的后半部分
+        # second_half_head 是后半部分的起始节点
+        second_half_head = slow.next
+        # 断开前半部分和后半部分的连接，这一步非常关键！
+        # 这样前半部分就成为了一个独立的链表，方便后续比较
+        slow.next = None
+        reversed_second_half_head = self._reverse_list(second_half_head)
+
+        # 4. 比较前半部分和反转后的后半部分
+        p1 = head
+        p2 = reversed_second_half_head
+        is_pal = True # 假设是回文
+
+        while p1 and p2:
+            if p1.val != p2.val:
+                is_pal = False # 发现不匹配，不是回文
+                break
+            p1 = p1.next
+            p2 = p2.next
+        
+        # 5. 恢复链表（可选但推荐，保持链表原始结构）
+        # 再次反转后半部分，将其恢复到原始顺序
+        original_second_half_head = self._reverse_list(reversed_second_half_head)
+        # 重新连接前半部分和后半部分
+        slow.next = original_second_half_head
+
+        return is_pal
+
+    def _reverse_list(self, head: ListNode) -> ListNode:
+        """
+        辅助函数：反转链表
+        """
+        prev = None
+        curr = head
+        while curr:
+            next_temp = curr.next # 临时保存下一个节点
+            curr.next = prev      # 当前节点的 next 指向前一个节点
+            prev = curr           # prev 移动到当前节点
+            curr = next_temp      # curr 移动到下一个节点
+        return prev # prev 最终就是反转后链表的头节点
+
+```
+
+---
+
+结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示 `O(1)` 空间复杂度的双指针 + 反转链表解法的执行过程：
+
+输入：`head = [1,2,2,1]`
+输出：`true`
+
+链表初始状态：`1 -> 2 -> 2 -> 1 -> null`
+
+**Step 1: 找到链表的中间节点**
+
+*   `slow = head` (指向 `1`)
+*   `fast = head` (指向 `1`)
+
+**循环开始：**
+1.  `fast.next` (`2`) 不为 `null`，`fast.next.next` (`2`) 不为 `null`。
+    *   `slow` 移动到 `2` (第一个 `2`)
+    *   `fast` 移动到 `1` (最后一个 `1`)
+    链表：`slow` 指向 `2` (第一个)，`fast` 指向 `1` (最后一个)
+    `1 -> (slow)2 -> 2 -> (fast)1 -> null`
+2.  `fast.next` (`null`) 为 `null`。循环结束。
+
+此时，`slow` 指向第一个 `2`。
+
+**Step 2: 反转链表的后半部分**
+
+*   `secondHalfHead = slow.next` (指向第二个 `2`)
+    链表现在可以看作 `1 -> 2 -> (slow)2 -> (secondHalfHead)2 -> 1 -> null`
+*   **断开连接：** `slow.next = null`
+    链表变成两部分：
+    `Part 1: 1 -> 2 -> null`
+    `Part 2: 2 -> 1 -> null` (`secondHalfHead` 指向第二个 `2`)
+*   调用 `_reverse_list(secondHalfHead)` 反转 `Part 2`：
+    *   `_reverse_list(2 -> 1 -> null)`
+    *   第一次迭代：`curr` 是 `2`，`next_temp` 是 `1`。`2.next` 指向 `null`。`prev` 是 `2`，`curr` 是 `1`。
+    *   第二次迭代：`curr` 是 `1`，`next_temp` 是 `null`。`1.next` 指向 `2`。`prev` 是 `1`，`curr` 是 `null`。
+    *   循环结束。返回 `prev`，即 `1`。
+    `reversedSecondHalfHead` 指向 `1` (反转后的 `1 -> 2 -> null`)
+
+**Step 3: 比较前半部分和反转后的后半部分**
+
+*   `p1 = head` (指向 `1` (第一个链表的头))
+*   `p2 = reversedSecondHalfHead` (指向 `1` (反转后的第二个链表的头))
+*   `isPal = true`
+
+**循环开始 (while p1 != null && p2 != null):**
+1.  `p1.val` (`1`) == `p2.val` (`1`)。匹配。
+    *   `p1` 移动到 `2` (第一个链表的 `2`)
+    *   `p2` 移动到 `2` (反转后的第二个链表的 `2`)
+    `p1` 指向 `2`，`p2` 指向 `2`
+2.  `p1.val` (`2`) == `p2.val` (`2`)。匹配。
+    *   `p1` 移动到 `null`
+    *   `p2` 移动到 `null`
+    `p1` 指向 `null`，`p2` 指向 `null`
+3.  `p1` 为 `null`，循环结束。
+
+`isPal` 仍然是 `true`。
+
+**Step 4: 恢复链表（可选）**
+
+*   调用 `_reverse_list(reversedSecondHalfHead)` 再次反转 `1 -> 2 -> null`：
+    *   反转后得到 `2 -> 1 -> null` (`originalSecondHalfHead` 指向 `2`)
+*   `slow.next = originalSecondHalfHead` (将第一个 `2` 的 `next` 指向 `originalSecondHalfHead` 即第二个 `2`)
+    链表恢复为：`1 -> 2 -> 2 -> 1 -> null`
+
+**结果：** 返回 `isPal`，即 `true`。
+
+---
+
+**示例 2：`head = [1,2]` (非回文，奇数/偶数长度都适用)**
+
+链表初始状态：`1 -> 2 -> null`
+
+**Step 1: 找到链表的中间节点**
+
+*   `slow = head` (指向 `1`)
+*   `fast = head` (指向 `1`)
+
+**循环开始：**
+1.  `fast.next` (`2`) 不为 `null`，但 `fast.next.next` (`null`) 为 `null`。循环结束。
+
+此时，`slow` 指向 `1`。
+
+**Step 2: 反转链表的后半部分**
+
+*   `secondHalfHead = slow.next` (指向 `2`)
+    链表现在可以看作 `1 -> (slow)1 -> (secondHalfHead)2 -> null`
+*   **断开连接：** `slow.next = null`
+    链表变成两部分：
+    `Part 1: 1 -> null`
+    `Part 2: 2 -> null` (`secondHalfHead` 指向 `2`)
+*   调用 `_reverse_list(secondHalfHead)` 反转 `Part 2`：
+    *   `_reverse_list(2 -> null)`
+    *   反转后得到 `2 -> null` (`reversedSecondHalfHead` 指向 `2`)
+
+**Step 3: 比较前半部分和反转后的后半部分**
+
+*   `p1 = head` (指向 `1`)
+*   `p2 = reversedSecondHalfHead` (指向 `2`)
+*   `isPal = true`
+
+**循环开始 (while p1 != null && p2 != null):**
+1.  `p1.val` (`1`) != `p2.val` (`2`)。不匹配。
+    *   `isPal` 设置为 `false`。
+    *   `break` 循环。
+
+`isPal` 已经是 `false`。
+
+**Step 4: 恢复链表（可选）**
+
+*   调用 `_reverse_list(reversedSecondHalfHead)` 再次反转 `2 -> null`：
+    *   反转后得到 `2 -> null` (`originalSecondHalfHead` 指向 `2`)
+*   `slow.next = originalSecondHalfHead` (将 `1` 的 `next` 指向 `2`)
+    链表恢复为：`1 -> 2 -> null`
+
+**结果：** 返回 `isPal`，即 `false`。
+
+通过这两个示例，可以看出快慢指针 + 反转链表的方法能够正确地判断回文，并且满足 O(1) 空间复杂度的要求。
 
 
 
