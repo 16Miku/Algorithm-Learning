@@ -2148,6 +2148,308 @@ class Solution:
 
 
 
+
+
+
+
+### 141. 环形链表
+
+简单
+相关标签
+相关企业
+给你一个链表的头节点 head ，判断链表中是否有环。
+如果链表中有某个节点，可以通过连续跟踪 next 指针再次到达，则链表中存在环。 为了表示给定链表中的环，评测系统内部使用整数 pos 来表示链表尾连接到链表中的位置（索引从 0 开始）。注意：pos 不作为参数进行传递 。仅仅是为了标识链表的实际情况。
+
+如果链表中存在环 ，则返回 true 。 否则，返回 false 。
+
+ 
+
+示例 1：
+输入：head = [3,2,0,-4], pos = 1 
+输出：true 
+解释：链表中有一个环，其尾部连接到第二个节点。 
+
+示例 2：
+输入：head = [1,2], pos = 0 
+输出：true 
+解释：链表中有一个环，其尾部连接到第一个节点。 
+
+示例 3：
+输入：head = [1], pos = -1 
+输出：false 
+解释：链表中没有环。 
+
+ 
+
+提示：
+链表中节点的数目范围是 [0, 10^4]
+-10^5 <= Node.val <= 10^5
+pos 为 -1 或者链表中的一个 有效索引 。
+
+
+进阶：你能用 O(1)（即，常量）内存解决此问题吗？
+
+
+@讲解算法题
+
+
+
+
+
+#### 讲解
+
+
+
+
+
+好的，我将为您详细讲解 LeetCode 141 题“环形链表”，并提供 Java 和 Python 两种语言的解法代码，最后结合示例演示代码的执行过程。
+
+
+题目解析与思路分析
+
+判断链表是否有环是一个经典的链表问题。一个链表有环意味着它的某个节点的 `next` 指针指向了链表前面的某个节点，导致链表形成一个闭环，从某个节点开始沿着 `next` 指针走，可以无限循环下去。
+
+我们来分析解决这个问题的几种方法。
+
+ 1. 方法一：使用哈希表 (O(N) 空间复杂度)
+
+**思路：**
+我们可以遍历链表，并将每个访问过的节点存储在一个哈希集合（Set）中。在每次访问一个新节点时，检查这个节点是否已经在哈希集合中。
+*   如果当前节点已经在哈希集合中，说明我们再次访问到了一个之前访问过的节点，这表示链表中存在环。
+*   如果遍历完整个链表（即遇到 `null`），都没有发现重复节点，说明链表中没有环。
+
+**步骤：**
+1.  创建一个空的哈希集合 `visited_nodes`。
+2.  初始化一个指针 `current = head`。
+3.  循环遍历链表：
+    *   如果 `current` 为 `null`，说明链表已经遍历到末尾，没有环，返回 `false`。
+    *   如果 `current` 已经在 `visited_nodes` 中，说明有环，返回 `true`。
+    *   将 `current` 添加到 `visited_nodes` 中。
+    *   `current = current.next`。
+
+**时间复杂度：** O(N)，最坏情况下需要遍历所有节点一次。哈希集合的插入和查找操作平均时间复杂度为 O(1)。
+**空间复杂度：** O(N)，最坏情况下需要存储所有节点。
+
+这种方法简单直观，但它不满足题目进阶要求 `O(1)` 空间复杂度。
+
+ 2. 方法二：快慢指针法（Floyd's Cycle-Finding Algorithm / Tortoise and Hare） (O(1) 空间复杂度)
+
+**思路：**
+这是解决环形链表问题的经典算法，它能够满足 `O(1)` 空间复杂度的要求。其核心思想是使用两个指针，一个快指针（`fast`）和一个慢指针（`slow`），它们都从链表头开始移动，但速度不同。`fast` 指针每次移动两步，`slow` 指针每次移动一步。
+
+**核心原理：**
+*   **如果链表中没有环：** `fast` 指针最终会先到达链表的末尾（`null`）。因为它每次移动两步，比 `slow` 指针更快。
+*   **如果链表中存在环：** `fast` 指针和 `slow` 指针最终会在环内相遇。
+    *   想象一下在一个圆形跑道上赛跑，一个跑得快，一个跑得慢。只要它们都在跑道上，跑得快的总会追上跑得慢的。
+    *   当 `slow` 指针进入环时，`fast` 指针可能已经在环内，或者紧随其后进入环。由于 `fast` 比 `slow` 快一步，它们之间的距离会每一步缩小 1。在一个有限的环中，它们最终一定会相遇。
+
+**算法步骤：**
+
+1.  **初始化：**
+    *   `slow` 指针指向 `head`。
+    *   `fast` 指针指向 `head`。
+2.  **循环条件：**
+    *   循环继续，直到 `fast` 指针到达链表末尾（`fast == null`）或者 `fast` 的下一个节点到达链表末尾（`fast.next == null`）。这两种情况都意味着链表没有环。
+3.  **移动指针：**
+    *   `slow` 每次移动一步：`slow = slow.next`。
+    *   `fast` 每次移动两步：`fast = fast.next.next`。
+4.  **判断相遇：**
+    *   在每次移动后，检查 `slow` 和 `fast` 是否指向同一个节点。
+    *   如果 `slow == fast`，说明它们相遇了，链表中存在环，返回 `true`。
+5.  **循环结束：**
+    *   如果循环结束（即 `fast` 或 `fast.next` 为 `null`），但 `slow` 和 `fast` 从未相遇，说明链表中没有环，返回 `false`。
+
+**边缘情况：**
+*   **空链表或只有一个节点的链表：** `head` 为 `null` 或 `head.next` 为 `null`。在这种情况下，循环条件会立即不满足，直接返回 `false`，这是正确的。
+*   **两个节点的链表形成环：** `1 -> 2 -> 1`。
+    *   `slow` = `1`, `fast` = `1`
+    *   第一次迭代：`slow` = `2`, `fast` = `1` (因为 `fast` 走了两步 `1->2->1`)。此时 `slow == fast` 成立，返回 `true`。
+
+**时间复杂度：** O(N)。`fast` 指针最多遍历整个链表两次。
+**空间复杂度：** O(1)。只使用了常数个指针变量。
+
+---
+
+ 流程图 (Mermaid)
+
+```mermaid
+graph TD
+    A[开始] --> B{head == null 或 head.next == null?};
+    B -- 是 --> C[返回 false];
+    B -- 否 --> D[slow = head, fast = head];
+    D --> E{fast != null 且 fast.next != null?};
+    E -- 是 --> F[slow = slow.next];
+    F --> G[fast = fast.next.next];
+    G --> H{slow == fast?};
+    H -- 是 --> I[返回 true];
+    H -- 否 --> E;
+    E -- 否 --> J[返回 false];
+```
+
+---
+
+ 代码实现
+
+首先定义 `ListNode` 类（如果环境没有提供的话）：
+
+**Java 版 `ListNode` 定义：**
+
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int x) {
+        val = x;
+        next = null; // 默认为 null，表示链表末尾
+    }
+}
+```
+
+**Python 版 `ListNode` 定义：**
+
+```python
+class ListNode:
+    def __init__(self, x):
+        self.val = x
+        self.next = None # 默认为 None，表示链表末尾
+```
+
+ Java 解法 (O(1) 空间复杂度)
+
+```java
+/**
+ * Definition for singly-linked list.
+ * class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode(int x) {
+ *         val = x;
+ *         next = null;
+ *     }
+ * }
+ */
+public class Solution {
+    public boolean hasCycle(ListNode head) {
+        // 特殊情况处理：空链表或只有一个节点的链表，不可能有环
+        if (head == null || head.next == null) {
+            return false;
+        }
+
+        // 初始化快慢指针
+        ListNode slow = head;
+        ListNode fast = head;
+
+        // 循环直到快指针到达链表末尾（无环）
+        // 或者快慢指针相遇（有环）
+        while (fast != null && fast.next != null) {
+            // 慢指针每次移动一步
+            slow = slow.next;
+            // 快指针每次移动两步
+            fast = fast.next.next;
+
+            // 如果快慢指针相遇，则说明链表有环
+            if (slow == fast) {
+                return true;
+            }
+        }
+
+        // 如果循环结束时，快指针到达了链表末尾（即 fast 为 null 或 fast.next 为 null），
+        // 且快慢指针从未相遇，则说明链表没有环
+        return false;
+    }
+}
+
+```
+
+Python 解法 (O(1) 空间复杂度)
+
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.next = None
+
+class Solution:
+    def hasCycle(self, head: ListNode) -> bool:
+        # 特殊情况处理：空链表或只有一个节点的链表，不可能有环
+        if not head or not head.next:
+            return False
+        
+        # 初始化快慢指针
+        slow = head
+        fast = head
+
+        # 循环直到快指针到达链表末尾（无环）
+        # 或者快慢指针相遇（有环）
+        while fast and fast.next: # 确保 fast 和 fast.next 都不为 None
+            # 慢指针每次移动一步
+            slow = slow.next
+            # 快指针每次移动两步
+            fast = fast.next.next
+
+            # 如果快慢指针相遇，则说明链表有环
+            if slow == fast:
+                return True
+        
+        # 如果循环结束时，快指针到达了链表末尾（即 fast 或 fast.next 为 None），
+        # 且快慢指针从未相遇，则说明链表没有环
+        return False
+
+```
+
+---
+
+ 结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示快慢指针法的执行过程：
+
+输入：`head = [3,2,0,-4], pos = 1`
+输出：`true`
+
+链表结构如下：
+`3 (head) -> 2 -> 0 -> -4`
+              `^         |`
+              `|_________|` (尾部 -4 指向 2)
+
+为了更清晰地演示，我们假设节点对象为 `N_val`：
+`N_3 -> N_2 -> N_0 -> N_-4`
+         `^           |`
+         `|___________|`
+
+**初始化：**
+*   `slow` 指向 `N_3`
+*   `fast` 指向 `N_3`
+
+**循环开始 (`while fast and fast.next`):**
+
+**第 1 步：**
+*   `fast` (`N_3`) 不为 `null`，`fast.next` (`N_2`) 不为 `null`。
+*   `slow` 移动到 `N_2` (`slow = N_3.next`)
+*   `fast` 移动到 `N_0` (`fast = N_3.next.next`)
+*   `slow` (`N_2`) != `fast` (`N_0`)。继续循环。
+
+**第 2 步：**
+*   `fast` (`N_0`) 不为 `null`，`fast.next` (`N_-4`) 不为 `null`。
+*   `slow` 移动到 `N_0` (`slow = N_2.next`)
+*   `fast` 移动到 `N_2` (`fast = N_0.next.next`，即 `-4` 的 `next` 是 `2`)
+*   `slow` (`N_0`) != `fast` (`N_2`)。继续循环。
+
+**第 3 步：**
+*   `fast` (`N_2`) 不为 `null`，`fast.next` (`N_0`) 不为 `null`。
+*   `slow` 移动到 `N_-4` (`slow = N_0.next`)
+*   `fast` 移动到 `N_-4` (`fast = N_2.next.next`，即 `0` 的 `next` 是 `-4`，`-4` 的 `next` 是 `2`，`2` 的 `next` 是 `0`，`0` 的 `next` 是 `-4`。所以 `fast` 走了两步 `N_2 -> N_0 -> N_-4`)
+*   `slow` (`N_-4`) == `fast` (`N_-4`)。**相遇！**
+
+**结果：** 返回 `true`。
+
+这个演示清晰地展示了快慢指针如何在环中相遇，从而判断出链表存在环。如果链表没有环，`fast` 指针最终会遇到 `null`，循环终止，函数返回 `false`。
+
+
+
+
+
+
 ## 二叉树
 
 
