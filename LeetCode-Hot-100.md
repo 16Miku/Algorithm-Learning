@@ -1077,6 +1077,625 @@ class Solution:
 
 
 
+### 160. 相交链表
+已解答
+简单
+相关标签
+premium lock icon
+相关企业
+给你两个单链表的头节点 headA 和 headB ，请你找出并返回两个单链表相交的起始节点。如果两个链表不存在相交节点，返回 null 。
+
+图示两个链表在节点 c1 开始相交：
+
+
+
+题目数据 保证 整个链式结构中不存在环。
+
+注意，函数返回结果后，链表必须 保持其原始结构 。
+
+自定义评测：
+
+评测系统 的输入如下（你设计的程序 不适用 此输入）：
+
+intersectVal - 相交的起始节点的值。如果不存在相交节点，这一值为 0
+listA - 第一个链表
+listB - 第二个链表
+skipA - 在 listA 中（从头节点开始）跳到交叉节点的节点数
+skipB - 在 listB 中（从头节点开始）跳到交叉节点的节点数
+评测系统将根据这些输入创建链式数据结构，并将两个头节点 headA 和 headB 传递给你的程序。如果程序能够正确返回相交节点，那么你的解决方案将被 视作正确答案 。
+
+ 
+
+示例 1：
+
+
+
+输入：intersectVal = 8, listA = [4,1,8,4,5], listB = [5,6,1,8,4,5], skipA = 2, skipB = 3
+输出：Intersected at '8'
+解释：相交节点的值为 8 （注意，如果两个链表相交则不能为 0）。
+从各自的表头开始算起，链表 A 为 [4,1,8,4,5]，链表 B 为 [5,6,1,8,4,5]。
+在 A 中，相交节点前有 2 个节点；在 B 中，相交节点前有 3 个节点。
+— 请注意相交节点的值不为 1，因为在链表 A 和链表 B 之中值为 1 的节点 (A 中第二个节点和 B 中第三个节点) 是不同的节点。换句话说，它们在内存中指向两个不同的位置，而链表 A 和链表 B 中值为 8 的节点 (A 中第三个节点，B 中第四个节点) 在内存中指向相同的位置。
+ 
+
+示例 2：
+
+
+
+输入：intersectVal = 2, listA = [1,9,1,2,4], listB = [3,2,4], skipA = 3, skipB = 1
+输出：Intersected at '2'
+解释：相交节点的值为 2 （注意，如果两个链表相交则不能为 0）。
+从各自的表头开始算起，链表 A 为 [1,9,1,2,4]，链表 B 为 [3,2,4]。
+在 A 中，相交节点前有 3 个节点；在 B 中，相交节点前有 1 个节点。
+
+示例 3：
+
+
+
+输入：intersectVal = 0, listA = [2,6,4], listB = [1,5], skipA = 3, skipB = 2
+输出：No intersection
+解释：从各自的表头开始算起，链表 A 为 [2,6,4]，链表 B 为 [1,5]。
+由于这两个链表不相交，所以 intersectVal 必须为 0，而 skipA 和 skipB 可以是任意值。
+这两个链表不相交，因此返回 null 。
+ 
+
+提示：
+
+listA 中节点数目为 m
+listB 中节点数目为 n
+1 <= m, n <= 3 * 10^4
+1 <= Node.val <= 10^5
+0 <= skipA <= m
+0 <= skipB <= n
+如果 listA 和 listB 没有交点，intersectVal 为 0
+如果 listA 和 listB 有交点，intersectVal == listA[skipA] == listB[skipB]
+ 
+
+进阶：你能否设计一个时间复杂度 O(m + n) 、仅用 O(1) 内存的解决方案？
+
+
+
+
+
+
+
+
+
+
+
+#### 双指针法讲解
+
+
+好的，我将为您详细讲解 LeetCode 160 题“相交链表”，并提供 Java 和 Python 两种语言的解法代码，最后结合示例演示代码的执行过程。
+
+
+算法讲解：双指针法
+
+这道题最巧妙和高效的解法是使用**双指针法**。其核心思想是：如果两个链表相交，那么从相交点到链表末尾的这一段是公共的。两个链表在相交点之后的节点是完全相同的（内存地址相同）。
+
+**基本思路：**
+
+1.  假设链表 A 的长度为 `L_A`，链表 B 的长度为 `L_B`。
+2.  假设从链表头到相交点的距离，链表 A 为 `a`，链表 B 为 `b`。
+3.  假设相交点到链表末尾的公共部分的长度为 `c`。
+    那么有：`L_A = a + c`，`L_B = b + c`。
+4.  我们设置两个指针 `pA` 和 `pB`，分别从 `headA` 和 `headB` 开始同步遍历。
+5.  当 `pA` 遍历到链表 A 的末尾时，将其指向 `headB`，继续遍历。
+6.  当 `pB` 遍历到链表 B 的末尾时，将其指向 `headA`，继续遍历。
+
+**为什么这样能找到相交点？**
+
+*   考虑指针 `pA` 走过的总路径：`a` (A的非公共部分) + `c` (公共部分) + `b` (B的非公共部分)。总长度为 `a + c + b`。
+*   考虑指针 `pB` 走过的总路径：`b` (B的非公共部分) + `c` (公共部分) + `a` (A的非公共部分)。总长度为 `b + c + a`。
+
+由于 `a + c + b` 等于 `b + c + a`，这意味着如果两个链表相交，`pA` 和 `pB` 最终会在相交点**同时**到达并相遇。因为它们都走了相同的总步数到达相交点。
+
+*   **如果两个链表相交：**
+    *   `pA` 走完 `L_A` 步到达 A 的末尾，然后跳到 `headB` 继续走。
+    *   `pB` 走完 `L_B` 步到达 B 的末尾，然后跳到 `headA` 继续走。
+    *   当它们再次相遇时，这个相遇点就是相交的起始节点。
+
+*   **如果两个链表不相交：**
+    *   `pA` 走完 `L_A` 步到达 A 的末尾，跳到 `headB`。
+    *   `pB` 走完 `L_B` 步到达 B 的末尾，跳到 `headA`。
+    *   `pA` 走完 `L_B` 步到达 B 的末尾（此时 `pA` 已经走了 `L_A + L_B` 步，指向 `null`）。
+    *   `pB` 走完 `L_A` 步到达 A 的末尾（此时 `pB` 也已经走了 `L_B + L_A` 步，指向 `null`）。
+    *   最终，`pA` 和 `pB` 都会在 `null` 处相遇，此时返回 `null`，表示没有相交。
+
+**算法步骤：**
+
+1.  初始化两个指针 `pA = headA` 和 `pB = headB`。
+2.  使用 `while pA != pB` 循环。
+3.  在循环内部：
+    *   如果 `pA` 走到链表末尾（即 `pA` 为 `null`），则将 `pA` 指向 `headB`。否则，`pA` 继续向后移动一位 (`pA = pA.next`)。
+    *   如果 `pB` 走到链表末尾（即 `pB` 为 `null`），则将 `pB` 指向 `headA`。否则，`pB` 继续向后移动一位 (`pB = pB.next`)。
+4.  当 `pA == pB` 时，循环结束。此时 `pA`（或 `pB`）就是相交节点，如果它们都是 `null`，则表示没有相交。
+
+**时间复杂度：** O(m + n)，因为两个指针最多各遍历两个链表一次。
+**空间复杂度：** O(1)，只需要常数级的额外空间。
+
+---
+
+流程图 (Mermaid)
+
+```mermaid
+graph TD
+    A[开始] --> B{初始化 pA = headA, pB = headB};
+    B --> C{pA == pB?};
+    C -- 否 --> D{pA == null?};
+    D -- 是 --> E[pA = headB];
+    D -- 否 --> F[pA = pA.next];
+    E --> G{pB == null?};
+    F --> G;
+    G -- 是 --> H[pB = headA];
+    G -- 否 --> I[pB = pB.next];
+    H --> C;
+    I --> C;
+    C -- 是 --> J[返回 pA];
+```
+
+---
+
+代码实现
+
+首先定义 `ListNode` 类（如果环境没有提供的话）：
+
+**Java 版 `ListNode` 定义：**
+
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int x) {
+        val = x;
+        next = null;
+    }
+}
+```
+
+**Python 版 `ListNode` 定义：**
+
+```python
+class ListNode:
+    def __init__(self, x):
+        self.val = x
+        self.next = None
+```
+
+Java 解法
+
+```java
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode(int x) {
+ *         val = x;
+ *         next = null;
+ *     }
+ * }
+ */
+public class Solution {
+    public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
+        // 如果其中任何一个链表为空，则不可能有交点，直接返回 null
+        if (headA == null || headB == null) {
+            return null;
+        }
+
+        // 初始化两个指针，分别指向两个链表的头节点
+        ListNode pA = headA;
+        ListNode pB = headB;
+
+        // 循环直到两个指针相遇（指向同一个节点）
+        // 如果有交点，它们会在交点处相遇
+        // 如果没有交点，它们会同时到达 null（都走完 A + B 的总长度）
+        while (pA != pB) {
+            // 如果 pA 已经到达链表 A 的末尾（即 pA 为 null），
+            // 则将其重定向到链表 B 的头部。
+            // 否则，pA 继续向前移动一位。
+            pA = (pA == null) ? headB : pA.next;
+
+            // 如果 pB 已经到达链表 B 的末尾（即 pB 为 null），
+            // 则将其重定向到链表 A 的头部。
+            // 否则，pB 继续向前移动一位。
+            pB = (pB == null) ? headA : pB.next;
+        }
+
+        // 当循环结束时，pA 和 pB 指向同一个节点，这个节点就是相交的起始节点。
+        // 如果没有交点，它们会同时指向 null。
+        return pA;
+    }
+}
+
+```
+
+Python 解法
+
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.next = None
+
+class Solution:
+    def getIntersectionNode(self, headA: ListNode, headB: ListNode) -> ListNode:
+        # 如果其中任何一个链表为空，则不可能有交点，直接返回 None
+        if not headA or not headB:
+            return None
+
+        # 初始化两个指针，分别指向两个链表的头节点
+        pA = headA
+        pB = headB
+
+        # 循环直到两个指针相遇（指向同一个节点）
+        # 如果有交点，它们会在交点处相遇
+        # 如果没有交点，它们会同时到达 None（都走完 A + B 的总长度）
+        while pA is not pB:
+            # 如果 pA 已经到达链表 A 的末尾（即 pA 为 None），
+            # 则将其重定向到链表 B 的头部。
+            # 否则，pA 继续向前移动一位。
+            pA = headB if pA is None else pA.next
+
+            # 如果 pB 已经到达链表 B 的末尾（即 pB 为 None），
+            # 则将其重定向到链表 A 的头部。
+            # 否则，pB 继续向前移动一位。
+            pB = headA if pB is None else pB.next
+        
+        # 当循环结束时，pA 和 pB 指向同一个节点，这个节点就是相交的起始节点。
+        # 如果没有交点，它们会同时指向 None。
+        return pA
+
+```
+
+---
+
+结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示双指针法的执行过程：
+
+输入：`intersectVal = 8, listA = [4,1,8,4,5], listB = [5,6,1,8,4,5], skipA = 2, skipB = 3`
+输出：`Intersected at '8'`
+
+为了更清晰地演示，我们假设链表结构如下（`N_X` 表示节点对象，`val` 是节点的值）：
+
+```
+链表 A: N_4A -> N_1A -> N_8 -> N_4B -> N_5 -> null
+                       ^ (skipA = 2)
+链表 B: N_5B -> N_6 -> N_1B -> N_8 -> N_4B -> N_5 -> null
+                               ^ (skipB = 3)
+
+相交节点是 N_8 (值为 8)。
+注意：N_8, N_4B, N_5 是两个链表共享的相同内存地址的节点。
+N_4A 和 N_4B 尽管值都是4，但它们是不同的节点对象。
+N_1A 和 N_1B 尽管值都是1，但它们是不同的节点对象。
+```
+
+**初始化：**
+`pA` 指向 `N_4A` (headA)
+`pB` 指向 `N_5B` (headB)
+
+**循环开始 (while pA != pB):**
+
+**第 1 步：**
+*   `pA` (`N_4A`) != `pB` (`N_5B`)
+*   `pA` 移动到 `N_1A`
+*   `pB` 移动到 `N_6`
+
+**第 2 步：**
+*   `pA` (`N_1A`) != `pB` (`N_6`)
+*   `pA` 移动到 `N_8` (相交节点)
+*   `pB` 移动到 `N_1B`
+
+**第 3 步：**
+*   `pA` (`N_8`) != `pB` (`N_1B`)
+*   `pA` 移动到 `N_4B`
+*   `pB` 移动到 `N_8` (相交节点)
+
+**第 4 步：**
+*   `pA` (`N_4B`) != `pB` (`N_8`)
+*   `pA` 移动到 `N_5`
+*   `pB` 移动到 `N_4B`
+
+**第 5 步：**
+*   `pA` (`N_5`) != `pB` (`N_4B`)
+*   `pA` 移动到 `null`
+*   `pB` 移动到 `N_5`
+
+**第 6 步：**
+*   `pA` (`null`) != `pB` (`N_5`)
+*   `pA` 为 `null`，重定向 `pA` 到 `headB` (`N_5B`)
+*   `pB` 移动到 `null`
+
+**第 7 步：**
+*   `pA` (`N_5B`) != `pB` (`null`)
+*   `pA` 移动到 `N_6`
+*   `pB` 为 `null`，重定向 `pB` 到 `headA` (`N_4A`)
+
+**第 8 步：**
+*   `pA` (`N_6`) != `pB` (`N_4A`)
+*   `pA` 移动到 `N_1B`
+*   `pB` 移动到 `N_1A`
+
+**第 9 步：**
+*   `pA` (`N_1B`) != `pB` (`N_1A`) (注意：虽然值都是1，但它们是不同的节点对象)
+*   `pA` 移动到 `N_8` (相交节点)
+*   `pB` 移动到 `N_8` (相交节点)
+
+**第 10 步：**
+*   `pA` (`N_8`) == `pB` (`N_8`)
+*   循环条件 `pA != pB` 不满足，循环终止。
+*   返回 `pA`，即 `N_8`。
+
+**结果：** `N_8` (值为 8)，与题目示例输出一致。
+
+这个演示清晰地展示了两个指针如何通过遍历对方链表来“弥补”长度差，最终在相交点相遇。如果链表不相交，它们会同时变成 `null`，然后返回 `null`。
+
+
+
+
+
+
+
+### [206. 反转链表](https://leetcode.cn/problems/reverse-linked-list/description/)
+已解答
+简单
+
+给你单链表的头节点 head ，请你反转链表，并返回反转后的链表。
+ 
+
+示例 1：
+
+
+输入：head = [1,2,3,4,5]
+输出：[5,4,3,2,1]
+
+
+示例 2：
+
+
+输入：head = [1,2]
+输出：[2,1]
+
+
+示例 3：
+
+输入：head = []
+输出：[]
+ 
+
+提示：
+
+- 链表中节点的数目范围是 [0, 5000]
+- -5000 <= Node.val <= 5000
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### 双指针法-Java-无注释版
+
+
+
+
+
+
+
+
+
+```Java
+
+
+
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public ListNode reverseList(ListNode head) {
+        // 双指针法
+
+        if( head == null ) {
+
+            return null;
+        }
+
+        ListNode pre = new ListNode() ;
+
+        pre =null;
+
+        ListNode cur = head;
+        ListNode temp = new ListNode();
+
+        while( cur.next != null ) {
+
+            temp = cur.next;
+
+            cur.next = pre;
+
+            pre = cur;
+
+            cur = temp;
+
+
+        }
+
+
+        cur.next = pre;
+
+        pre = cur;
+
+
+
+        return pre;
+
+
+    }
+}
+
+
+```
+
+
+
+
+
+
+
+
+
+
+#### 双指针法-Java-注释优化版 
+
+
+
+
+
+
+
+
+```Java
+
+
+
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public ListNode reverseList(ListNode head) {
+        // 双指针法 (Iterative approach using two pointers: pre and cur)
+
+        if( head == null ) {
+            // 如果链表为空，则直接返回 null，空链表反转后仍然是空链表
+            return null;
+        }
+
+        ListNode pre = new ListNode() ; // 初始化前一个指针 pre
+        // ListNode pre = null;  // 也可以直接初始化为 null,  ListNode() 默认 val = 0, next = null;  这里使用 ListNode()  或者 null 都可以。
+
+        pre =null; // 初始化 pre 指针为 null，在反转的过程中，pre 将指向 cur 的前一个节点，初始时，第一个节点的前一个节点为 null
+
+        ListNode cur = head; // 初始化当前指针 cur，指向链表的头节点，cur 指针用于遍历链表
+        ListNode temp = new ListNode(); // 初始化临时节点 temp，用于在反转时保存 cur 的下一个节点，避免链表断开
+
+        while( cur != null ) { // 修改循环条件为 cur != null， 遍历到链表末尾
+        // while( cur.next != null ) { // 原来的循环条件是 cur.next != null，会导致最后一个节点无法反转，循环在倒数第二个节点结束
+
+            temp = cur.next; // 步骤一：保存 cur 的下一个节点到 temp，因为 cur.next 指针即将反转指向前一个节点，需要先保存
+
+            cur.next = pre; // 步骤二：反转 cur 的 next 指针，让它指向 pre，实现当前节点指向前一个节点的反转
+
+            pre = cur; // 步骤三：pre 指针后移，移动到 cur 的位置，为下一次循环做准备，pre 始终指向 cur 的前一个节点（反转后是后一个节点）
+
+            cur = temp; // 步骤四：cur 指针后移，移动到 temp 的位置，即原来的 cur.next 的位置，继续遍历下一个节点
+
+            if (cur == null){ // 增加判断条件，当 cur 为空时，跳出循环，避免 NullPointerException， 同时也避免了原代码在 while( cur.next != null ) 循环条件下，最后一个节点无法反转的问题。
+                break;
+            }
+
+
+        }
+
+
+        // cur.next = pre; //  这行代码是多余的，while 循环条件修改为 cur != null 之后，不需要再在循环外执行 cur.next = pre;
+
+        // pre = cur;  // 这行代码也是多余的， while 循环结束后，pre 已经指向反转后的头节点，不需要再赋值 pre = cur;  且此时 cur 已经为 null
+
+        // while 循环结束后，pre 指针指向原链表的最后一个节点，也就是反转后链表的头节点
+        return pre; // 返回 pre，pre 指向反转后链表的头节点
+
+
+    }
+}
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+#### 双指针法-C++ 
+
+
+
+```C++
+
+
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+
+
+        ListNode* pre = nullptr;
+
+        ListNode* cur = head;
+
+
+        while( cur ) {
+
+            ListNode* nxt = cur->next;
+
+            cur->next = pre;
+
+            pre = cur;
+
+            cur = nxt;
+
+        }
+
+        return pre;
+        
+    }
+};
+
+
+```
+
+
+
+
+
+
 
 
 
