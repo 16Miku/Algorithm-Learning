@@ -2934,6 +2934,2059 @@ class Solution:
 
 
 
+
+
+
+### 21. 合并两个有序链表
+已解答
+简单
+相关标签
+premium lock icon
+相关企业
+将两个升序链表合并为一个新的 升序 链表并返回。新链表是通过拼接给定的两个链表的所有节点组成的。 
+
+ 
+
+示例 1：
+
+
+输入：l1 = [1,2,4], l2 = [1,3,4]
+输出：[1,1,2,3,4,4]
+示例 2：
+
+输入：l1 = [], l2 = []
+输出：[]
+示例 3：
+
+输入：l1 = [], l2 = [0]
+输出：[0]
+ 
+
+提示：
+
+两个链表的节点数目范围是 [0, 50]
+-100 <= Node.val <= 100
+l1 和 l2 均按 非递减顺序 排列
+
+
+
+
+
+
+
+
+
+
+#### C语言解法
+
+
+
+```c
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     struct ListNode *next;
+ * };
+ */
+ // 方法一：迭代
+struct ListNode* mergeTwoLists(struct ListNode* list1, struct ListNode* list2) {
+    
+
+    struct ListNode dummy = {};
+    /* 
+    创建一个哨兵节点，作为合并后的新链表头节点的前一个节点。这样可以避免单独处理头节点，也无需特判链表为空的情况，从而简化代码。
+    含义：
+    创建了一个哨兵节点 dummy，它是一个空的 ListNode 结构体实例，{} 表示将其所有成员初始化为 0 或空值。
+    作用：
+    1.充当合并链表的虚拟头节点，简化边界条件的处理，避免特殊处理链表的头节点。
+    2.在合并过程中，所有新节点都会被连接到这个哨兵节点的 next 后面。
+    3.最终返回时，只需要返回 dummy.next 即可得到完整的新链表。 
+    */
+    struct ListNode* cur = &dummy;
+    /* 
+    cur 指向新链表的最后一个节点
+    含义：
+    cur 是一个指针，初始指向 dummy 结构体的地址。
+    作用：
+    1.cur 负责遍历和构建新链表，始终指向当前新链表的最后一个节点。
+    2.在合并过程中，通过 cur->next = list1 或 cur->next = list2 将较小的节点加入新链表，然后移动 cur 指针，使其始终指向链表的末尾。
+    3.最终，dummy.next 将指向完整的新链表。
+
+    */
+
+    // 当 list1 和 list2 都不为空时，遍历它们
+    while( list1 && list2 )
+    {
+
+        // 比较 list 1 ​ 和 list 2 ​ 的节点值
+        if( list1->val < list2->val )
+        {   // 如果 list1 当前节点的值小于 list2
+
+            cur->next = list1;
+            // 将 list1 当前节点加到新链表的末尾
+            list1 = list1->next;
+            // 把 list 1 ​ 替换成它的下一个节点
+
+
+        }
+        else
+        {   // 如果 list2 当前节点的值小于或等于 list1,注：相等的情况加哪个节点都是可以的
+
+            cur->next = list2;
+            // 将 list2 当前节点连接到新链表
+            list2 = list2->next;
+            // list2 向前移动
+
+
+        }
+
+        cur = cur->next;
+        // 更新 cur，使其指向新链表的最后一个节点
+
+
+    }
+    // 重复上述过程，直到其中一个链表为空。
+
+    cur->next = list1 ? list1 : list2;
+    // 处理剩余的链表，如果其中一个链表还有节点未处理，直接拼接到新链表末尾
+
+    return dummy.next;
+    /* 
+    最后，返回新链表的头节点，即哨兵节点的下一个节点。
+    为什么返回 dummy.next 而不是 dummy->next？
+    区别在于：
+        1. dummy.next 是访问 结构体变量 dummy 的成员 next，使用 点运算符 .
+        2. dummy->next 是访问 结构体指针 所指向对象的成员 next，使用 箭头运算符 ->
+    具体区别
+    1. dummy 是一个结构体变量，它不是指针。
+        struct ListNode dummy = {}; 创建了一个 struct ListNode 变量 dummy。 
+        dummy 是一个普通变量，不是指针，因此我们需要用 . 运算符来访问它的成员。 
+    2. 点运算符 . 与箭头运算符 -> 的使用区别：
+        .（点运算符） 用于访问 结构体变量 的成员。 
+        ->（箭头运算符） 用于访问 结构体指针 所指向的对象的成员。 
+    代码中的变量类型
+        dummy 是 struct ListNode 类型的 变量，所以访问 next 时，应该使用 .：
+        return dummy.next;
+        而不是：
+        return dummy->next;  // 错误，因为 dummy 不是指针
+        如果 dummy 是一个 指针（例如 struct ListNode* dummy），那么访问 next 时才可以使用 ->：
+        struct ListNode* dummy = malloc(sizeof(struct ListNode)); // 这时 dummy 是指针
+        return dummy->next;  // 正确
+    总结
+    dummy.next：用于访问 结构体变量 的成员 next。 
+    dummy->next：用于访问 结构体指针 所指向的对象的成员 next。 
+    在你的代码中，dummy 是一个结构体变量，因此必须使用 dummy.next。
+
+
+    结构体变量 vs 结构体指针
+    特性	    结构体变量	                结构体指针
+    定义方式	struct ListNode node1;	    struct ListNode* pNode;
+    内存分配	在栈上分配内存	            需要在堆上使用 malloc 手动分配内存
+    访问成员	使用点运算符 . 访问成员	    使用箭头运算符 -> 访问成员
+    存储内容	结构体本身的数据	        结构体变量的地址
+    内存释放	自动管理内存	            需要手动调用 free 释放内存
+
+    */
+
+}
+```
+
+
+
+
+
+
+#### java+python讲解
+
+
+好的，我将为您详细讲解 LeetCode 21 题“合并两个有序链表”，并提供 Java 和 Python 两种语言的解法代码，最后结合示例演示代码的执行过程。
+
+---
+
+
+
+
+
+题目解析与思路分析
+
+合并两个有序链表是一个常见的链表操作。由于链表已经有序，我们可以利用这个特性，通过比较两个链表当前节点的值来构建新的有序链表。
+
+1. 方法一：迭代法
+
+**思路：**
+迭代法是解决此问题的常用且高效的方法。我们创建一个新的虚拟头节点（dummy head），然后用一个指针 `current` 来构建合并后的链表。`current` 指针始终指向新链表的最后一个节点。
+
+**步骤：**
+1.  创建一个虚拟头节点 `dummyHead`。这个节点不存储实际数据，它的作用是简化代码逻辑，避免对新链表第一个节点进行特殊处理。
+2.  创建一个 `current` 指针，并将其初始化为 `dummyHead`。
+3.  使用 `while` 循环，只要 `l1` 和 `l2` 都不为 `null`，就进行比较：
+    *   如果 `l1.val <= l2.val`，将 `l1` 的当前节点连接到 `current.next`。然后 `l1` 向前移动一位 (`l1 = l1.next`)。
+    *   否则（即 `l2.val < l1.val`），将 `l2` 的当前节点连接到 `current.next`。然后 `l2` 向前移动一位 (`l2 = l2.next`)。
+    *   无论选择哪个节点，`current` 指针都必须向前移动一位 (`current = current.next`)，以准备连接下一个节点。
+4.  当循环结束时，意味着其中一个链表已经遍历完毕（或两者都遍历完毕）。如果 `l1` 或 `l2` 中还有剩余节点，直接将剩余的链表连接到 `current.next`。因为原链表已经是有序的，所以剩余部分无需再比较，直接拼接即可。
+    *   `current.next = (l1 != null) ? l1 : l2;`
+5.  最后，返回 `dummyHead.next`，这才是合并后链表的真正头节点。
+
+**时间复杂度：** O(M + N)，其中 M 和 N 分别是两个链表的长度。因为每个节点只会被遍历一次。
+**空间复杂度：** O(1)，只使用了常数个额外指针。
+
+2. 方法二：递归法
+
+**思路：**
+递归法利用了链表的结构特点。基本思想是：如果两个链表都不为空，那么合并后的链表的头节点一定是 `l1` 和 `l2` 中值较小的那个。然后，这个较小节点的 `next` 指针指向的是剩余部分合并后的结果。
+
+**步骤：**
+1.  **基本情况（Base Cases）：**
+    *   如果 `l1` 为 `null`，说明 `l1` 已经遍历完，直接返回 `l2`。
+    *   如果 `l2` 为 `null`，说明 `l2` 已经遍历完，直接返回 `l1`。
+2.  **递归步骤：**
+    *   比较 `l1.val` 和 `l2.val`。
+    *   如果 `l1.val <= l2.val`：
+        *   将 `l1.next` 指向 `mergeTwoLists(l1.next, l2)` 的结果。
+        *   返回 `l1` 作为当前合并部分的头。
+    *   否则 (`l2.val < l1.val`)：
+        *   将 `l2.next` 指向 `mergeTwoLists(l1, l2.next)` 的结果。
+        *   返回 `l2` 作为当前合并部分的头。
+
+**时间复杂度：** O(M + N)，因为每次递归调用都会处理一个节点，直到所有节点都被处理。
+**空间复杂度：** O(M + N)，在最坏情况下（例如一个链表非常长，另一个链表很短），递归深度可能达到 M+N，导致栈空间消耗。对于题目给定的 `N <= 50`，这通常不是问题。
+
+---
+
+流程图 (Mermaid)
+
+这里我们主要绘制迭代法的流程图，因为它在链表合并中更常用且避免递归深度问题。
+
+```mermaid
+graph TD
+    A[开始] --> B[创建 dummyHead 和 current = dummyHead];
+    B --> C{l1 != null 且 l2 != null?};
+    C -- 是 --> D{l1.val <= l2.val?};
+    D -- 是 --> E[current.next = l1];
+    E --> F[l1 = l1.next];
+    D -- 否 --> G[current.next = l2];
+    G --> H[l2 = l2.next];
+    F --> I[current = current.next];
+    H --> I;
+    I --> C;
+    C -- 否 --> J{l1 != null?};
+    J -- 是 --> K[current.next = l1];
+    J -- 否 --> L{l2 != null?};
+    L -- 是 --> M[current.next = l2];
+    L -- 否 --> N[返回 dummyHead.next];
+    K --> N;
+    M --> N;
+```
+
+---
+
+代码实现
+
+首先定义 `ListNode` 类（如果环境没有提供的话）：
+
+**Java 版 `ListNode` 定义：**
+
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+```
+
+**Python 版 `ListNode` 定义：**
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+```
+
+ Java 解法 (迭代法)
+
+```java
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        // 创建一个虚拟头节点，用于简化链表操作，避免对第一个节点进行特殊处理
+        ListNode dummyHead = new ListNode(-1); 
+        // current 指针用于构建新链表，它始终指向当前已合并部分的最后一个节点
+        ListNode current = dummyHead;
+
+        // 当 l1 和 l2 都不为 null 时，循环比较并合并
+        while (l1 != null && l2 != null) {
+            // 比较两个链表当前节点的值
+            if (l1.val <= l2.val) {
+                // 如果 l1 的值较小或相等，将 l1 节点接到 current 的后面
+                current.next = l1;
+                // 移动 l1 指针到下一个节点
+                l1 = l1.next;
+            } else {
+                // 如果 l2 的值较小，将 l2 节点接到 current 的后面
+                current.next = l2;
+                // 移动 l2 指针到下一个节点
+                l2 = l2.next;
+            }
+            // current 指针向前移动，指向刚刚接上的节点，为下一个节点的连接做准备
+            current = current.next;
+        }
+
+        // 循环结束后，如果 l1 或 l2 中还有剩余节点（其中一个可能已经遍历完）
+        // 直接将剩余的非空链表部分连接到 current 的后面。
+        // 因为原链表都是有序的，所以剩余部分也无需再比较，直接拼接即可。
+        if (l1 != null) {
+            current.next = l1;
+        } else if (l2 != null) {
+            current.next = l2;
+        }
+
+        // 返回虚拟头节点的下一个节点，即合并后链表的真正头节点
+        return dummyHead.next;
+    }
+}
+
+```
+
+Python 解法 (迭代法)
+
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+class Solution:
+    def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
+        # 创建一个虚拟头节点，用于简化链表操作，避免对第一个节点进行特殊处理
+        dummy_head = ListNode(-1)
+        # current 指针用于构建新链表，它始终指向当前已合并部分的最后一个节点
+        current = dummy_head
+
+        # 当 l1 和 l2 都不为 None 时，循环比较并合并
+        while l1 and l2:
+            # 比较两个链表当前节点的值
+            if l1.val <= l2.val:
+                # 如果 l1 的值较小或相等，将 l1 节点接到 current 的后面
+                current.next = l1
+                # 移动 l1 指针到下一个节点
+                l1 = l1.next
+            else:
+                # 如果 l2 的值较小，将 l2 节点接到 current 的后面
+                current.next = l2
+                # 移动 l2 指针到下一个节点
+                l2 = l2.next
+            # current 指针向前移动，指向刚刚接上的节点，为下一个节点的连接做准备
+            current = current.next
+        
+        # 循环结束后，如果 l1 或 l2 中还有剩余节点（其中一个可能已经遍历完）
+        # 直接将剩余的非空链表部分连接到 current 的后面。
+        # 因为原链表都是有序的，所以剩余部分也无需再比较，直接拼接即可。
+        if l1:
+            current.next = l1
+        elif l2:
+            current.next = l2
+        
+        # 返回虚拟头节点的下一个节点，即合并后链表的真正头节点
+        return dummy_head.next
+
+```
+
+---
+
+ 结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示迭代法的执行过程：
+
+输入：`l1 = [1,2,4], l2 = [1,3,4]`
+输出：`[1,1,2,3,4,4]`
+
+为了区分相同值的节点，我们假设节点对象为 `N_val_listName`：
+`l1: N_1_l1 -> N_2_l1 -> N_4_l1 -> null`
+`l2: N_1_l2 -> N_3_l2 -> N_4_l2 -> null`
+
+**初始状态：**
+*   `dummy_head = ListNode(-1)`
+*   `current = dummy_head`
+*   `merged_list: (dummy_head) -> null`
+
+**循环开始 (`while l1 and l2`):**
+
+1.  **第一次循环：**
+    *   `l1` (`N_1_l1`) 和 `l2` (`N_1_l2`) 都不为 `null`。
+    *   比较 `l1.val` (1) 和 `l2.val` (1)。`1 <= 1` 为 `True`。
+    *   `current.next = l1` (即 `dummy_head.next = N_1_l1`)
+    *   `l1 = l1.next` (即 `l1` 移动到 `N_2_l1`)
+    *   `current = current.next` (即 `current` 移动到 `N_1_l1`)
+    `merged_list: (dummy_head) -> N_1_l1 -> null`
+    `l1: N_2_l1 -> N_4_l1 -> null`
+    `l2: N_1_l2 -> N_3_l2 -> N_4_l2 -> null`
+
+2.  **第二次循环：**
+    *   `l1` (`N_2_l1`) 和 `l2` (`N_1_l2`) 都不为 `null`。
+    *   比较 `l1.val` (2) 和 `l2.val` (1)。`2 <= 1` 为 `False`。
+    *   `current.next = l2` (即 `N_1_l1.next = N_1_l2`)
+    *   `l2 = l2.next` (即 `l2` 移动到 `N_3_l2`)
+    *   `current = current.next` (即 `current` 移动到 `N_1_l2`)
+    `merged_list: (dummy_head) -> N_1_l1 -> N_1_l2 -> null`
+    `l1: N_2_l1 -> N_4_l1 -> null`
+    `l2: N_3_l2 -> N_4_l2 -> null`
+
+3.  **第三次循环：**
+    *   `l1` (`N_2_l1`) 和 `l2` (`N_3_l2`) 都不为 `null`。
+    *   比较 `l1.val` (2) 和 `l2.val` (3)。`2 <= 3` 为 `True`。
+    *   `current.next = l1` (即 `N_1_l2.next = N_2_l1`)
+    *   `l1 = l1.next` (即 `l1` 移动到 `N_4_l1`)
+    *   `current = current.next` (即 `current` 移动到 `N_2_l1`)
+    `merged_list: (dummy_head) -> N_1_l1 -> N_1_l2 -> N_2_l1 -> null`
+    `l1: N_4_l1 -> null`
+    `l2: N_3_l2 -> N_4_l2 -> null`
+
+4.  **第四次循环：**
+    *   `l1` (`N_4_l1`) 和 `l2` (`N_3_l2`) 都不为 `null`。
+    *   比较 `l1.val` (4) 和 `l2.val` (3)。`4 <= 3` 为 `False`。
+    *   `current.next = l2` (即 `N_2_l1.next = N_3_l2`)
+    *   `l2 = l2.next` (即 `l2` 移动到 `N_4_l2`)
+    *   `current = current.next` (即 `current` 移动到 `N_3_l2`)
+    `merged_list: (dummy_head) -> N_1_l1 -> N_1_l2 -> N_2_l1 -> N_3_l2 -> null`
+    `l1: N_4_l1 -> null`
+    `l2: N_4_l2 -> null`
+
+5.  **第五次循环：**
+    *   `l1` (`N_4_l1`) 和 `l2` (`N_4_l2`) 都不为 `null`。
+    *   比较 `l1.val` (4) 和 `l2.val` (4)。`4 <= 4` 为 `True`。
+    *   `current.next = l1` (即 `N_3_l2.next = N_4_l1`)
+    *   `l1 = l1.next` (即 `l1` 移动到 `null`)
+    *   `current = current.next` (即 `current` 移动到 `N_4_l1`)
+    `merged_list: (dummy_head) -> N_1_l1 -> N_1_l2 -> N_2_l1 -> N_3_l2 -> N_4_l1 -> null`
+    `l1: null`
+    `l2: N_4_l2 -> null`
+
+**循环结束：**
+*   `l1` 为 `null`，循环条件 `l1 and l2` 不满足，循环终止。
+
+**处理剩余部分：**
+*   `l1` 为 `null`，`l2` (`N_4_l2`) 不为 `null`。
+*   `current.next = l2` (即 `N_4_l1.next = N_4_l2`)
+    `merged_list: (dummy_head) -> N_1_l1 -> N_1_l2 -> N_2_l1 -> N_3_l2 -> N_4_l1 -> N_4_l2 -> null`
+
+**返回结果：**
+*   返回 `dummy_head.next`，即 `N_1_l1`。
+*   最终合并后的链表为：`1 -> 1 -> 2 -> 3 -> 4 -> 4`，与示例输出一致。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 2. 两数相加
+已解答
+中等
+相关标签
+premium lock icon
+相关企业
+给你两个 非空 的链表，表示两个非负的整数。它们每位数字都是按照 逆序 的方式存储的，并且每个节点只能存储 一位 数字。
+
+请你将两个数相加，并以相同形式返回一个表示和的链表。
+
+你可以假设除了数字 0 之外，这两个数都不会以 0 开头。
+
+ 
+
+示例 1：
+
+
+输入：l1 = [2,4,3], l2 = [5,6,4]
+输出：[7,0,8]
+解释：342 + 465 = 807.
+
+示例 2：
+
+输入：l1 = [0], l2 = [0]
+输出：[0]
+
+示例 3：
+
+输入：l1 = [9,9,9,9,9,9,9], l2 = [9,9,9,9]
+输出：[8,9,9,9,0,0,0,1]
+ 
+
+提示：
+
+每个链表中的节点数在范围 [1, 100] 内
+0 <= Node.val <= 9
+题目数据保证列表表示的数字不含前导零
+
+
+
+
+
+#### java+python讲解
+
+
+
+
+好的，我将为您详细讲解 LeetCode 2 题“两数相加”，并提供 Java 和 Python 两种语言的解法代码，最后结合示例演示代码的执行过程。
+
+
+题目解析与思路分析
+
+这道题目是经典的链表操作题，本质上是模拟我们小学时学习的“竖式加法”。
+
+**关键点：**
+
+1.  **数字逆序存储：** 这是一个非常重要的提示。这意味着链表的头节点存储的是数字的个位，第二个节点是十位，以此类推。这种存储方式使得我们可以直接从链表头部开始进行加法运算，而无需先反转链表或者使用栈来处理。这和我们平时从右往左（个位到高位）进行加法运算的习惯是吻合的。
+
+2.  **逐位加法与进位：**
+    *   我们需要遍历两个链表，将对应位置的数字相加。
+    *   每次相加的结果可能会产生一个**和**和一个**进位**。
+    *   例如，`4 + 6 = 10`。那么当前位的数字是 `0`，进位是 `1`。
+    *   `和 = (l1当前位数字 + l2当前位数字 + 上一步的进位) % 10`
+    *   `新进位 = (l1当前位数字 + l2当前位数字 + 上一步的进位) // 10` (整数除法)
+
+3.  **处理链表长度不一致：**
+    *   当一个链表比另一个短时，我们可以将其后续节点视为 `0`。
+    *   循环条件应该考虑所有可能的情况：两个链表都还有节点，或者只剩一个链表有节点，或者两个链表都为空但还有进位。
+
+4.  **构建结果链表：**
+    *   为了方便构建新的链表，我们通常会创建一个**虚拟头节点 (dummy head)**。这个虚拟头节点不存储实际数据，它的 `next` 指针将指向合并后链表的第一个实际节点。这样可以避免对第一个节点进行特殊处理。
+    *   我们还需要一个 `current` 指针，它始终指向正在构建的新链表的最后一个节点。每次计算出一位数字后，就创建一个新节点，并将其连接到 `current.next`，然后移动 `current` 指针到这个新节点。
+
+5.  **处理最后的进位：**
+    *   在所有链表都遍历完毕后，如果最后还有进位（例如 `[9] + [1]` 结果是 `[0,1]`），需要为这个进位额外创建一个新节点。
+
+**算法步骤（迭代法）：**
+
+1.  **初始化：**
+    *   创建一个虚拟头节点 `dummyHead = new ListNode(0)`。
+    *   创建一个 `current` 指针，并将其初始化为 `dummyHead`。
+    *   初始化 `carry = 0` (进位)。
+2.  **循环：**
+    *   使用 `while` 循环，条件是 `l1 != null` 或者 `l2 != null` 或者 `carry != 0`。只要这三个条件中的任意一个为真，就继续循环。
+    *   在循环内部，获取当前 `l1` 和 `l2` 节点的值：
+        *   `x = (l1 != null) ? l1.val : 0;` (如果 `l1` 为 `null`，则取 `0`)
+        *   `y = (l2 != null) ? l2.val : 0;` (如果 `l2` 为 `null`，则取 `0`)
+    *   计算当前位的和：`sum = x + y + carry;`
+    *   更新进位：`carry = sum / 10;` (整数除法，得到进位)
+    *   计算当前位数字：`digit = sum % 10;` (取模，得到当前位数字)
+    *   创建新节点：`current.next = new ListNode(digit);`
+    *   移动 `current` 指针：`current = current.next;`
+    *   移动 `l1` 和 `l2` 指针（如果它们不为 `null`）：
+        *   `if (l1 != null) l1 = l1.next;`
+        *   `if (l2 != null) l2 = l2.next;`
+3.  **返回结果：**
+    *   循环结束后，返回 `dummyHead.next`，它就是表示和的链表的头节点。
+
+**时间复杂度：** O(max(M, N))，其中 M 和 N 分别是两个链表的长度。因为我们最多需要遍历两个链表中最长的那一个的长度。
+**空间复杂度：** O(max(M, N))，新链表的长度最多是 `max(M, N) + 1`，所以需要与链表长度成比例的额外空间。
+
+---
+
+ 流程图 (Mermaid)
+
+
+---
+
+代码实现
+
+首先定义 `ListNode` 类（如果环境没有提供的话）：
+
+**Java 版 `ListNode` 定义：**
+
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {} // 无参构造函数
+    ListNode(int val) { this.val = val; } // 带值构造函数
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; } // 带值和下一个节点构造函数
+}
+```
+
+**Python 版 `ListNode` 定义：**
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+```
+
+Java 解法
+
+```java
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+        // 创建一个虚拟头节点，它的作用是简化代码逻辑，避免对新链表的第一个节点进行特殊处理。
+        // 最后返回 dummyHead.next 即可。
+        ListNode dummyHead = new ListNode(0); 
+        
+        // current 指针用于构建新的结果链表，它始终指向当前已构建部分的最后一个节点。
+        ListNode current = dummyHead;
+        
+        // carry 用于存储进位，初始为 0。
+        int carry = 0;
+
+        // 循环条件：只要 l1 或 l2 还有节点，或者还有进位，就继续循环。
+        // 这样可以处理两个链表长度不一致的情况，以及最后可能产生的进位。
+        while (l1 != null || l2 != null || carry != 0) {
+            // 获取 l1 当前节点的值，如果 l1 为 null，则视为 0。
+            int x = (l1 != null) ? l1.val : 0;
+            // 获取 l2 当前节点的值，如果 l2 为 null，则视为 0。
+            int y = (l2 != null) ? l2.val : 0;
+
+            // 计算当前位的和：两个数字的当前位之和加上上一位的进位。
+            int sum = x + y + carry;
+            
+            // 计算新的进位：和除以 10 的整数部分。
+            carry = sum / 10;
+            
+            // 计算当前位的新数字：和除以 10 的余数部分。
+            int digit = sum % 10;
+
+            // 创建一个新的节点，存储当前位的数字。
+            current.next = new ListNode(digit);
+            
+            // 移动 current 指针到新创建的节点，为下一次连接做准备。
+            current = current.next;
+
+            // 移动 l1 指针到下一个节点，如果 l1 不为 null。
+            if (l1 != null) {
+                l1 = l1.next;
+            }
+            // 移动 l2 指针到下一个节点，如果 l2 不为 null。
+            if (l2 != null) {
+                l2 = l2.next;
+            }
+        }
+
+        // 循环结束后，dummyHead.next 就是表示两个数之和的链表的头节点。
+        return dummyHead.next;
+    }
+}
+```
+
+ Python 解法
+
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+class Solution:
+    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:
+        # 创建一个虚拟头节点，它的作用是简化代码逻辑，避免对新链表的第一个节点进行特殊处理。
+        # 最后返回 dummy_head.next 即可。
+        dummy_head = ListNode(0)
+        
+        # current 指针用于构建新的结果链表，它始终指向当前已构建部分的最后一个节点。
+        current = dummy_head
+        
+        # carry 用于存储进位，初始为 0。
+        carry = 0
+
+        # 循环条件：只要 l1 或 l2 还有节点，或者还有进位，就继续循环。
+        # 这样可以处理两个链表长度不一致的情况，以及最后可能产生的进位。
+        while l1 or l2 or carry:
+            # 获取 l1 当前节点的值，如果 l1 为 None，则视为 0。
+            x = l1.val if l1 else 0
+            # 获取 l2 当前节点的值，如果 l2 为 None，则视为 0。
+            y = l2.val if l2 else 0
+
+            # 计算当前位的和：两个数字的当前位之和加上上一位的进位。
+            total_sum = x + y + carry
+            
+            # 计算新的进位：和除以 10 的整数部分。
+            carry = total_sum // 10
+            
+            # 计算当前位的新数字：和除以 10 的余数部分。
+            digit = total_sum % 10
+
+            # 创建一个新的节点，存储当前位的数字。
+            current.next = ListNode(digit)
+            
+            # 移动 current 指针到新创建的节点，为下一次连接做准备。
+            current = current.next
+
+            # 移动 l1 指针到下一个节点，如果 l1 不为 None。
+            if l1:
+                l1 = l1.next
+            # 移动 l2 指针到下一个节点，如果 l2 不为 None。
+            if l2:
+                l2 = l2.next
+        
+        # 循环结束后，dummy_head.next 就是表示两个数之和的链表的头节点。
+        return dummy_head.next
+
+```
+
+---
+
+ 结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示迭代法的执行过程：
+
+输入：`l1 = [2,4,3], l2 = [5,6,4]`
+输出：`[7,0,8]`
+
+链表结构如下：
+`l1: N_2_l1 -> N_4_l1 -> N_3_l1 -> null` (代表 342)
+`l2: N_5_l2 -> N_6_l2 -> N_4_l2 -> null` (代表 465)
+
+**初始状态：**
+*   `dummyHead = ListNode(0)`
+*   `current = dummyHead`
+*   `carry = 0`
+*   `result_list: (dummyHead) -> null`
+
+**循环开始 (`while l1 != null || l2 != null || carry != 0`):**
+
+1.  **第一次循环 (处理个位)：**
+    *   `l1` (`N_2_l1`) 不为 `null`，`l2` (`N_5_l2`) 不为 `null`，`carry` 为 `0`。条件满足。
+    *   `x = l1.val` (2)
+    *   `y = l2.val` (5)
+    *   `sum = x + y + carry = 2 + 5 + 0 = 7`
+    *   `carry = sum / 10 = 7 / 10 = 0`
+    *   `digit = sum % 10 = 7 % 10 = 7`
+    *   `current.next = new ListNode(7)` (即 `dummyHead.next` 指向新节点 `N_7`)
+    *   `current` 移动到 `N_7`
+    *   `l1` 移动到 `N_4_l1`
+    *   `l2` 移动到 `N_6_l2`
+    `result_list: (dummyHead) -> N_7 -> null`
+    `l1: N_4_l1 -> N_3_l1 -> null`
+    `l2: N_6_l2 -> N_4_l2 -> null`
+
+2.  **第二次循环 (处理十位)：**
+    *   `l1` (`N_4_l1`) 不为 `null`，`l2` (`N_6_l2`) 不为 `null`，`carry` 为 `0`。条件满足。
+    *   `x = l1.val` (4)
+    *   `y = l2.val` (6)
+    *   `sum = x + y + carry = 4 + 6 + 0 = 10`
+    *   `carry = sum / 10 = 10 / 10 = 1`
+    *   `digit = sum % 10 = 10 % 10 = 0`
+    *   `current.next = new ListNode(0)` (即 `N_7.next` 指向新节点 `N_0`)
+    *   `current` 移动到 `N_0`
+    *   `l1` 移动到 `N_3_l1`
+    *   `l2` 移动到 `N_4_l2`
+    `result_list: (dummyHead) -> N_7 -> N_0 -> null`
+    `l1: N_3_l1 -> null`
+    `l2: N_4_l2 -> null`
+    `carry = 1`
+
+3.  **第三次循环 (处理百位)：**
+    *   `l1` (`N_3_l1`) 不为 `null`，`l2` (`N_4_l2`) 不为 `null`，`carry` 为 `1`。条件满足。
+    *   `x = l1.val` (3)
+    *   `y = l2.val` (4)
+    *   `sum = x + y + carry = 3 + 4 + 1 = 8`
+    *   `carry = sum / 10 = 8 / 10 = 0`
+    *   `digit = sum % 10 = 8 % 10 = 8`
+    *   `current.next = new ListNode(8)` (即 `N_0.next` 指向新节点 `N_8`)
+    *   `current` 移动到 `N_8`
+    *   `l1` 移动到 `null`
+    *   `l2` 移动到 `null`
+    `result_list: (dummyHead) -> N_7 -> N_0 -> N_8 -> null`
+    `l1: null`
+    `l2: null`
+    `carry = 0`
+
+**循环结束：**
+*   `l1` 为 `null`，`l2` 为 `null`，`carry` 为 `0`。循环条件 `l1 != null || l2 != null || carry != 0` 不满足，循环终止。
+
+**返回结果：**
+*   返回 `dummyHead.next`，即 `N_7`。
+*   最终表示和的链表为：`N_7 -> N_0 -> N_8 -> null`，对应数字 `[7,0,8]`，与示例输出一致。
+
+这个过程完美模拟了竖式加法，逐位处理，并正确处理了进位和链表长度不一致的情况。
+
+
+
+
+
+
+
+
+### 19. 删除链表的倒数第 N 个结点
+已解答
+中等
+相关标签
+premium lock icon
+相关企业
+提示
+给你一个链表，删除链表的倒数第 n 个结点，并且返回链表的头结点。
+
+ 
+
+示例 1：
+输入：head = [1,2,3,4,5], n = 2
+输出：[1,2,3,5]
+
+示例 2：
+输入：head = [1], n = 1
+输出：[]
+
+示例 3：
+输入：head = [1,2], n = 1
+输出：[1]
+ 
+
+提示：
+
+链表中结点的数目为 sz
+1 <= sz <= 30
+0 <= Node.val <= 100
+1 <= n <= sz
+ 
+
+进阶：你能尝试使用一趟扫描实现吗？
+
+
+
+
+
+#### C语言解法
+
+
+
+
+```c
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     struct ListNode *next;
+ * };
+ */
+
+ // 茶神所讲双指针法。为了有效删除倒数第 n 个节点，我们可以采用双指针法，这是一个非常经典的链表问题技巧。
+struct ListNode* removeNthFromEnd(struct ListNode* head, int n) {
+    
+
+    struct ListNode dummy = {0,head};
+    /* 1.创建哨兵节点（dummy node）： 为了方便处理边界情况（如删除头节点），我们创建一个哨兵节点 dummy，它指向链表的头节点。
+    哨兵节点 dummy:
+    定义了一个名为 dummy 的 ListNode 类型变量。
+    它是一个链表节点，作为链表的“虚拟头节点”或“哨兵节点”。
+    好处：即使链表的头节点发生改变（比如删除第一个节点时），dummy 节点可以始终作为链表的入口，无需特别处理头节点的特殊情况。
+    初始化哨兵节点:
+    {0, head} 初始化了哨兵节点的两个成员：
+    val：赋值为 0，这是哨兵节点存储的值，通常无实际意义，只是一个占位符。
+    next：指向链表的实际头节点 head，让哨兵节点连接到链表的起点。
+    */
+    struct ListNode* left = &dummy;
+    struct ListNode* right = &dummy;
+    // 2.设置双指针： 两个指针 left 和 right，初始时都指向 dummy。
+
+    while( n-- ){
+        // 3.将右指针向右平移n步，使得左右指针间隔为n
+
+        right = right->next;
+
+    }
+
+    while( right->next ) {
+        // 4.循环移动两个指针，直到右指针移动到链表尾部
+
+        left = left->next;
+        right = right->next;
+        // 将左右指针保持n的间隔整体右移。当 right 指向链表末尾时，left 刚好指向待删除节点的前一个节点。
+
+    }
+
+
+    /* 循环结束后，左右指针间隔为n，且右指针指向链表尾部，
+    即右指针为链表倒数第1个结点，left指向链表的倒数第 n+1 个结点，left->next指向链表的倒数第 n 个结点
+    */
+
+    left->next = left->next->next;
+    // 5.删除结点：将原本指向链表的倒数第 n 个结点的指针left->next，赋值left->next->next指向的地址，使其指向倒数第n-1个结点，这样链表中就去除了原本的倒数第 n 个结点
+
+    return dummy.next;
+    // 6.返回头结点： 返回 dummy.next，即链表的实际头节点。
+
+
+}
+```
+
+
+
+#### java+python讲解
+
+
+好的，我将为您详细讲解 LeetCode 19 题“删除链表的倒数第 N 个结点”，并提供 Java 和 Python 两种语言的解法代码，最后结合示例演示代码的执行过程。
+
+
+
+题目解析与思路分析
+
+这道题目要求我们删除链表的倒数第 `n` 个节点。由于是单链表，我们不能直接从尾部向前遍历。通常解决这类问题有几种思路。
+
+ 1. 方法一：两次遍历 (Two Pass)
+
+**思路：**
+最直观的方法是先遍历一次链表，计算出链表的总长度 `L`。然后，倒数第 `n` 个节点就是从头开始的第 `(L - n + 1)` 个节点。要删除这个节点，我们需要找到它的前一个节点，即从头开始的第 `(L - n)` 个节点。
+
+**步骤：**
+1.  **第一次遍历：** 遍历整个链表，统计链表节点的总数 `L`。
+2.  **第二次遍历：**
+    *   计算需要删除的节点是从头开始的第 `(L - n + 1)` 个节点。
+    *   为了删除它，我们需要找到它的前一个节点，即从头开始的第 `(L - n)` 个节点。
+    *   创建一个虚拟头节点 `dummyHead`，将其 `next` 指向 `head`。这样可以统一处理删除头节点的情况。
+    *   从 `dummyHead` 开始，移动一个指针 `prev` `(L - n)` 步。
+    *   `prev` 停在要删除节点的前一个节点。
+    *   执行删除操作：`prev.next = prev.next.next`。
+3.  返回 `dummyHead.next`。
+
+**时间复杂度：** O(L) + O(L - n) = O(L)，因为需要两次遍历。
+**空间复杂度：** O(1)，只使用了常数个额外变量。
+
+ 2. 方法二：一次遍历（快慢指针 / 双指针法） (One Pass / Two Pointers)
+
+**思路：**
+为了满足进阶要求（O(1) 空间，一次遍历），我们可以使用快慢指针。核心思想是让两个指针之间保持 `n` 个节点的距离。
+
+**原理：**
+1.  我们设置两个指针 `fast` 和 `slow`。
+2.  先让 `fast` 指针向前走 `n` 步。此时 `fast` 和 `slow` 之间恰好相隔 `n` 个节点。
+3.  然后，`fast` 和 `slow` 同时向前移动，每次移动一步。
+4.  当 `fast` 指针到达链表末尾（即 `fast.next` 为 `null`）时，`slow` 指针将恰好停在要删除节点的前一个节点上。
+    *   为什么是 `fast.next == null` 而不是 `fast == null`？因为我们最终需要 `slow` 停在要删除节点的前一个节点。如果 `fast` 走到 `null`，那么 `slow` 停在了目标节点上，而不是目标节点的前一个节点。让 `fast` 比 `slow` 多走 `n` 步，当 `fast` 走到链表末尾的 `null` 时，`slow` 恰好指向倒数第 `n` 个节点。为了让 `slow` 指向倒数第 `n` 个节点的前一个节点，我们需要让 `fast` 再多走一步。
+    *   或者，更直观地，我们可以让 `fast` 先走 `n+1` 步（从 `dummyHead` 开始）。这样当 `fast` 走到 `null` 时，`slow` 正好在目标节点的前一个。
+    *   **更简洁的实现：** 初始时，`slow` 和 `fast` 都指向虚拟头节点 `dummyHead`。然后让 `fast` 先走 `n` 步。接着，`fast` 和 `slow` 同时前进，直到 `fast` 走到链表的最后一个节点（即 `fast.next == null`）。此时，`slow` 恰好停在待删除节点的前一个节点。
+
+**详细步骤 (使用虚拟头节点)：**
+
+1.  创建一个虚拟头节点 `dummyHead = new ListNode(0)`。将 `dummyHead.next` 指向 `head`。这样做的好处是，即使要删除的节点是原链表的头节点，我们也能以统一的方式处理（即删除 `dummyHead.next`）。
+2.  初始化两个指针 `fast = dummyHead` 和 `slow = dummyHead`。
+3.  让 `fast` 指针先向前移动 `n` 步。
+    *   `for (int i = 0; i < n; i++) { fast = fast.next; }`
+4.  现在，`fast` 和 `slow` 之间相隔 `n` 个节点。同时移动 `fast` 和 `slow`，直到 `fast` 到达链表的末尾（即 `fast.next == null`）。
+    *   `while (fast.next != null) {`
+    *   `    fast = fast.next;`
+    *   `    slow = slow.next;`
+    *   `}`
+5.  当循环结束时，`slow` 指针所指向的节点就是倒数第 `n` 个节点的前一个节点。
+6.  执行删除操作：`slow.next = slow.next.next;`
+7.  返回 `dummyHead.next`，这是修改后的链表的头节点。
+
+**时间复杂度：** O(L)，因为两个指针都最多遍历一次链表。
+**空间复杂度：** O(1)，只使用了常数个额外指针。
+
+---
+
+流程图 (Mermaid)
+
+---
+
+代码实现
+
+首先定义 `ListNode` 类（如果环境没有提供的话）：
+
+**Java 版 `ListNode` 定义：**
+
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+```
+
+**Python 版 `ListNode` 定义：**
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+```
+
+ Java 解法 (一次遍历 / 快慢指针)
+
+```java
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public ListNode removeNthFromEnd(ListNode head, int n) {
+        // 创建一个虚拟头节点，它的next指向原始链表的头节点。
+        // 这样可以简化对删除头节点这种特殊情况的处理。
+        ListNode dummyHead = new ListNode(0);
+        dummyHead.next = head;
+
+        // 初始化快慢指针，都指向虚拟头节点。
+        ListNode fast = dummyHead;
+        ListNode slow = dummyHead;
+
+        // 1. 快指针 fast 先向前移动 n 步。
+        // 这样，fast 和 slow 之间就保持了 n 个节点的距离。
+        // 例如，如果 n=2，fast 会从 dummyHead 移动到 head.next。
+        for (int i = 0; i < n; i++) {
+            fast = fast.next;
+        }
+
+        // 2. 同时移动快慢指针，直到快指针 fast 到达链表的末尾。
+        // 当 fast.next 为 null 时，fast 指向的是链表的最后一个节点。
+        // 此时，slow 指针恰好停在倒数第 n 个节点的前一个节点。
+        while (fast.next != null) {
+            fast = fast.next; // fast 向前移动一步
+            slow = slow.next; // slow 也向前移动一步
+        }
+
+        // 3. 执行删除操作。
+        // slow.next 指向的是要删除的节点。
+        // slow.next.next 指向的是要删除节点的下一个节点。
+        // 通过将 slow.next 直接指向 slow.next.next，实现了跳过并删除目标节点。
+        slow.next = slow.next.next;
+
+        // 返回虚拟头节点的下一个节点，即修改后链表的真正头节点。
+        return dummyHead.next;
+    }
+}
+
+```
+
+ Python 解法 (一次遍历 / 快慢指针)
+
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+class Solution:
+    def removeNthFromEnd(self, head: ListNode, n: int) -> ListNode:
+        # 创建一个虚拟头节点，它的next指向原始链表的头节点。
+        # 这样可以简化对删除头节点这种特殊情况的处理。
+        dummy_head = ListNode(0)
+        dummy_head.next = head
+
+        # 初始化快慢指针，都指向虚拟头节点。
+        fast = dummy_head
+        slow = dummy_head
+
+        # 1. 快指针 fast 先向前移动 n 步。
+        # 这样，fast 和 slow 之间就保持了 n 个节点的距离。
+        # 例如，如果 n=2，fast 会从 dummy_head 移动到 head.next。
+        for _ in range(n):
+            fast = fast.next
+        
+        # 2. 同时移动快慢指针，直到快指针 fast 到达链表的末尾。
+        # 当 fast.next 为 None 时，fast 指向的是链表的最后一个节点。
+        # 此时，slow 指针恰好停在倒数第 n 个节点的前一个节点。
+        while fast.next: # 只要 fast 的下一个节点不为 None，就继续移动
+            fast = fast.next # fast 向前移动一步
+            slow = slow.next # slow 也向前移动一步
+        
+        # 3. 执行删除操作。
+        # slow.next 指向的是要删除的节点。
+        # slow.next.next 指向的是要删除节点的下一个节点。
+        # 通过将 slow.next 直接指向 slow.next.next，实现了跳过并删除目标节点。
+        slow.next = slow.next.next
+
+        # 返回虚拟头节点的下一个节点，即修改后链表的真正头节点。
+        return dummy_head.next
+
+```
+
+---
+
+结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示快慢指针法的执行过程：
+
+输入：`head = [1,2,3,4,5], n = 2`
+输出：`[1,2,3,5]`
+
+链表结构如下：
+`N_0 (dummyHead) -> N_1 -> N_2 -> N_3 -> N_4 -> N_5 -> null`
+                     `^ (head)`
+
+**初始状态：**
+*   `dummyHead = ListNode(0)`
+*   `dummyHead.next = N_1`
+*   `fast = dummyHead` (指向 `N_0`)
+*   `slow = dummyHead` (指向 `N_0`)
+
+**1. 快指针 fast 先向前移动 `n=2` 步：**
+
+*   **第一次循环 (i=0):** `fast = fast.next` (即 `fast` 移动到 `N_1`)
+*   **第二次循环 (i=1):** `fast = fast.next` (即 `fast` 移动到 `N_2`)
+
+现在：
+`fast` 指向 `N_2`
+`slow` 指向 `N_0`
+`N_0 -> N_1 -> N_2 -> N_3 -> N_4 -> N_5 -> null`
+`^slow           ^fast`
+
+**2. 同时移动快慢指针，直到 `fast.next` 为 `null`：**
+
+*   **第一次 `while` 循环：**
+    *   `fast.next` (`N_3`) 不为 `null`。
+    *   `fast = fast.next` (即 `fast` 移动到 `N_3`)
+    *   `slow = slow.next` (即 `slow` 移动到 `N_1`)
+    现在：
+    `N_0 -> N_1 -> N_2 -> N_3 -> N_4 -> N_5 -> null`
+    `        ^slow           ^fast`
+
+*   **第二次 `while` 循环：**
+    *   `fast.next` (`N_4`) 不为 `null`。
+    *   `fast = fast.next` (即 `fast` 移动到 `N_4`)
+    *   `slow = slow.next` (即 `slow` 移动到 `N_2`)
+    现在：
+    `N_0 -> N_1 -> N_2 -> N_3 -> N_4 -> N_5 -> null`
+    `                ^slow           ^fast`
+
+*   **第三次 `while` 循环：**
+    *   `fast.next` (`N_5`) 不为 `null`。
+    *   `fast = fast.next` (即 `fast` 移动到 `N_5`)
+    *   `slow = slow.next` (即 `slow` 移动到 `N_3`)
+    现在：
+    `N_0 -> N_1 -> N_2 -> N_3 -> N_4 -> N_5 -> null`
+    `                        ^slow           ^fast`
+
+*   **第四次 `while` 循环：**
+    *   `fast.next` (`null`) 为 `null`。循环条件不满足，循环终止。
+
+此时，`slow` 指向 `N_3`。要删除的倒数第 2 个节点是 `N_4`。`slow` 确实停在了 `N_4` 的前一个节点上。
+
+**3. 执行删除操作：`slow.next = slow.next.next;`**
+
+*   `slow.next` 当前是 `N_4`。
+*   `slow.next.next` 当前是 `N_5`。
+*   所以 `N_3.next` (即 `slow.next`) 被重新指向 `N_5`。
+*   链表变为：`N_0 -> N_1 -> N_2 -> N_3 -> N_5 -> null` (`N_4` 被跳过，从而被删除)
+
+**4. 返回 `dummyHead.next`：**
+
+*   `dummyHead.next` 仍然是 `N_1`。
+*   最终返回的链表头是 `N_1`，链表内容为 `[1,2,3,5]`，与示例输出一致。
+
+这个过程清晰地展示了快慢指针如何巧妙地定位到待删除节点的前一个节点，从而实现高效的删除操作。
+
+
+
+
+
+
+
+
+
+
+
+
+### 24. 两两交换链表中的节点
+已解答
+中等
+相关标签
+premium lock icon
+相关企业
+给你一个链表，两两交换其中相邻的节点，并返回交换后链表的头节点。你必须在不修改节点内部的值的情况下完成本题（即，只能进行节点交换）。
+
+ 
+
+示例 1：
+
+
+输入：head = [1,2,3,4]
+输出：[2,1,4,3]
+示例 2：
+
+输入：head = []
+输出：[]
+示例 3：
+
+输入：head = [1]
+输出：[1]
+ 
+
+提示：
+
+链表中节点的数目在范围 [0, 100] 内
+0 <= Node.val <= 100
+
+
+
+
+
+#### java+python讲解
+
+
+
+
+好的，我将为您详细讲解 LeetCode 24 题“两两交换链表中的节点”，并提供 Java 和 Python 两种语言的解法代码，最后结合示例演示代码的执行过程。
+
+
+题目解析与思路分析
+
+这道题目要求我们两两交换链表中的相邻节点，而不是交换节点的值。这意味着我们需要操作节点的 `next` 指针来改变它们的连接顺序。
+
+例如，对于链表 `A -> B -> C -> D`，我们希望将其变为 `B -> A -> D -> C`。
+
+**关键挑战：**
+
+1.  **改变指针指向：** 这是链表操作的核心，需要小心翼翼地更新 `next` 指针，避免断链或创建循环。
+2.  **处理头节点：** 如果原链表的头节点参与了交换（例如 `1->2` 变成 `2->1`），那么新链表的头节点会发生变化。
+3.  **处理奇数长度链表：** 如果链表长度是奇数，最后一个节点将没有配对，应保持不变。
+4.  **处理空链表或单节点链表：** 这些是基本情况，无需交换。
+
+1. 方法一：迭代法
+
+**思路：**
+迭代法是解决此问题的常用且高效的方法。我们使用一个 `prev_node` 指针来跟踪当前要交换的两个节点的前一个节点。这个 `prev_node` 的作用是，在交换完一对节点后，将 `prev_node` 的 `next` 指针指向新交换后的第一个节点。
+
+为了简化对链表头部的处理（因为第一个节点可能会被交换，导致原 `head` 不再是新 `head`），我们通常会引入一个**虚拟头节点 (dummy head)**。
+
+**核心逻辑：**
+假设我们有 `prev_node -> node1 -> node2 -> next_pair_start` 这样的结构。
+我们希望将其变为 `prev_node -> node2 -> node1 -> next_pair_start`。
+
+我们需要执行以下指针操作：
+1.  `node1` 的 `next` 指针指向 `node2` 的 `next` (即 `next_pair_start`)。
+2.  `node2` 的 `next` 指针指向 `node1`。
+3.  `prev_node` 的 `next` 指针指向 `node2`。
+
+**详细步骤：**
+
+1.  **创建虚拟头节点：**
+    *   `dummyHead = new ListNode(0)`
+    *   `dummyHead.next = head`
+    *   创建一个 `prev_node` 指针，并将其初始化为 `dummyHead`。这个 `prev_node` 将在每次迭代中指向当前处理的“两两交换”部分的前一个节点。
+
+2.  **循环遍历：**
+    *   使用 `while` 循环，条件是 `prev_node.next != null` 并且 `prev_node.next.next != null`。
+        *   这个条件确保我们总是有至少两个节点可以进行交换。
+        *   `prev_node.next` 是当前对的第一个节点 (`node1`)。
+        *   `prev_node.next.next` 是当前对的第二个节点 (`node2`)。
+
+3.  **在循环内部，执行交换：**
+    *   `node1 = prev_node.next`
+    *   `node2 = prev_node.next.next`
+    *   **进行连接操作：**
+        *   `prev_node.next = node2;` // 1. `prev_node` 连接到 `node2`
+        *   `node1.next = node2.next;` // 2. `node1` 连接到 `node2` 原来的下一个节点 (即 `next_pair_start`)
+        *   `node2.next = node1;` // 3. `node2` 连接到 `node1`
+    *   **更新 `prev_node`：**
+        *   `prev_node = node1;` // `prev_node` 移动到 `node1`，为下一对的交换做准备。此时 `node1` 已经成为新的“已交换对”的最后一个节点。
+
+4.  **返回结果：**
+    *   循环结束后，返回 `dummyHead.next`，它就是交换后链表的真正头节点。
+
+**时间复杂度：** O(N)，因为我们只遍历了链表一次，每个节点的操作都是常数时间。
+**空间复杂度：** O(1)，只使用了常数个额外指针。
+
+2. 方法二：递归法
+
+**思路：**
+递归法利用了链表的结构特点。
+*   **基本情况（Base Cases）：**
+    *   如果链表为空 (`head == null`) 或者只有一个节点 (`head.next == null`)，则无法进行两两交换，直接返回 `head`。
+*   **递归步骤：**
+    *   假设当前要处理的两个节点是 `head` 和 `next_node` (`head.next`)。
+    *   我们知道 `next_node` 将成为这对交换后的新头。
+    *   `head.next` 应该指向 `next_node.next` 经过递归调用 `swapPairs(next_node.next)` 后的结果。
+    *   `next_node.next` 应该指向 `head`。
+    *   最后，返回 `next_node` 作为当前递归层级的头节点。
+
+**时间复杂度：** O(N)，因为每次递归调用都会处理一对节点（或一个节点），直到所有节点都被处理。
+**空间复杂度：** O(N)，在最坏情况下（例如链表没有偶数对，或者每次只递归一个节点），递归深度可能达到 N/2，导致栈空间消耗。对于题目给定的 `N <= 100`，这通常不是问题。
+
+---
+
+流程图 (Mermaid)
+
+
+---
+
+代码实现
+
+首先定义 `ListNode` 类（如果环境没有提供的话）：
+
+**Java 版 `ListNode` 定义：**
+
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {} // 无参构造函数
+    ListNode(int val) { this.val = val; } // 带值构造函数
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; } // 带值和下一个节点构造函数
+}
+```
+
+**Python 版 `ListNode` 定义：**
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+```
+
+Java 解法 (迭代法)
+
+```java
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public ListNode swapPairs(ListNode head) {
+        // 创建一个虚拟头节点，它的 next 指向原始链表的头节点。
+        // 使用虚拟头节点可以简化对链表头部的处理，尤其当原头节点被交换时。
+        ListNode dummyHead = new ListNode(0);
+        dummyHead.next = head;
+
+        // prevNode 指针始终指向当前要交换的两个节点的前一个节点。
+        // 初始时指向 dummyHead。
+        ListNode prevNode = dummyHead;
+
+        // 循环条件：确保 prevNode 后面至少有两个节点可以进行交换。
+        // prevNode.next 是第一个节点 (node1)。
+        // prevNode.next.next 是第二个节点 (node2)。
+        while (prevNode.next != null && prevNode.next.next != null) {
+            // 定义当前要交换的两个节点
+            ListNode node1 = prevNode.next;
+            ListNode node2 = prevNode.next.next;
+
+            // 执行核心的指针交换操作
+            // 1. prevNode 的 next 指向 node2 (将 prevNode 连接到交换后的第一个节点)
+            prevNode.next = node2;
+            // 2. node1 的 next 指向 node2 原来的下一个节点 (将 node1 连接到下一对的起始点)
+            node1.next = node2.next;
+            // 3. node2 的 next 指向 node1 (完成 node1 和 node2 的交换)
+            node2.next = node1;
+
+            // 移动 prevNode 指针到当前已交换对的最后一个节点 (即 node1)。
+            // 这样，在下一次循环中，prevNode 就会指向下一对的前一个节点。
+            prevNode = node1;
+        }
+
+        // 返回虚拟头节点的下一个节点，即交换后链表的真正头节点。
+        return dummyHead.next;
+    }
+}
+```
+
+Python 解法 (迭代法)
+
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+class Solution:
+    def swapPairs(self, head: ListNode) -> ListNode:
+        # 创建一个虚拟头节点，它的 next 指向原始链表的头节点。
+        # 使用虚拟头节点可以简化对链表头部的处理，尤其当原头节点被交换时。
+        dummy_head = ListNode(0)
+        dummy_head.next = head
+
+        # prev_node 指针始终指向当前要交换的两个节点的前一个节点。
+        # 初始时指向 dummy_head。
+        prev_node = dummy_head
+
+        # 循环条件：确保 prev_node 后面至少有两个节点可以进行交换。
+        # prev_node.next 是第一个节点 (node1)。
+        # prev_node.next.next 是第二个节点 (node2)。
+        while prev_node.next and prev_node.next.next:
+            # 定义当前要交换的两个节点
+            node1 = prev_node.next
+            node2 = prev_node.next.next
+
+            # 执行核心的指针交换操作
+            # 1. prev_node 的 next 指向 node2 (将 prev_node 连接到交换后的第一个节点)
+            prev_node.next = node2
+            # 2. node1 的 next 指向 node2 原来的下一个节点 (将 node1 连接到下一对的起始点)
+            node1.next = node2.next
+            # 3. node2 的 next 指向 node1 (完成 node1 和 node2 的交换)
+            node2.next = node1
+
+            # 移动 prev_node 指针到当前已交换对的最后一个节点 (即 node1)。
+            # 这样，在下一次循环中，prev_node 就会指向下一对的前一个节点。
+            prev_node = node1
+        
+        # 返回虚拟头节点的下一个节点，即交换后链表的真正头节点。
+        return dummy_head.next
+
+```
+
+---
+
+结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示迭代法的执行过程：
+
+输入：`head = [1,2,3,4]`
+输出：`[2,1,4,3]`
+
+链表结构如下：
+`N_0 (dummyHead) -> N_1 -> N_2 -> N_3 -> N_4 -> null`
+                     `^ (head)`
+
+**初始状态：**
+*   `dummyHead = ListNode(0)`
+*   `dummyHead.next = N_1`
+*   `prev_node = dummyHead` (指向 `N_0`)
+
+**循环开始 (`while prev_node.next and prev_node.next.next`):**
+
+1.  **第一次循环 (交换 `N_1` 和 `N_2`)：**
+    *   `prev_node.next` (`N_1`) 不为 `null`，`prev_node.next.next` (`N_2`) 不为 `null`。条件满足。
+    *   `node1 = prev_node.next` (即 `N_1`)
+    *   `node2 = prev_node.next.next` (即 `N_2`)
+
+    *   **执行交换：**
+        *   `prev_node.next = node2;` (即 `N_0.next` 指向 `N_2`)
+            `N_0 -> N_2`
+        *   `node1.next = node2.next;` (即 `N_1.next` 指向 `N_3`)
+            `N_1 -> N_3`
+        *   `node2.next = node1;` (即 `N_2.next` 指向 `N_1`)
+            `N_2 -> N_1`
+    *   **当前链表结构：** `N_0 -> N_2 -> N_1 -> N_3 -> N_4 -> null`
+    *   **更新 `prev_node`：** `prev_node = node1` (即 `prev_node` 移动到 `N_1`)
+
+2.  **第二次循环 (交换 `N_3` 和 `N_4`)：**
+    *   `prev_node.next` (`N_3`) 不为 `null`，`prev_node.next.next` (`N_4`) 不为 `null`。条件满足。
+    *   `node1 = prev_node.next` (即 `N_3`)
+    *   `node2 = prev_node.next.next` (即 `N_4`)
+
+    *   **执行交换：**
+        *   `prev_node.next = node2;` (即 `N_1.next` 指向 `N_4`)
+            `N_0 -> N_2 -> N_1 -> N_4`
+        *   `node1.next = node2.next;` (即 `N_3.next` 指向 `null`)
+            `N_3 -> null`
+        *   `node2.next = node1;` (即 `N_4.next` 指向 `N_3`)
+            `N_4 -> N_3`
+    *   **当前链表结构：** `N_0 -> N_2 -> N_1 -> N_4 -> N_3 -> null`
+    *   **更新 `prev_node`：** `prev_node = node1` (即 `prev_node` 移动到 `N_3`)
+
+3.  **第三次循环：**
+    *   `prev_node` (`N_3`)。
+    *   `prev_node.next` (`null`) 为 `null`。循环条件不满足，循环终止。
+
+**返回结果：**
+*   返回 `dummyHead.next`，即 `N_2`。
+*   最终链表为：`N_2 -> N_1 -> N_4 -> N_3 -> null`，对应 `[2,1,4,3]`，与示例输出一致。
+
+这个过程清晰地展示了迭代法如何通过 `prev_node` 巧妙地连接交换后的节点，并逐步推进，最终完成整个链表的两两交换。
+
+
+
+
+
+
+
+
+
+
+### 146. LRU 缓存
+
+**题目描述：**
+
+请你设计并实现一个满足 **LRU (最近最少使用)** 缓存 约束的数据结构。
+
+实现 `LRUCache` 类：
+
+*   `LRUCache(int capacity)` 以 **正整数** 作为容量 `capacity` 初始化 LRU 缓存。
+*   `int get(int key)` 如果关键字 `key` 存在于缓存中，则返回关键字的值，否则返回 `-1`。
+*   `void put(int key, int value)` 如果关键字 `key` 已经存在，则变更其数据值 `value` ；如果不存在，则向缓存中插入该组 `key-value` 。如果插入操作导致关键字数量超过 `capacity` ，则应该 **逐出** 最久未使用的关键字。
+
+函数 `get` 和 `put` 必须以 **O(1)** 的平均时间复杂度运行。
+
+**示例：**
+
+输入
+`["LRUCache", "put", "put", "get", "put", "get", "put", "get", "get", "get"]`
+`[[2], [1, 1], [2, 2], [1], [3, 3], [2], [4, 4], [1], [3], [4]]`
+
+输出
+`[null, null, null, 1, null, -1, null, -1, 3, 4]`
+
+**解释：**
+```
+LRUCache lRUCache = new LRUCache(2); // capacity = 2
+lRUCache.put(1, 1); // 缓存是 {1=1}
+lRUCache.put(2, 2); // 缓存是 {1=1, 2=2}
+lRUCache.get(1);    // 返回 1。因为访问了 1，所以 1 变为最近使用，缓存顺序更新。
+                    // 缓存现在是 {2=2 (LRU), 1=1 (MRU)}
+lRUCache.put(3, 3); // 该操作会使得关键字 2 作废，因为容量已满，2 是最久未使用的。
+                    // 缓存是 {1=1, 3=3} (3是新加入的MRU，1因为被2挤下去但又被3挤下去，顺序是1 LRU, 3 MRU)
+                    // 实际应该是 {1=1 (LRU), 3=3 (MRU)}
+                    // 2 被淘汰，因为它是最久未使用的
+lRUCache.get(2);    // 返回 -1 (未找到)
+lRUCache.put(4, 4); // 该操作会使得关键字 1 作废，因为容量已满，1 是最久未使用的。
+                    // 缓存是 {3=3, 4=4}
+                    // 1 被淘汰，因为它是最久未使用的
+lRUCache.get(1);    // 返回 -1 (未找到)
+lRUCache.get(3);    // 返回 3
+                    // 缓存现在是 {4=4 (LRU), 3=3 (MRU)}
+lRUCache.get(4);    // 返回 4
+                    // 缓存现在是 {3=3 (LRU), 4=4 (MRU)}
+```
+
+**提示：**
+
+*   `1 <= capacity <= 3000`
+*   `0 <= key <= 10000`
+*   `0 <= value <= 10^5`
+*   最多调用 `2 * 10^5` 次 `get` 和 `put`
+
+
+
+
+
+#### java+python讲解
+
+
+
+
+
+好的，我将为您详细讲解 LeetCode 146 题“LRU 缓存”，并提供 Java 和 Python 两种语言的解法代码，最后结合示例演示代码的执行过程。
+
+题目解析与思路分析
+
+LRU (Least Recently Used) 缓存是一种常用的缓存淘汰策略，它的核心思想是：如果缓存已满，当需要插入新数据时，就淘汰掉最近最少使用的数据。
+
+要实现 `get` 和 `put` 操作的平均时间复杂度为 O(1)，我们需要两种数据结构协同工作：
+
+1.  **哈希表 (HashMap / Dictionary)**：用于存储 `key` 到缓存项的映射。通过 `key` 可以在 O(1) 时间内快速查找对应的缓存项。但是，哈希表本身无法维护元素的访问顺序，也无法高效地找到“最近最少使用”的元素。
+
+2.  **双向链表 (Doubly Linked List)**：用于维护缓存项的访问顺序。
+    *   链表头部（或靠近头部）存放最近使用的元素 (MRU)。
+    *   链表尾部（或靠近尾部）存放最久未使用的元素 (LRU)。
+    *   双向链表的优势在于，给定一个节点，可以在 O(1) 时间内将其从链表中移除，也可以在 O(1) 时间内将其添加到链表的头部或尾部。
+
+**结合使用：**
+
+*   哈希表存储 `key -> Node` 的映射，其中 `Node` 是双向链表中的节点。
+*   双向链表的每个节点存储 `(key, value)` 对。`key` 的存储是必要的，因为当从链表尾部淘汰节点时，我们需要知道对应的 `key` 以便从哈希表中移除该项。
+
+**核心操作逻辑：**
+
+我们定义双向链表的头部为 MRU (Most Recently Used)，尾部为 LRU (Least Recently Used)。为了简化边界条件处理，通常会使用一个**虚拟头节点 (dummy head)** 和一个**虚拟尾节点 (dummy tail)**。
+
+*   **`Node` 结构：**
+    *   `key`: 缓存的键
+    *   `value`: 缓存的值
+    *   `prev`: 指向前一个节点
+    *   `next`: 指向后一个节点
+
+*   **`LRUCache` 结构：**
+    *   `capacity`: 缓存容量
+    *   `size`: 当前缓存中元素的数量
+    *   `cache`: `HashMap<Integer, Node>` (Java) 或 `dict<int, Node>` (Python)，存储 `key` 到对应 `Node` 的映射。
+    *   `head`: 虚拟头节点，`head.next` 永远指向 MRU 节点。
+    *   `tail`: 虚拟尾节点，`tail.prev` 永远指向 LRU 节点。
+
+**辅助函数 (双向链表操作)：**
+
+1.  **`add_node(Node node)` / `moveToHead(Node node)`：**
+    将一个节点移动到链表头部，表示它最近被使用。
+    *   将 `node` 插入到 `head` 和 `head.next` 之间。
+    *   更新相关节点的 `prev` 和 `next` 指针。
+
+2.  **`remove_node(Node node)`：**
+    从链表中删除一个节点。
+    *   将 `node.prev` 的 `next` 指向 `node.next`。
+    *   将 `node.next` 的 `prev` 指向 `node.prev`。
+    *   更新相关节点的 `prev` 和 `next` 指针。
+
+3.  **`remove_tail_node()`：**
+    删除链表尾部的节点（LRU 节点），用于缓存淘汰。
+    *   `node_to_remove = tail.prev`
+    *   调用 `remove_node(node_to_remove)`。
+    *   返回被删除的节点。
+
+**`get(key)` 操作：**
+
+1.  在 `cache` 中查找 `key`。
+2.  如果 `key` 不存在，返回 `-1`。
+3.  如果 `key` 存在：
+    *   获取对应的 `Node`。
+    *   将该 `Node` 从当前位置移除。
+    *   将该 `Node` 移动到链表头部 (MRU)。
+    *   返回 `Node.value`。
+    *   上述移除再添加的过程可以封装成一个 `moveToHead` 方法。
+
+**`put(key, value)` 操作：**
+
+1.  在 `cache` 中查找 `key`。
+2.  **如果 `key` 已经存在：**
+    *   获取对应的 `Node`。
+    *   更新 `Node.value = value`。
+    *   将该 `Node` 从当前位置移除。
+    *   将该 `Node` 移动到链表头部 (MRU)。
+3.  **如果 `key` 不存在：**
+    *   创建一个新的 `Node(key, value)`。
+    *   将新 `Node` 添加到 `cache` 中。
+    *   将新 `Node` 移动到链表头部 (MRU)。
+    *   `size++`。
+    *   **检查容量：** 如果 `size > capacity`：
+        *   从链表尾部删除 LRU 节点 (`remove_tail_node()`)。
+        *   从 `cache` 中删除对应 LRU 节点的 `key`。
+        *   `size--`。
+
+**复杂度分析：**
+
+*   **时间复杂度：** `get` 和 `put` 操作都是 O(1)。
+    *   哈希表的查找、插入、删除都是 O(1) 平均时间。
+    *   双向链表的插入、删除都是 O(1) 时间（因为我们总能直接拿到要操作的节点）。
+*   **空间复杂度：** O(capacity)，因为哈希表和双向链表存储的元素数量不会超过 `capacity`。
+
+---
+
+ 架构图 (Mermaid)
+
+```mermaid
+classDiagram
+    class LRUCache {
+        -int capacity
+        -int size
+        -Map<int, Node> cache
+        -Node head
+        -Node tail
+        +LRUCache(int capacity)
+        +int get(int key)
+        +void put(int key, int value)
+        -void _add_node(Node node)
+        -void _remove_node(Node node)
+        -void _move_to_head(Node node)
+        -Node _remove_tail_node()
+    }
+
+    class Node {
+        +int key
+        +int value
+        +Node prev
+        +Node next
+        +Node(int key, int value)
+    }
+
+    LRUCache "1" -- "N" Node : contains
+
+    note for LRUCache "head 和 tail 是虚拟节点"
+```
+
+
+
+---
+
+ 代码实现
+
+首先定义 `Node` 类，它将作为双向链表的节点：
+
+**Java 版 `Node` 定义：**
+
+```java
+class Node {
+    int key;
+    int value;
+    Node prev;
+    Node next;
+
+    public Node(int key, int value) {
+        this.key = key;
+        this.value = value;
+    }
+}
+```
+
+**Python 版 `Node` 定义：**
+
+```python
+class Node:
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
+        self.prev = None
+        self.next = None
+```
+
+ Java 解法
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+// 定义双向链表节点
+class Node {
+    int key;
+    int value;
+    Node prev;
+    Node next;
+
+    public Node(int key, int value) {
+        this.key = key;
+        this.value = value;
+    }
+}
+
+class LRUCache {
+    private Map<Integer, Node> cache; // 存储 key 到 Node 的映射，实现 O(1) 查找
+    private int capacity;             // 缓存的最大容量
+    private int size;                 // 当前缓存中的元素数量
+    private Node head;                // 虚拟头节点
+    private Node tail;                // 虚拟尾节点
+
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        this.size = 0;
+        this.cache = new HashMap<>();
+
+        // 初始化虚拟头尾节点
+        // head -> null <- tail (初始状态)
+        // head.next 永远指向 MRU 节点
+        // tail.prev 永远指向 LRU 节点
+        head = new Node(0, 0); // 虚拟节点，key和value无意义
+        tail = new Node(0, 0); // 虚拟节点
+        head.next = tail;
+        tail.prev = head;
+    }
+
+    // 获取缓存中的值
+    public int get(int key) {
+        Node node = cache.get(key);
+        // 如果 key 不存在，返回 -1
+        if (node == null) {
+            return -1;
+        }
+        // 如果 key 存在，表示该节点被访问了，需要将其移动到链表头部（MRU）
+        _moveToHead(node);
+        return node.value;
+    }
+
+    // 放入/更新缓存中的值
+    public void put(int key, int value) {
+        Node node = cache.get(key);
+        // 如果 key 已经存在
+        if (node != null) {
+            node.value = value; // 更新值
+            _moveToHead(node);  // 移动到头部，表示最近使用
+        } else {
+            // 如果 key 不存在
+            Node newNode = new Node(key, value);
+            cache.put(key, newNode); // 添加到哈希表
+            _addNode(newNode);       // 添加到链表头部
+            size++;                  // 缓存大小增加
+
+            // 如果超出容量，需要淘汰最久未使用的节点
+            if (size > capacity) {
+                Node tailNode = _removeTailNode(); // 移除尾部节点（LRU）
+                cache.remove(tailNode.key);         // 从哈希表中移除对应 key
+                size--;                             // 缓存大小减小
+            }
+        }
+    }
+
+    // 辅助方法：将节点添加到链表头部（在虚拟头节点之后）
+    private void _addNode(Node node) {
+        node.prev = head;
+        node.next = head.next;
+        head.next.prev = node;
+        head.next = node;
+    }
+
+    // 辅助方法：从链表中移除一个节点
+    private void _removeNode(Node node) {
+        node.prev.next = node.next;
+        node.next.prev = node.prev;
+    }
+
+    // 辅助方法：将一个已存在的节点移动到链表头部
+    private void _moveToHead(Node node) {
+        _removeNode(node); // 先从当前位置移除
+        _addNode(node);    // 再添加到头部
+    }
+
+    // 辅助方法：移除链表尾部节点（最久未使用的节点）
+    private Node _removeTailNode() {
+        Node nodeToRemove = tail.prev; // 获取尾部节点（虚拟尾节点的前一个）
+        _removeNode(nodeToRemove);     // 移除该节点
+        return nodeToRemove;           // 返回被移除的节点
+    }
+}
+
+/**
+ * Your LRUCache object will be instantiated and called as such:
+ * LRUCache obj = new LRUCache(capacity);
+ * int param_1 = obj.get(key);
+ * obj.put(key,value);
+ */
+```
+
+ Python 解法
+
+```python
+class Node:
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
+        self.prev = None
+        self.next = None
+
+class LRUCache:
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.size = 0
+        self.cache = {} # 存储 key 到 Node 的映射，实现 O(1) 查找
+
+        # 初始化虚拟头尾节点
+        # head <-> tail (初始状态)
+        # self.head.next 永远指向 MRU 节点
+        # self.tail.prev 永远指向 LRU 节点
+        self.head = Node(0, 0) # 虚拟节点，key和value无意义
+        self.tail = Node(0, 0) # 虚拟节点
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    # 辅助方法：将节点添加到链表头部（在虚拟头节点之后）
+    def _add_node(self, node: Node):
+        node.prev = self.head
+        node.next = self.head.next
+        self.head.next.prev = node
+        self.head.next = node
+
+    # 辅助方法：从链表中移除一个节点
+    def _remove_node(self, node: Node):
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    # 辅助方法：将一个已存在的节点移动到链表头部
+    def _move_to_head(self, node: Node):
+        self._remove_node(node) # 先从当前位置移除
+        self._add_node(node)    # 再添加到头部
+
+    # 辅助方法：移除链表尾部节点（最久未使用的节点）
+    def _remove_tail_node(self) -> Node:
+        node_to_remove = self.tail.prev # 获取尾部节点（虚拟尾节点的前一个）
+        self._remove_node(node_to_remove) # 移除该节点
+        return node_to_remove           # 返回被移除的节点
+
+    def get(self, key: int) -> int:
+        node = self.cache.get(key)
+        # 如果 key 不存在，返回 -1
+        if not node:
+            return -1
+        # 如果 key 存在，表示该节点被访问了，需要将其移动到链表头部（MRU）
+        self._move_to_head(node)
+        return node.value
+
+    def put(self, key: int, value: int) -> None:
+        node = self.cache.get(key)
+        # 如果 key 已经存在
+        if node:
+            node.value = value # 更新值
+            self._move_to_head(node) # 移动到头部，表示最近使用
+        else:
+            # 如果 key 不存在
+            new_node = Node(key, value)
+            self.cache[key] = new_node # 添加到哈希表
+            self._add_node(new_node)    # 添加到链表头部
+            self.size += 1              # 缓存大小增加
+
+            # 如果超出容量，需要淘汰最久未使用的节点
+            if self.size > self.capacity:
+                tail_node = self._remove_tail_node() # 移除尾部节点（LRU）
+                del self.cache[tail_node.key]       # 从哈希表中移除对应 key
+                self.size -= 1                      # 缓存大小减小
+
+# Your LRUCache object will be instantiated and called as such:
+# obj = LRUCache(capacity)
+# param_1 = obj.get(key)
+# obj.put(key,value)
+```
+
+---
+
+结合示例演示代码执行过程
+
+我们使用题目提供的示例来演示 `LRUCache` 的工作流程：
+
+输入：`capacity = 2`
+操作序列：`put(1,1), put(2,2), get(1), put(3,3), get(2), put(4,4), get(1), get(3), get(4)`
+
+**初始化：`lRUCache = LRUCache(2)`**
+*   `capacity = 2`
+*   `size = 0`
+*   `cache = {}`
+*   双向链表：`head <-> tail` (实际是 `head.next = tail`, `tail.prev = head`)
+
+**1. `lRUCache.put(1, 1)`**
+*   `key = 1` 不在 `cache` 中。
+*   创建 `newNode = Node(1, 1)`。
+*   `cache[1] = newNode`。`cache = {1: Node(1,1)}`
+*   `_add_node(newNode)`:
+    *   `head.next` (原 `tail`) 的 `prev` 指向 `newNode`。
+    *   `newNode.next` 指向 `head.next` (原 `tail`)。
+    *   `head.next` 指向 `newNode`。
+    *   `newNode.prev` 指向 `head`。
+    *   链表：`head <-> Node(1,1) <-> tail`
+*   `size = 1`。
+*   `size` (1) 不大于 `capacity` (2)。
+*   输出：`null`
+
+**2. `lRUCache.put(2, 2)`**
+*   `key = 2` 不在 `cache` 中。
+*   创建 `newNode = Node(2, 2)`。
+*   `cache[2] = newNode`。`cache = {1: Node(1,1), 2: Node(2,2)}`
+*   `_add_node(newNode)`: (MRU 在头部，新节点加到头部)
+    *   `head.next` (原 `Node(1,1)`) 的 `prev` 指向 `newNode`。
+    *   `newNode.next` 指向 `head.next` (原 `Node(1,1)`)。
+    *   `head.next` 指向 `newNode`。
+    *   `newNode.prev` 指向 `head`。
+    *   链表：`head <-> Node(2,2) <-> Node(1,1) <-> tail`
+*   `size = 2`。
+*   `size` (2) 不大于 `capacity` (2)。
+*   输出：`null`
+
+**3. `lRUCache.get(1)`**
+*   `key = 1` 在 `cache` 中，获取 `Node(1,1)`。
+*   `_move_to_head(Node(1,1))`:
+    *   `_remove_node(Node(1,1))`: `Node(2,2).next` 指向 `tail`，`tail.prev` 指向 `Node(2,2)`。
+        *   链表：`head <-> Node(2,2) <-> tail`
+    *   `_add_node(Node(1,1))`:
+        *   `Node(1,1)` 插入到 `head` 和 `Node(2,2)` 之间。
+        *   链表：`head <-> Node(1,1) <-> Node(2,2) <-> tail`
+*   返回 `Node(1,1).value` 即 `1`。
+*   输出：`1`
+
+**4. `lRUCache.put(3, 3)`**
+*   `key = 3` 不在 `cache` 中。
+*   创建 `newNode = Node(3, 3)`。
+*   `cache[3] = newNode`。`cache = {1: Node(1,1), 2: Node(2,2), 3: Node(3,3)}`
+*   `_add_node(newNode)`: (MRU 在头部，新节点加到头部)
+    *   `Node(3,3)` 插入到 `head` 和 `Node(1,1)` 之间。
+    *   链表：`head <-> Node(3,3) <-> Node(1,1) <-> Node(2,2) <-> tail`
+*   `size = 3`。
+*   `size` (3) 大于 `capacity` (2)。
+*   执行淘汰：
+    *   `_remove_tail_node()`: `node_to_remove = tail.prev` (即 `Node(2,2)`)。
+        *   `_remove_node(Node(2,2))`: `Node(1,1).next` 指向 `tail`，`tail.prev` 指向 `Node(1,1)`。
+        *   链表：`head <-> Node(3,3) <-> Node(1,1) <-> tail`
+    *   `cache.remove(Node(2,2).key)`: `del cache[2]`。`cache = {1: Node(1,1), 3: Node(3,3)}`
+    *   `size = 2`。
+*   输出：`null`
+
+**5. `lRUCache.get(2)`**
+*   `key = 2` 不在 `cache` 中。
+*   返回 `-1`。
+*   输出：`-1`
+
+**6. `lRUCache.put(4, 4)`**
+*   `key = 4` 不在 `cache` 中。
+*   创建 `newNode = Node(4, 4)`。
+*   `cache[4] = newNode`。`cache = {1: Node(1,1), 3: Node(3,3), 4: Node(4,4)}`
+*   `_add_node(newNode)`: (MRU 在头部，新节点加到头部)
+    *   `Node(4,4)` 插入到 `head` 和 `Node(3,3)` 之间。
+    *   链表：`head <-> Node(4,4) <-> Node(3,3) <-> Node(1,1) <-> tail`
+*   `size = 3`。
+*   `size` (3) 大于 `capacity` (2)。
+*   执行淘汰：
+    *   `_remove_tail_node()`: `node_to_remove = tail.prev` (即 `Node(1,1)`)。
+        *   `_remove_node(Node(1,1))`: `Node(3,3).next` 指向 `tail`，`tail.prev` 指向 `Node(3,3)`。
+        *   链表：`head <-> Node(4,4) <-> Node(3,3) <-> tail`
+    *   `cache.remove(Node(1,1).key)`: `del cache[1]`。`cache = {3: Node(3,3), 4: Node(4,4)}`
+    *   `size = 2`。
+*   输出：`null`
+
+**7. `lRUCache.get(1)`**
+*   `key = 1` 不在 `cache` 中。
+*   返回 `-1`。
+*   输出：`-1`
+
+**8. `lRUCache.get(3)`**
+*   `key = 3` 在 `cache` 中，获取 `Node(3,3)`。
+*   `_move_to_head(Node(3,3))`:
+    *   `_remove_node(Node(3,3))`: `Node(4,4).next` 指向 `tail`，`tail.prev` 指向 `Node(4,4)`。
+        *   链表：`head <-> Node(4,4) <-> tail`
+    *   `_add_node(Node(3,3))`:
+        *   `Node(3,3)` 插入到 `head` 和 `Node(4,4)` 之间。
+        *   链表：`head <-> Node(3,3) <-> Node(4,4) <-> tail`
+*   返回 `Node(3,3).value` 即 `3`。
+*   输出：`3`
+
+**9. `lRUCache.get(4)`**
+*   `key = 4` 在 `cache` 中，获取 `Node(4,4)`。
+*   `_move_to_head(Node(4,4))`:
+    *   `_remove_node(Node(4,4))`: `Node(3,3).next` 指向 `tail`，`tail.prev` 指向 `Node(3,3)`。
+        *   链表：`head <-> Node(3,3) <-> tail`
+    *   `_add_node(Node(4,4))`:
+        *   `Node(4,4)` 插入到 `head` 和 `Node(3,3)` 之间。
+        *   链表：`head <-> Node(4,4) <-> Node(3,3) <-> tail`
+*   返回 `Node(4,4).value` 即 `4`。
+*   输出：`4`
+
+**最终输出与示例一致：`[null, null, null, 1, null, -1, null, -1, 3, 4]`**
+
+这个详细的步骤演示了哈希表和双向链表如何协同工作，以 O(1) 的时间复杂度实现 LRU 缓存的 `get` 和 `put` 操作。
+
+
+
+
+
+
+
+
+
+
+
 ## 二叉树
 
 
