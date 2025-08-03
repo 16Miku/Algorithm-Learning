@@ -1603,6 +1603,359 @@ class Solution:
 
 
 
+### 15. 三数之和
+
+**题目描述：**
+
+给你一个整数数组 `nums` ，判断是否存在三元组 `[nums[i], nums[j], nums[k]]` 满足 `i != j`、`i != k` 且 `j != k` ，同时还满足 `nums[i] + nums[j] + nums[k] == 0` 。请你返回所有和为 `0` 且不重复的三元组。
+
+**注意：** 答案中不可以包含重复的三元组。
+
+**示例 1：**
+
+输入：`nums = [-1,0,1,2,-1,-4]`
+输出：`[[-1,-1,2],[-1,0,1]]`
+解释：
+`nums[0] + nums[1] + nums[2] = (-1) + 0 + 1 = 0` 。
+`nums[1] + nums[2] + nums[4] = 0 + 1 + (-1) = 0` 。
+`nums[0] + nums[3] + nums[4] = (-1) + 2 + (-1) = 0` 。
+不同的三元组是 `[-1,0,1]` 和 `[-1,-1,2]` 。
+注意，输出的顺序和三元组的顺序并不重要。
+
+**示例 2：**
+
+输入：`nums = [0,1,1]`
+输出：`[]`
+解释：唯一可能的三元组和不为 0 。
+
+**示例 3：**
+
+输入：`nums = [0,0,0]`
+输出：`[[0,0,0]]`
+解释：唯一可能的三元组和为 0 。
+
+**提示：**
+
+*   `3 <= nums.length <= 3000`
+*   `-10^5 <= nums[i] <= 10^5`
+
+
+
+#### java+python讲解
+---
+
+题目解析与思路分析
+
+这道题目要求我们从一个整数数组中找出所有三个元素之和为零的**不重复**三元组。
+
+**关键挑战：**
+
+1.  **找到三个数和为零：** `a + b + c = 0`。
+2.  **不重复的三元组：** 即使数组中有重复数字，最终输出的三元组也必须是唯一的。例如 `[-1, 0, 1]` 和 `[0, -1, 1]` 视为同一个三元组，`[-1, -1, 2]` 也是一个有效三元组。
+
+1. 暴力解法 (Brute Force)
+
+最直接的办法是使用三层嵌套循环，枚举所有 `(i, j, k)` 的组合，然后判断 `nums[i] + nums[j] + nums[k] == 0`。
+*   时间复杂度：O(N^3)。
+*   对于 `N = 3000`，`3000^3 = 2.7 * 10^10`，会严重超时。
+*   此外，还需要额外处理结果去重的问题，这会增加复杂性。
+
+ 2. 优化解法：排序 + 双指针
+
+为了将时间复杂度从 O(N^3) 降低到 O(N^2)，我们可以借鉴“两数之和”问题的思路。
+`a + b + c = 0` 可以转化为 `b + c = -a`。
+
+**核心思路：**
+
+1.  **排序数组：** 首先对数组 `nums` 进行排序。排序是解决重复元素和使用双指针的关键。时间复杂度 O(N log N)。
+2.  **固定一个数：** 遍历排序后的数组，固定一个元素 `nums[i]` 作为三元组的第一个元素 `a`。
+3.  **使用双指针寻找另外两个数：** 对于固定的 `nums[i]`，我们需要在 `nums[i+1]` 到 `nums[n-1]` 的范围内寻找两个数 `nums[left]` 和 `nums[right]`，使得 `nums[left] + nums[right] == -nums[i]`。这正是“两数之和”问题，可以使用双指针法在排序数组中高效解决。
+    *   初始化 `left = i + 1` (指向 `nums[i]` 后面的第一个元素)。
+    *   初始化 `right = n - 1` (指向数组的最后一个元素)。
+    *   计算目标和 `target = -nums[i]`。
+    *   在 `left < right` 的条件下循环：
+        *   计算当前三数之和 `current_sum = nums[i] + nums[left] + nums[right]`。
+        *   如果 `current_sum == 0`：
+            *   找到了一个符合条件的三元组 `[nums[i], nums[left], nums[right]]`。将其添加到结果列表中。
+            *   **处理重复：** 为了避免添加重复的三元组，我们需要在找到一个有效三元组后，**同时**移动 `left` 和 `right` 指针，并且跳过与当前 `nums[left]` 或 `nums[right]` 值相同的后续元素。
+                *   `while left < right && nums[left] == nums[left+1]: left++`
+                *   `while left < right && nums[right] == nums[right-1]: right--`
+                *   最后，`left++` 和 `right--`，继续寻找下一组。
+        *   如果 `current_sum < 0`：
+            *   说明和太小了，需要增大和。由于数组已排序，增大和的唯一方法是移动 `left` 指针向右 (`left++`)，尝试寻找更大的数字。
+        *   如果 `current_sum > 0`：
+            *   说明和太大了，需要减小和。移动 `right` 指针向左 (`right--`)，尝试寻找更小的数字。
+
+**处理重复三元组的技巧：**
+
+*   **对 `nums[i]` 的去重：** 在外层循环中，如果 `i > 0` 并且 `nums[i] == nums[i-1]`，说明当前的 `nums[i]` 与上一个 `nums[i-1]` 相同，那么以 `nums[i]` 开头的三元组会与以 `nums[i-1]` 开头的三元组重复（因为 `left` 和 `right` 会探索相同的范围）。所以，直接 `continue` 跳过当前 `i`。
+*   **对 `nums[left]` 和 `nums[right]` 的去重：** 在找到一个有效三元组后，`left` 和 `right` 指针需要继续移动。为了避免 `nums[left]` 或 `nums[right]` 再次选择相同的值，我们需要在移动 `left` 之前，跳过所有与当前 `nums[left]` 相同的元素；在移动 `right` 之前，跳过所有与当前 `nums[right]` 相同的元素。
+
+**剪枝优化：**
+
+*   **如果 `nums[i] > 0`：** 因为数组已排序，如果第一个数 `nums[i]` 已经大于 0，那么后面的 `nums[left]` 和 `nums[right]` 也必然大于等于 `nums[i]`，它们的和 `nums[i] + nums[left] + nums[right]` 必然大于 0，不可能等于 0。所以可以直接 `break` 外层循环。
+*   **如果 `nums[i]` 的后两个元素之和仍然小于 `0`，或者 `nums[i]` 加上最大的两个元素之和仍然小于 `0`：** 这种优化通常不需要显式写，双指针逻辑会自然处理。但如果 `nums[i]` 加上最小的两个元素 `nums[i+1]` 和 `nums[i+2]` 都大于 0，那么也可以 `break`。
+
+**完整算法步骤：**
+
+1.  对数组 `nums` 进行排序。
+2.  初始化一个空列表 `result` 用于存储结果三元组。
+3.  遍历 `i` 从 `0` 到 `n - 3` (确保 `left` 和 `right` 至少有两个元素)。
+    *   **跳过重复的 `nums[i]`：** 如果 `i > 0` 且 `nums[i] == nums[i-1]`，则 `continue`。
+    *   **剪枝优化：** 如果 `nums[i] > 0`，则 `break`。
+    *   设置 `left = i + 1`, `right = n - 1`, `target = -nums[i]`。
+    *   进入双指针循环 `while left < right`：
+        *   计算 `current_sum = nums[left] + nums[right]`。
+        *   如果 `current_sum == target`：
+            *   将 `[nums[i], nums[left], nums[right]]` 添加到 `result`。
+            *   **跳过重复的 `nums[left]`：** `while left < right && nums[left] == nums[left+1]: left++`。
+            *   **跳过重复的 `nums[right]`：** `while left < right && nums[right] == nums[right-1]: right--`。
+            *   `left++`，`right--`。
+        *   如果 `current_sum < target`：
+            *   `left++`。
+        *   如果 `current_sum > target`：
+            *   `right--`。
+4.  返回 `result`。
+
+**时间复杂度：** O(N log N) (排序) + O(N^2) (双指针遍历) = O(N^2)。
+**空间复杂度：** O(log N) 或 O(N) (取决于排序算法的空间复杂度，通常是 O(log N) 用于快速排序的递归栈)，或者 O(1) 如果不考虑排序的额外空间。不考虑输出列表的空间。
+
+---
+
+流程图 (Mermaid)
+
+
+---
+
+代码实现
+
+Java 解法
+
+```java
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+class Solution {
+    public List<List<Integer>> threeSum(int[] nums) {
+        // 1. 创建结果列表
+        List<List<Integer>> result = new ArrayList<>();
+        // 获取数组长度
+        int n = nums.length;
+
+        // 2. 对数组进行排序
+        // 排序是解决重复三元组和使用双指针的关键
+        Arrays.sort(nums);
+
+        // 3. 遍历数组，固定第一个数 nums[i]
+        // i 的范围是 0 到 n - 3，确保后面至少还有两个元素供 left 和 right 指针使用
+        for (int i = 0; i < n - 2; i++) {
+            // 3.1 剪枝优化：如果当前 nums[i] 已经大于 0，
+            // 因为数组已排序，后面的元素也都会大于等于 nums[i]，
+            // 三数之和不可能为 0，直接结束循环
+            if (nums[i] > 0) {
+                break;
+            }
+
+            // 3.2 跳过重复的 nums[i]
+            // 如果当前 nums[i] 和上一个 nums[i-1] 相同，
+            // 那么以 nums[i] 开头的三元组会与以 nums[i-1] 开头的三元组重复，
+            // 直接跳过当前 i
+            if (i > 0 && nums[i] == nums[i - 1]) {
+                continue;
+            }
+
+            // 4. 使用双指针寻找另外两个数
+            int left = i + 1;       // 左指针，从 nums[i] 的下一个位置开始
+            int right = n - 1;      // 右指针，从数组末尾开始
+            int target = -nums[i];  // 目标和，即 nums[left] + nums[right] 应该等于的值
+
+            // 双指针循环，直到 left 和 right 相遇
+            while (left < right) {
+                int currentSum = nums[left] + nums[right];
+
+                if (currentSum == target) {
+                    // 找到了一个符合条件的三元组
+                    result.add(Arrays.asList(nums[i], nums[left], nums[right]));
+
+                    // 5. 处理重复的 nums[left] 和 nums[right]
+                    // 为了避免添加重复的三元组，移动 left 和 right 指针，跳过所有相同的值
+                    while (left < right && nums[left] == nums[left + 1]) {
+                        left++; // 跳过重复的 left 元素
+                    }
+                    while (left < right && nums[right] == nums[right - 1]) {
+                        right--; // 跳过重复的 right 元素
+                    }
+
+                    // 继续向内收缩指针，寻找下一组不同的三元组
+                    left++;
+                    right--;
+                } else if (currentSum < target) {
+                    // 和太小，需要增大和，移动左指针
+                    left++;
+                } else { // currentSum > target
+                    // 和太大，需要减小和，移动右指针
+                    right--;
+                }
+            }
+        }
+
+        // 6. 返回结果列表
+        return result;
+    }
+}
+```
+
+Python 解法
+
+```python
+from typing import List
+
+class Solution:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        # 1. 创建结果列表
+        result = []
+        # 获取数组长度
+        n = len(nums)
+
+        # 2. 对数组进行排序
+        # 排序是解决重复三元组和使用双指针的关键
+        nums.sort()
+
+        # 3. 遍历数组，固定第一个数 nums[i]
+        # i 的范围是 0 到 n - 2 (Python 的 range 是左闭右开，所以是 n-2，
+        # 实际遍历到 n-3，确保后面至少还有两个元素供 left 和 right 指针使用)
+        for i in range(n - 2):
+            # 3.1 剪枝优化：如果当前 nums[i] 已经大于 0，
+            # 因为数组已排序，后面的元素也都会大于等于 nums[i]，
+            # 三数之和不可能为 0，直接结束循环
+            if nums[i] > 0:
+                break
+            
+            # 3.2 跳过重复的 nums[i]
+            # 如果当前 nums[i] 和上一个 nums[i-1] 相同，
+            # 那么以 nums[i] 开头的三元组会与以 nums[i-1] 开头的三元组重复，
+            # 直接跳过当前 i
+            if i > 0 and nums[i] == nums[i-1]:
+                continue
+            
+            # 4. 使用双指针寻找另外两个数
+            left = i + 1      # 左指针，从 nums[i] 的下一个位置开始
+            right = n - 1     # 右指针，从数组末尾开始
+            target = -nums[i] # 目标和，即 nums[left] + nums[right] 应该等于的值
+
+            # 双指针循环，直到 left 和 right 相遇
+            while left < right:
+                current_sum = nums[left] + nums[right]
+
+                if current_sum == target:
+                    # 找到了一个符合条件的三元组
+                    result.append([nums[i], nums[left], nums[right]])
+
+                    # 5. 处理重复的 nums[left] 和 nums[right]
+                    # 为了避免添加重复的三元组，移动 left 和 right 指针，跳过所有相同的值
+                    while left < right and nums[left] == nums[left + 1]:
+                        left += 1 # 跳过重复的 left 元素
+                    while left < right and nums[right] == nums[right - 1]:
+                        right -= 1 # 跳过重复的 right 元素
+                    
+                    # 继续向内收缩指针，寻找下一组不同的三元组
+                    left += 1
+                    right -= 1
+                elif current_sum < target:
+                    # 和太小，需要增大和，移动左指针
+                    left += 1
+                else: # current_sum > target
+                    # 和太大，需要减小和，移动右指针
+                    right -= 1
+        
+        # 6. 返回结果列表
+        return result
+
+```
+
+---
+
+结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示排序 + 双指针法的执行过程：
+
+输入：`nums = [-1,0,1,2,-1,-4]`
+
+**1. 排序数组：**
+`nums` 排序后变为 `[-4, -1, -1, 0, 1, 2]`
+`n = 6`
+
+**2. 初始化：**
+`result = []`
+
+**3. 外层循环 `for i in range(n - 2)` (即 `i` 从 `0` 到 `3`)：**
+
+*   **`i = 0`, `nums[i] = -4`**
+    *   `i > 0` 不满足，不跳过。
+    *   `nums[0]` (-4) 不大于 `0`。
+    *   `left = 1`, `right = 5`, `target = -(-4) = 4`。
+    *   **内层循环 `while left < right` (即 `1 < 5`)：**
+        *   `left = 1, right = 5`. `nums[1] = -1, nums[5] = 2`. `current_sum = -1 + 2 = 1`.
+        *   `1 < target` (4)。`left++` (变为 2)。
+        *   `left = 2, right = 5`. `nums[2] = -1, nums[5] = 2`. `current_sum = -1 + 2 = 1`.
+        *   `1 < target` (4)。`left++` (变为 3)。
+        *   `left = 3, right = 5`. `nums[3] = 0, nums[5] = 2`. `current_sum = 0 + 2 = 2`.
+        *   `2 < target` (4)。`left++` (变为 4)。
+        *   `left = 4, right = 5`. `nums[4] = 1, nums[5] = 2`. `current_sum = 1 + 2 = 3`.
+        *   `3 < target` (4)。`left++` (变为 5)。
+        *   `left` (5) 不小于 `right` (5)。内层循环结束。
+
+*   **`i = 1`, `nums[i] = -1`**
+    *   `i > 0` (`1 > 0`) 满足。
+    *   `nums[1]` (-1) == `nums[0]` (-4) 为 `False`。不跳过。
+    *   `nums[1]` (-1) 不大于 `0`。
+    *   `left = 2`, `right = 5`, `target = -(-1) = 1`。
+    *   **内层循环 `while left < right` (即 `2 < 5`)：**
+        *   `left = 2, right = 5`. `nums[2] = -1, nums[5] = 2`. `current_sum = -1 + 2 = 1`.
+        *   `1 == target` (1)。条件满足。
+        *   `result.add([-1, -1, 2])`。`result = [[-1,-1,2]]`。
+        *   **跳过重复 `left`：** `left` (2) < `right` (5) 且 `nums[2]` (-1) == `nums[3]` (0) 为 `False`。不移动 `left`。
+        *   **跳过重复 `right`：** `left` (2) < `right` (5) 且 `nums[5]` (2) == `nums[4]` (1) 为 `False`。不移动 `right`。
+        *   `left++` (变为 3)，`right--` (变为 4)。
+        *   `left = 3, right = 4`. `nums[3] = 0, nums[4] = 1`. `current_sum = 0 + 1 = 1`.
+        *   `1 == target` (1)。条件满足。
+        *   `result.add([-1, 0, 1])`。`result = [[-1,-1,2], [-1,0,1]]`。
+        *   **跳过重复 `left`：** `left` (3) < `right` (4) 且 `nums[3]` (0) == `nums[4]` (1) 为 `False`。不移动 `left`。
+        *   **跳过重复 `right`：** `left` (3) < `right` (4) 且 `nums[4]` (1) == `nums[3]` (0) 为 `False`。不移动 `right`。
+        *   `left++` (变为 4)，`right--` (变为 3)。
+        *   `left` (4) 不小于 `right` (3)。内层循环结束。
+
+*   **`i = 2`, `nums[i] = -1`**
+    *   `i > 0` (`2 > 0`) 满足。
+    *   `nums[2]` (-1) == `nums[1]` (-1) 为 `True`。跳过当前 `i`。
+
+*   **`i = 3`, `nums[i] = 0`**
+    *   `i > 0` (`3 > 0`) 满足。
+    *   `nums[3]` (0) == `nums[2]` (-1) 为 `False`。不跳过。
+    *   `nums[3]` (0) 不大于 `0`。
+    *   `left = 4`, `right = 5`, `target = -(0) = 0`。
+    *   **内层循环 `while left < right` (即 `4 < 5`)：**
+        *   `left = 4, right = 5`. `nums[4] = 1, nums[5] = 2`. `current_sum = 1 + 2 = 3`.
+        *   `3 > target` (0)。`right--` (变为 4)。
+        *   `left` (4) 不小于 `right` (4)。内层循环结束。
+
+**外层循环结束。** `i` 达到 `n-2`。
+
+**4. 返回 `result`：**
+`[[-1,-1,2], [-1,0,1]]`，与示例输出一致。
+
+这个过程清晰地展示了排序 + 双指针方法如何有效地找到所有不重复的三元组，并通过跳过重复元素来避免结果中的重复。
+
+
+
+
+
+
+
+
+
+
 
 
 
