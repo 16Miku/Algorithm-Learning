@@ -1953,6 +1953,335 @@ class Solution:
 
 
 
+### 42. 接雨水
+
+**题目描述：**
+
+给定 `n` 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
+
+**示例 1：**
+
+输入：`height = [0,1,0,2,1,0,1,3,2,1,2,1]`
+输出：`6`
+解释：上面是由数组 `[0,1,0,2,1,0,1,3,2,1,2,1]` 表示的高度图，在这种情况下，可以接 6 个单位的雨水（蓝色部分表示雨水）。
+![示例 1 解释图](https://assets.leetcode-cn.com/aliyun-lc-upload/uploads/2018/10/22/rainwatertrap.png)
+
+**示例 2：**
+
+输入：`height = [4,2,0,3,2,5]`
+输出：`9`
+
+**提示：**
+
+*   `n == height.length`
+*   `1 <= n <= 2 * 10^4`
+*   `0 <= height[i] <= 10^5`
+
+
+#### java+python讲解
+
+ 题目解析与思路分析
+
+这道题目要求我们计算一个柱状图中能接多少雨水。
+
+**核心思想：**
+对于数组中的每个位置 `i`，它能接到的雨水量取决于它左右两边最高的柱子。
+具体来说，位置 `i` 能接到的水的高度是 `min(left_max, right_max) - height[i]`。
+如果 `min(left_max, right_max) - height[i]` 的结果小于等于 0，则该位置无法接水。
+总的雨水量就是所有位置能接到的水量的总和。
+
+**问题分解：**
+
+1.  如何找到每个位置 `i` 左边最高的柱子 `left_max[i]`？
+2.  如何找到每个位置 `i` 右边最高的柱子 `right_max[i]`？
+3.  遍历每个位置 `i`，计算 `min(left_max[i], right_max[i]) - height[i]` 并累加。
+
+ 1. 方法一：动态规划 (Dynamic Programming)
+
+**思路：**
+我们可以预处理两个数组，`left_max` 和 `right_max`，分别存储每个位置左边和右边的最大高度。
+
+**步骤：**
+
+1.  **初始化：**
+    *   `n = height.length`。
+    *   如果 `n <= 2`，无法接水，直接返回 `0`。
+    *   创建 `left_max` 数组，大小为 `n`。
+    *   创建 `right_max` 数组，大小为 `n`。
+    *   `total_water = 0`。
+
+2.  **计算 `left_max` 数组：**
+    *   `left_max[0] = height[0]`。
+    *   从 `i = 1` 到 `n-1` 遍历：`left_max[i] = max(left_max[i-1], height[i])`。
+    *   `left_max[i]` 存储的是 `height[0...i]` 中的最大值。
+
+3.  **计算 `right_max` 数组：**
+    *   `right_max[n-1] = height[n-1]`。
+    *   从 `i = n-2` 到 `0` 遍历（从右往左）：`right_max[i] = max(right_max[i+1], height[i])`。
+    *   `right_max[i]` 存储的是 `height[i...n-1]` 中的最大值。
+
+4.  **计算总雨水量：**
+    *   从 `i = 0` 到 `n-1` 遍历：
+    *   `water_at_i = min(left_max[i], right_max[i]) - height[i]`。
+    *   如果 `water_at_i > 0`，则 `total_water += water_at_i`。
+
+5.  返回 `total_water`。
+
+**时间复杂度：** O(N)。三趟遍历，每趟 O(N)。
+**空间复杂度：** O(N)。需要两个额外的数组 `left_max` 和 `right_max`。
+
+ 2. 方法二：双指针 (Two Pointers)
+
+**思路：**
+方法一需要 O(N) 的额外空间。我们可以通过双指针法将空间复杂度优化到 O(1)。
+核心思想是：在双指针移动过程中，动态地维护 `left_max` 和 `right_max`。
+
+**原理：**
+我们用 `left` 和 `right` 两个指针分别从数组两端向中间移动。
+同时维护两个变量：`left_max` (记录 `left` 指针左侧的最大高度) 和 `right_max` (记录 `right` 指针右侧的最大高度)。
+
+*   当 `height[left] < height[right]` 时：
+    *   这意味着当前的水位瓶颈是由 `height[left]` 决定的（因为 `right` 侧有一个更高的墙 `height[right]`）。
+    *   如果 `height[left] >= left_max`，说明 `left` 处的墙更高，更新 `left_max = height[left]`。
+    *   如果 `height[left] < left_max`，说明 `left` 处的墙比 `left_max` 矮，它能够接水。此时，`left` 处能接的水量就是 `left_max - height[left]`。
+    *   然后 `left++`。
+*   当 `height[left] >= height[right]` 时：
+    *   这意味着当前的水位瓶颈是由 `height[right]` 决定的。
+    *   如果 `height[right] >= right_max`，说明 `right` 处的墙更高，更新 `right_max = height[right]`。
+    *   如果 `height[right] < right_max`，说明 `right` 处的墙比 `right_max` 矮，它能够接水。此时，`right` 处能接的水量就是 `right_max - height[right]`。
+    *   然后 `right--`。
+
+**为什么这样有效？**
+在 `height[left] < height[right]` 的情况下，我们知道 `min(left_max, right_max)` 至少是 `left_max`。
+更重要的是，`right_max` 肯定大于或等于 `height[right]`，而 `height[right]` 又大于 `height[left]`。所以 `right_max > height[left]`。
+因此，`min(left_max, right_max)` 实际上就是 `left_max`（如果 `left_max` 小于 `right_max`）或者 `right_max`（如果 `right_max` 小于 `left_max`）。
+但由于我们知道 `height[left]` 是当前两边较矮的，并且 `right_max` 至少是 `height[right]`，而 `height[right]` 又比 `height[left]` 高，所以我们可以放心地说，在 `left` 侧计算雨水时，右侧的墙 `right_max` 足够高，真正决定水位的只会是 `left_max`。
+同理，当 `height[right] <= height[left]` 时，决定水位的只会是 `right_max`。
+
+**算法步骤：**
+
+1.  初始化 `total_water = 0`。
+2.  初始化 `left = 0`, `right = n - 1`。
+3.  初始化 `left_max = 0`, `right_max = 0`。
+4.  进入循环，条件是 `left < right`。
+5.  在循环内部：
+    *   **如果 `height[left] < height[right]`：**
+        *   如果 `height[left] >= left_max`，更新 `left_max = height[left]`。
+        *   否则 (`height[left] < left_max`)，`total_water += (left_max - height[left])`。
+        *   `left++`。
+    *   **否则 (`height[left] >= height[right]`)：**
+        *   如果 `height[right] >= right_max`，更新 `right_max = height[right]`。
+        *   否则 (`height[right] < right_max`)，`total_water += (right_max - height[right])`。
+        *   `right--`。
+6.  循环结束后，返回 `total_water`。
+
+**时间复杂度：** O(N)。双指针从两端向中间移动，最多遍历数组一次。
+**空间复杂度：** O(1)。只使用了常数个额外变量。
+
+
+
+---
+
+ 代码实现
+
+ Java 解法 (双指针)
+
+```java
+class Solution {
+    public int trap(int[] height) {
+        int n = height.length;
+
+        // 如果柱子数量少于3，无法形成凹槽接水，直接返回0
+        if (n <= 2) {
+            return 0;
+        }
+
+        int totalWater = 0; // 记录总的接水量
+        int left = 0;       // 左指针
+        int right = n - 1;  // 右指针
+
+        int leftMax = 0;    // 记录 left 指针左侧（包括 left 自身）的最高高度
+        int rightMax = 0;   // 记录 right 指针右侧（包括 right 自身）的最高高度
+
+        // 当左右指针没有相遇时，继续遍历
+        while (left < right) {
+            // 哪个指针指向的柱子更矮，就移动哪个指针
+            // 因为较矮的柱子是当前计算水量的瓶颈
+            if (height[left] < height[right]) {
+                // 如果当前 left 处的柱子比左侧最高高度还高，更新 leftMax
+                if (height[left] >= leftMax) {
+                    leftMax = height[left];
+                } else {
+                    // 否则，left 处的柱子比 leftMax 矮，可以接水
+                    // 接水量为 leftMax - height[left]
+                    totalWater += (leftMax - height[left]);
+                }
+                left++; // 移动左指针
+            } else {
+                // 如果当前 right 处的柱子比右侧最高高度还高，更新 rightMax
+                if (height[right] >= rightMax) {
+                    rightMax = height[right];
+                } else {
+                    // 否则，right 处的柱子比 rightMax 矮，可以接水
+                    // 接水量为 rightMax - height[right]
+                    totalWater += (rightMax - height[right]);
+                }
+                right--; // 移动右指针
+            }
+        }
+
+        return totalWater; // 返回总接水量
+    }
+}
+```
+
+ Python 解法 (双指针)
+
+```python
+from typing import List
+
+class Solution:
+    def trap(self, height: List[int]) -> int:
+        n = len(height)
+
+        # 如果柱子数量少于3，无法形成凹槽接水，直接返回0
+        if n <= 2:
+            return 0
+        
+        total_water = 0 # 记录总的接水量
+        left = 0        # 左指针
+        right = n - 1   # 右指针
+
+        left_max = 0    # 记录 left 指针左侧（包括 left 自身）的最高高度
+        right_max = 0   # 记录 right 指针右侧（包括 right 自身）的最高高度
+
+        # 当左右指针没有相遇时，继续遍历
+        while left < right:
+            # 哪个指针指向的柱子更矮，就移动哪个指针
+            # 因为较矮的柱子是当前计算水量的瓶颈
+            if height[left] < height[right]:
+                # 如果当前 left 处的柱子比左侧最高高度还高，更新 left_max
+                if height[left] >= left_max:
+                    left_max = height[left]
+                else:
+                    # 否则，left 处的柱子比 left_max 矮，可以接水
+                    # 接水量为 left_max - height[left]
+                    total_water += (left_max - height[left])
+                left += 1 # 移动左指针
+            else:
+                # 如果当前 right 处的柱子比右侧最高高度还高，更新 right_max
+                if height[right] >= right_max:
+                    right_max = height[right]
+                else:
+                    # 否则，right 处的柱子比 right_max 矮，可以接水
+                    # 接水量为 right_max - height[right]
+                    total_water += (right_max - height[right])
+                right -= 1 # 移动右指针
+        
+        return total_water # 返回总接水量
+
+```
+
+---
+
+ 结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示双指针法的执行过程：
+
+输入：`height = [0,1,0,2,1,0,1,3,2,1,2,1]`
+`n = 12`
+
+**初始状态：**
+`total_water = 0`
+`left = 0` (指向 `height[0] = 0`)
+`right = 11` (指向 `height[11] = 1`)
+`left_max = 0`
+`right_max = 0`
+
+**循环 `while left < right`：**
+
+1.  **`left = 0, right = 11`** (`height[0]=0, height[11]=1`)
+    *   `height[left]` (0) < `height[right]` (1)。进入 `if` 块。
+    *   `height[left]` (0) >= `left_max` (0)。更新 `left_max = 0`。
+    *   `left++`。`left` 变为 `1`。
+    `total_water = 0`, `left_max = 0`, `right_max = 0`
+
+2.  **`left = 1, right = 11`** (`height[1]=1, height[11]=1`)
+    *   `height[left]` (1) >= `height[right]` (1)。进入 `else` 块。
+    *   `height[right]` (1) >= `right_max` (0)。更新 `right_max = 1`。
+    *   `right--`。`right` 变为 `10`。
+    `total_water = 0`, `left_max = 0`, `right_max = 1`
+
+3.  **`left = 1, right = 10`** (`height[1]=1, height[10]=2`)
+    *   `height[left]` (1) < `height[right]` (2)。进入 `if` 块。
+    *   `height[left]` (1) >= `left_max` (0)。更新 `left_max = 1`。
+    *   `left++`。`left` 变为 `2`。
+    `total_water = 0`, `left_max = 1`, `right_max = 1`
+
+4.  **`left = 2, right = 10`** (`height[2]=0, height[10]=2`)
+    *   `height[left]` (0) < `height[right]` (2)。进入 `if` 块。
+    *   `height[left]` (0) < `left_max` (1)。可以接水。
+        *   `total_water += (left_max - height[left]) = 0 + (1 - 0) = 1`。
+    *   `left++`。`left` 变为 `3`。
+    `total_water = 1`, `left_max = 1`, `right_max = 1`
+
+5.  **`left = 3, right = 10`** (`height[3]=2, height[10]=2`)
+    *   `height[left]` (2) >= `height[right]` (2)。进入 `else` 块。
+    *   `height[right]` (2) >= `right_max` (1)。更新 `right_max = 2`。
+    *   `right--`。`right` 变为 `9`。
+    `total_water = 1`, `left_max = 1`, `right_max = 2`
+
+6.  **`left = 3, right = 9`** (`height[3]=2, height[9]=1`)
+    *   `height[left]` (2) >= `height[right]` (1)。进入 `else` 块。
+    *   `height[right]` (1) < `right_max` (2)。可以接水。
+        *   `total_water += (right_max - height[right]) = 1 + (2 - 1) = 2`。
+    *   `right--`。`right` 变为 `8`。
+    `total_water = 2`, `left_max = 1`, `right_max = 2`
+
+7.  **`left = 3, right = 8`** (`height[3]=2, height[8]=2`)
+    *   `height[left]` (2) >= `height[right]` (2)。进入 `else` 块。
+    *   `height[right]` (2) >= `right_max` (2)。更新 `right_max = 2`。
+    *   `right--`。`right` 变为 `7`。
+    `total_water = 2`, `left_max = 1`, `right_max = 2`
+
+8.  **`left = 3, right = 7`** (`height[3]=2, height[7]=3`)
+    *   `height[left]` (2) < `height[right]` (3)。进入 `if` 块。
+    *   `height[left]` (2) >= `left_max` (1)。更新 `left_max = 2`。
+    *   `left++`。`left` 变为 `4`。
+    `total_water = 2`, `left_max = 2`, `right_max = 2`
+
+9.  **`left = 4, right = 7`** (`height[4]=1, height[7]=3`)
+    *   `height[left]` (1) < `height[right]` (3)。进入 `if` 块。
+    *   `height[left]` (1) < `left_max` (2)。可以接水。
+        *   `total_water += (left_max - height[left]) = 2 + (2 - 1) = 3`。
+    *   `left++`。`left` 变为 `5`。
+    `total_water = 3`, `left_max = 2`, `right_max = 2`
+
+10. **`left = 5, right = 7`** (`height[5]=0, height[7]=3`)
+    *   `height[left]` (0) < `height[right]` (3)。进入 `if` 块。
+    *   `height[left]` (0) < `left_max` (2)。可以接水。
+        *   `total_water += (left_max - height[left]) = 3 + (2 - 0) = 5`。
+    *   `left++`。`left` 变为 `6`。
+    `total_water = 5`, `left_max = 2`, `right_max = 2`
+
+11. **`left = 6, right = 7`** (`height[6]=1, height[7]=3`)
+    *   `height[left]` (1) < `height[right]` (3)。进入 `if` 块。
+    *   `height[left]` (1) < `left_max` (2)。可以接水。
+        *   `total_water += (left_max - height[left]) = 5 + (2 - 1) = 6`。
+    *   `left++`。`left` 变为 `7`。
+    `total_water = 6`, `left_max = 2`, `right_max = 2`
+
+12. **`left = 7, right = 7`**
+    *   `left < right` 条件不满足 (`7 < 7` 为 `False`)。循环结束。
+
+最终返回 `total_water = 6`，与示例输出一致。
+
+这个过程清晰地展示了双指针法如何通过动态维护左右最大高度，并在每一步只考虑短板一侧的雨水，从而在 O(1) 空间复杂度下高效地计算接水量。
+
+
+
+
+
 
 
 
