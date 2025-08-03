@@ -1328,6 +1328,278 @@ class Solution:
 
 
 
+### 11. 盛最多水的容器
+
+**题目描述：**
+
+给定一个长度为 `n` 的整数数组 `height` 。有 `n` 条垂线，第 `i` 条线的两个端点是 `(i, 0)` 和 `(i, height[i])` 。
+
+找出其中的两条线，使得它们与 `x` 轴共同构成的容器可以容纳最多的水。
+
+返回容器可以储存的最大水量。
+
+说明：你不能倾斜容器。
+
+**示例 1：**
+
+输入：`[1,8,6,2,5,4,8,3,7]`
+输出：`49`
+解释：图中垂直线代表输入数组 `[1,8,6,2,5,4,8,3,7]`。在此情况下，容器能够容纳水（表示为蓝色部分）的最大值为 `49`。
+![示例 1 解释图](https://s3-lc-upload.s3.amazonaws.com/uploads/2018/07/17/question_11.jpg)
+
+**示例 2：**
+
+输入：`height = [1,1]`
+输出：`1`
+
+**提示：**
+
+*   `n == height.length`
+*   `2 <= n <= 10^5`
+*   `0 <= height[i] <= 10^4`
+
+---
+
+
+#### java+python讲解
+
+ 题目解析与思路分析
+
+这道题目要求我们从 `n` 条高度不等的垂线中选择两条，使得它们与 x 轴构成的容器能容纳最多的水。容器的容量由其宽度和高度决定。
+
+*   **宽度：** 两条垂线之间的距离，即 `|j - i|`。
+*   **高度：** 由两条垂线中较短的那条决定，即 `min(height[i], height[j])`。
+*   **容量 (Area)：** `width * height = (j - i) * min(height[i], height[j])`。
+
+由于 `n` 的范围可以达到 `10^5`，`O(N^2)` 的暴力解法（枚举所有可能的垂线对）会因为 `(10^5)^2 = 10^{10}` 次操作而超时。因此，我们需要寻找一个更高效的 `O(N)` 算法。
+
+优化解法：双指针法
+
+**核心思想：**
+使用两个指针，一个从数组的开头 (`left`) 开始，一个从数组的结尾 (`right`) 开始。它们向中间移动，并不断更新最大容量。
+
+**为什么双指针能工作？**
+
+我们来考虑容器的面积公式：`Area = min(height[left], height[right]) * (right - left)`。
+每次移动指针，容器的宽度 `(right - left)` 都会减小 1。为了使面积最大化，我们需要在宽度减小的同时，尽可能地提高容器的高度 `min(height[left], height[right])`。
+
+在每一步，我们计算当前 `left` 和 `right` 指针所围成的容器的面积。然后，我们需要决定移动 `left` 指针还是 `right` 指针。
+
+*   **如果 `height[left] < height[right]`：**
+    当前容器的高度受限于 `height[left]`。如果我们移动 `right` 指针（即 `right--`），新的宽度会减小，而新的高度 `min(height[left], height[right_new])` 仍然可能受限于 `height[left]`（如果 `height[left]` 仍然是较短的那个），甚至可能变得更矮（如果 `height[right_new]` 比 `height[left]` 还矮）。这种情况下，我们几乎不可能找到比当前更大的面积。
+    但是，如果我们移动 `left` 指针（即 `left++`），虽然宽度也减小了，但我们有机会找到一个更高的 `height[left_new]`。如果 `height[left_new]` 足够高，它就可能突破 `height[left]` 的限制，从而使得 `min(height[left_new], height[right])` 变大，甚至可能弥补宽度减小的损失，找到更大的面积。
+
+*   **如果 `height[right] <= height[left]`：**
+    同理，当前容器的高度受限于 `height[right]`。为了有机会找到更高的容器高度，我们应该移动 `right` 指针（即 `right--`），尝试找到一个更高的 `height[right_new]`。
+
+**结论：**
+在每一步，我们总是移动**高度较小**的那个指针。这样，我们才有可能在宽度减小的情况下，通过提升高度来找到更大的面积。移动高度较高的那个指针，无法提升高度（因为高度受限于另一侧的矮柱子），同时宽度还减小了，所以面积只会更小。
+
+**算法步骤：**
+
+1.  初始化两个指针 `left = 0` 和 `right = n - 1` (数组的起始和结束)。
+2.  初始化 `max_area = 0` (用于存储找到的最大容量)。
+3.  进入循环，条件是 `left < right` (当两个指针相遇时，所有可能的组合都已考虑)。
+4.  在循环内部：
+    *   计算当前容器的高度：`h = min(height[left], height[right])`。
+    *   计算当前容器的宽度：`w = right - left`。
+    *   计算当前容器的面积：`current_area = h * w`。
+    *   更新 `max_area = max(max_area, current_area)`。
+    *   根据哪个指针指向的垂线更短来移动指针：
+        *   如果 `height[left] < height[right]`，则 `left++`。
+        *   否则 (`height[right] <= height[left]`)，则 `right--`。
+5.  循环结束后，返回 `max_area`。
+
+**时间复杂度：** O(N)。两个指针从两端向中间移动，最多遍历数组一次。
+**空间复杂度：** O(1)。只使用了常数个额外变量。
+
+---
+
+ 流程图 (Mermaid)
+
+
+---
+
+ 代码实现
+
+ Java 解法
+
+```java
+class Solution {
+    public int maxArea(int[] height) {
+        int n = height.length;
+        
+        // 如果数组长度小于2，无法构成容器，直接返回0 (虽然题目提示 n >= 2)
+        if (n < 2) {
+            return 0;
+        }
+
+        int maxArea = 0; // 用于存储找到的最大容器容量
+        int left = 0;    // 左指针，从数组开头开始
+        int right = n - 1; // 右指针，从数组末尾开始
+
+        // 当左指针在右指针的左边时，循环继续
+        while (left < right) {
+            // 计算当前容器的高度，由两边垂线中较短的那条决定
+            int h = Math.min(height[left], height[right]);
+            // 计算当前容器的宽度
+            int w = right - left;
+            
+            // 计算当前容器的容量
+            int currentArea = h * w;
+            
+            // 更新最大容量
+            maxArea = Math.max(maxArea, currentArea);
+
+            // 移动指针：总是移动高度较小的那个指针
+            // 这样做的目的是为了有机会找到更高的垂线，从而可能增加容器的高度
+            if (height[left] < height[right]) {
+                left++; // 左边垂线较短，移动左指针
+            } else {
+                right--; // 右边垂线较短或相等，移动右指针
+            }
+        }
+
+        // 返回最大容量
+        return maxArea;
+    }
+}
+```
+
+ Python 解法
+
+```python
+from typing import List
+
+class Solution:
+    def maxArea(self, height: List[int]) -> int:
+        n = len(height)
+        
+        # 如果数组长度小于2，无法构成容器，直接返回0 (虽然题目提示 n >= 2)
+        if n < 2:
+            return 0
+
+        max_area = 0  # 用于存储找到的最大容器容量
+        left = 0      # 左指针，从数组开头开始
+        right = n - 1 # 右指针，从数组末尾开始
+
+        # 当左指针在右指针的左边时，循环继续
+        while left < right:
+            # 计算当前容器的高度，由两边垂线中较短的那条决定
+            h = min(height[left], height[right])
+            # 计算当前容器的宽度
+            w = right - left
+            
+            # 计算当前容器的容量
+            current_area = h * w
+            
+            # 更新最大容量
+            max_area = max(max_area, current_area)
+
+            # 移动指针：总是移动高度较小的那个指针
+            # 这样做的目的是为了有机会找到更高的垂线，从而可能增加容器的高度
+            if height[left] < height[right]:
+                left += 1 # 左边垂线较短，移动左指针
+            else:
+                right -= 1 # 右边垂线较短或相等，移动右指针
+        
+        # 返回最大容量
+        return max_area
+
+```
+
+---
+
+ 结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示双指针法的执行过程：
+
+输入：`height = [1,8,6,2,5,4,8,3,7]`
+
+**初始状态：**
+`n = 9`
+`max_area = 0`
+`left = 0` (指向 `height[0] = 1`)
+`right = 8` (指向 `height[8] = 7`)
+
+**循环 `while left < right`：**
+
+1.  **`left = 0, right = 8`**
+    *   `h = min(height[0], height[8]) = min(1, 7) = 1`
+    *   `w = 8 - 0 = 8`
+    *   `current_area = 1 * 8 = 8`
+    *   `max_area = max(0, 8) = 8`
+    *   `height[0]` (1) < `height[8]` (7) 为 `True`。`left++`。
+    `left` 变为 `1`。
+
+2.  **`left = 1, right = 8`**
+    *   `h = min(height[1], height[8]) = min(8, 7) = 7`
+    *   `w = 8 - 1 = 7`
+    *   `current_area = 7 * 7 = 49`
+    *   `max_area = max(8, 49) = 49`
+    *   `height[1]` (8) < `height[8]` (7) 为 `False`。`right--`。
+    `right` 变为 `7`。
+
+3.  **`left = 1, right = 7`**
+    *   `h = min(height[1], height[7]) = min(8, 3) = 3`
+    *   `w = 7 - 1 = 6`
+    *   `current_area = 3 * 6 = 18`
+    *   `max_area = max(49, 18) = 49`
+    *   `height[1]` (8) < `height[7]` (3) 为 `False`。`right--`。
+    `right` 变为 `6`。
+
+4.  **`left = 1, right = 6`**
+    *   `h = min(height[1], height[6]) = min(8, 8) = 8`
+    *   `w = 6 - 1 = 5`
+    *   `current_area = 8 * 5 = 40`
+    *   `max_area = max(49, 40) = 49`
+    *   `height[1]` (8) < `height[6]` (8) 为 `False`。`right--`。
+    `right` 变为 `5`。
+
+5.  **`left = 1, right = 5`**
+    *   `h = min(height[1], height[5]) = min(8, 4) = 4`
+    *   `w = 5 - 1 = 4`
+    *   `current_area = 4 * 4 = 16`
+    *   `max_area = max(49, 16) = 49`
+    *   `height[1]` (8) < `height[5]` (4) 为 `False`。`right--`。
+    `right` 变为 `4`。
+
+6.  **`left = 1, right = 4`**
+    *   `h = min(height[1], height[4]) = min(8, 5) = 5`
+    *   `w = 4 - 1 = 3`
+    *   `current_area = 5 * 3 = 15`
+    *   `max_area = max(49, 15) = 49`
+    *   `height[1]` (8) < `height[4]` (5) 为 `False`。`right--`。
+    `right` 变为 `3`。
+
+7.  **`left = 1, right = 3`**
+    *   `h = min(height[1], height[3]) = min(8, 2) = 2`
+    *   `w = 3 - 1 = 2`
+    *   `current_area = 2 * 2 = 4`
+    *   `max_area = max(49, 4) = 49`
+    *   `height[1]` (8) < `height[3]` (2) 为 `False`。`right--`。
+    `right` 变为 `2`。
+
+8.  **`left = 1, right = 2`**
+    *   `h = min(height[1], height[2]) = min(8, 6) = 6`
+    *   `w = 2 - 1 = 1`
+    *   `current_area = 6 * 1 = 6`
+    *   `max_area = max(49, 6) = 49`
+    *   `height[1]` (8) < `height[2]` (6) 为 `False`。`right--`。
+    `right` 变为 `1`。
+
+9.  **`left = 1, right = 1`**
+    *   `left < right` 条件不满足 (`1 < 1` 为 `False`)。循环结束。
+
+最终返回 `max_area = 49`，与示例输出一致。
+
+这个过程清晰地展示了双指针法如何有效地探索所有可能的容器组合，并通过每次淘汰较短的边来保证不会错过最优解，从而在 O(N) 时间复杂度内找到最大盛水量。
+
+
+
+
+
+
 
 
 
