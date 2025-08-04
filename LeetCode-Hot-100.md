@@ -2568,6 +2568,623 @@ class Solution {
 
 
 
+### 3. 无重复字符的最长子串
+
+中等
+
+相关标签
+
+相关企业
+
+提示
+
+给定一个字符串 s ，请你找出其中不含有重复字符的 最长 子串 的长度。
+
+ 
+
+示例 1:
+
+输入: s = "abcabcbb"
+输出: 3 
+解释: 因为无重复字符的最长子串是 "abc"，所以其长度为 3。
+
+示例 2:
+输入: s = "bbbbb"
+输出: 1
+解释: 因为无重复字符的最长子串是 "b"，所以其长度为 1。
+
+示例 3:
+输入: s = "pwwkew"
+输出: 3
+解释: 因为无重复字符的最长子串是 "wke"，所以其长度为 3。
+
+     请注意，你的答案必须是 子串 的长度，"pwke" 是一个子序列，不是子串。
+
+ 
+
+提示：
+
+0 <= s.length <= 5 * 10^4
+
+s 由英文字母、数字、符号和空格组成
+
+
+@高级软件工程师 教我如何做这道算法题？使用java语言
+
+
+
+
+
+
+#### 不定长滑动窗口，无注释
+
+
+```java
+class Solution {
+
+
+
+    public int lengthOfLongestSubstring(String s) {
+
+
+        if( s == null || s.length() == 0 ) {
+
+            return 0;
+        }
+
+
+        Map<Character,Integer> charIndexMap = new HashMap<>();
+
+        int maxLen = 0;
+
+        int left = 0;
+
+
+        for( int right=0; right < s.length(); right++ ) {
+
+
+            char currentChar = s.charAt( right );
+
+
+            if( charIndexMap.containsKey( currentChar ) && charIndexMap.get(currentChar) >= left ) {
+
+                left = charIndexMap.get(currentChar) + 1;
+
+            }
+
+
+            charIndexMap.put( currentChar, right );
+
+
+            int currentWindowLength = right - left + 1;
+
+
+            maxLen = Math.max( maxLen, currentWindowLength );
+
+
+        }
+        
+
+        return maxLen;
+    }
+
+
+    
+}
+```
+
+
+
+
+
+
+#### 不定长滑动窗口，注释讲解
+
+
+
+好的，作为一名高级软件工程师，我来一步步教你如何解决“无重复字符的最长子串”这道算法题。我们将使用 Java 语言来实现。
+
+---
+
+1. 理解问题
+
+首先，我们来仔细理解一下题目要求：
+
+*   **输入**: 一个字符串 `s`。
+*   **目标**: 找出 `s` 中不含有重复字符的**最长子串**的长度。
+*   **关键点**:
+    *   **子串 (Substring)**：是原始字符串中连续的一部分。例如，"abcabcbb" 的子串有 "abc", "bca", "abcbb" 等。
+    *   **子序列 (Subsequence)**：不一定是连续的，但字符顺序不变。例如，"pwke" 是 "pwwkew" 的子序列，但不是子串。题目明确要求是**子串**。
+    *   **无重复字符**: 子串中的所有字符都必须是唯一的。
+
+**示例分析：**
+
+*   `s = "abcabcbb"`
+    *   "abc" 是一个无重复字符的子串，长度为 3。
+    *   "bca" 也是，长度为 3。
+    *   "cab" 也是，长度为 3。
+    *   "abca" 包含重复字符 'a'，不是。
+    *   最长的无重复字符子串是 "abc", "bca", "cab"，它们的长度都是 3。所以输出 3。
+
+*   `s = "bbbbb"`
+    *   最长的无重复字符子串是 "b"，长度为 1。所以输出 1。
+
+*   `s = "pwwkew"`
+    *   "pw" 长度 2。
+    *   "pww" 包含重复 'w'。
+    *   "wk" 长度 2。
+    *   "wke" 长度 3。
+    *   "kew" 长度 3。
+    *   最长的无重复字符子串是 "wke" 或 "kew"，长度都是 3。所以输出 3。
+
+---
+
+2. 核心思想：滑动窗口 (Sliding Window)
+
+这道题非常适合使用“滑动窗口”算法来解决。滑动窗口是一种常用的算法技巧，用于解决数组或字符串的子数组/子串问题。它的基本思想是维护一个窗口（通常由两个指针 `left` 和 `right` 定义），然后根据条件移动窗口的边界。
+
+**滑动窗口的优势：**
+
+*   避免了暴力枚举所有子串（时间复杂度过高）。
+*   通过只遍历字符串一次（或常数次），大大提高了效率。
+
+**对于这道题，滑动窗口的工作原理如下：**
+
+1.  我们用两个指针 `left` 和 `right` 来定义当前考察的“窗口” `s[left...right]`。
+2.  `right` 指针会不断向右移动，扩展窗口。
+3.  在窗口扩展的过程中，我们需要检查新加入的字符 `s[right]` 是否已经在当前窗口 `s[left...right-1]` 中出现过。
+4.  如果 `s[right]` **没有**出现过，说明当前窗口 `s[left...right]` 仍然是无重复字符的，我们可以更新最大长度，并继续向右扩展 `right`。
+5.  如果 `s[right]` **已经**出现过，说明当前窗口 `s[left...right]` 包含了重复字符。为了消除重复，我们需要收缩窗口，即移动 `left` 指针。`left` 指针应该移动到哪里呢？它应该移动到重复字符的**下一个位置**，这样才能确保新的窗口 `s[new_left...right]` 不再包含重复字符。
+6.  重复步骤 2-5，直到 `right` 指针遍历完整个字符串。
+
+---
+
+3. 数据结构选择
+
+为了高效地判断字符是否重复以及快速找到重复字符的位置，我们需要一个数据结构来存储窗口内的字符及其位置。
+
+*   **`HashSet<Character>`**: 可以快速判断字符是否存在（O(1) 时间复杂度），但无法直接获取字符的索引，当遇到重复字符时，`left` 指针需要一个一个地向右移动，直到重复字符被移除。
+*   **`HashMap<Character, Integer>`**: 键是字符，值是字符在字符串中出现的**最新索引**。
+    *   优点：可以快速判断字符是否存在 (O(1))。当遇到重复字符时，可以直接通过 `map.get(char)` 获取其上次出现的索引，然后将 `left` 指针直接跳到 `上次出现索引 + 1` 的位置，从而更高效地收缩窗口。这是更优的选择。
+
+我们将使用 `HashMap<Character, Integer>`。
+
+---
+
+4. 算法步骤详解
+
+1.  **初始化变量**:
+    *   `maxLength = 0`: 用于存储找到的最长无重复字符子串的长度。
+    *   `left = 0`: 滑动窗口的左边界。
+    *   `Map<Character, Integer> charIndexMap = new HashMap<>()`: 用于存储字符及其在字符串中最新出现的索引。
+
+2.  **遍历字符串**: 使用 `right` 指针从 `0` 遍历到 `s.length() - 1`。
+
+    *   对于每个字符 `s.charAt(right)`：
+
+        a.  **检查重复**:
+            *   判断 `charIndexMap` 中是否已经包含了 `s.charAt(right)`。
+            *   如果包含，并且 `charIndexMap.get(s.charAt(right))` (即该字符上次出现的索引) **大于或等于** `left` (这意味着上次出现的位置在当前窗口内)，则说明当前窗口内有重复字符。
+            *   此时，需要将 `left` 移动到 `charIndexMap.get(s.charAt(right)) + 1`。这样，窗口的左边界就跳过了重复字符及其之前的部分，确保新窗口是无重复的。
+
+        b.  **更新字符索引**:
+            *   无论是否发生重复，都需要更新 `charIndexMap` 中 `s.charAt(right)` 的最新索引为当前的 `right`。`charIndexMap.put(s.charAt(right), right)`。
+
+        c.  **更新最大长度**:
+            *   当前无重复子串的长度是 `right - left + 1`。
+            *   将 `maxLength` 更新为 `Math.max(maxLength, right - left + 1)`。
+
+3.  **返回结果**: 遍历结束后，`maxLength` 就是最终答案。
+
+---
+
+5. 流程图
+
+
+---
+
+6. Java 代码实现
+
+```java
+class Solution {
+    /**
+     * 找出字符串中不含有重复字符的最长子串的长度。
+     * 使用滑动窗口（Sliding Window）算法。
+     *
+     * @param s 输入字符串
+     * @return 最长无重复字符子串的长度
+     */
+    public int lengthOfLongestSubstring(String s) {
+        // 如果输入字符串为空或为null，则最长子串长度为0
+        if (s == null || s.length() == 0) {
+            return 0;
+        }
+
+        // 用于存储字符及其在字符串中最新出现的索引
+        // 键：字符 (Character)
+        // 值：字符在字符串中出现的最新索引 (Integer)
+        java.util.Map<Character, Integer> charIndexMap = new java.util.HashMap<>();
+
+        // maxLen 用于记录到目前为止找到的最长无重复字符子串的长度
+        int maxLen = 0;
+        // left 是滑动窗口的左边界指针
+        int left = 0;
+
+        // right 是滑动窗口的右边界指针，它会遍历整个字符串
+        for (int right = 0; right < s.length(); right++) {
+            // 获取当前右指针指向的字符
+            char currentChar = s.charAt(right);
+
+            // 检查当前字符是否已经在 charIndexMap 中存在，并且其上次出现的索引在当前窗口 [left, right-1] 内
+            // 如果 charIndexMap.containsKey(currentChar) 为真，说明之前出现过这个字符
+            // 如果 charIndexMap.get(currentChar) >= left 为真，说明上次出现的位置在当前窗口的左边界或右边界之间
+            if (charIndexMap.containsKey(currentChar) && charIndexMap.get(currentChar) >= left) {
+                // 如果有重复字符，并且该重复字符在当前窗口内，
+                // 则需要移动左边界（left）到重复字符的下一个位置，
+                // 这样可以确保当前窗口内不再包含这个重复字符。
+                left = charIndexMap.get(currentChar) + 1;
+            }
+
+            // 更新或添加当前字符的最新索引到 charIndexMap
+            // 无论字符是否重复，我们都更新它的最新位置。
+            charIndexMap.put(currentChar, right);
+
+            // 计算当前无重复字符子串的长度
+            // 长度 = 右边界索引 - 左边界索引 + 1
+            int currentWindowLength = right - left + 1;
+
+            // 更新最长无重复字符子串的长度
+            maxLen = Math.max(maxLen, currentWindowLength);
+        }
+
+        // 遍历结束后，maxLen 即为所求的最长无重复字符子串的长度
+        return maxLen;
+    }
+}
+```
+
+---
+
+7. 示例演练
+
+我们以 `s = "abcabcbb"` 为例，逐步演示代码的执行过程：
+
+| `right` | `currentChar` | `charIndexMap` (更新前) | `charIndexMap.get(currentChar)` >= `left`? | `left` (更新后) | `charIndexMap` (更新后) | `currentWindowLength` (`right - left + 1`) | `maxLen` | 备注 |
+| :------ | :------------ | :---------------------- | :----------------------------------------- | :-------------- | :---------------------- | :------------------------------------------- | :------- | :--- |
+| 0       | 'a'           | {}                      | 否                                         | 0               | {'a': 0}                | 0 - 0 + 1 = 1                                | 1        | 窗口: "a" |
+| 1       | 'b'           | {'a': 0}                | 否                                         | 0               | {'a': 0, 'b': 1}        | 1 - 0 + 1 = 2                                | 2        | 窗口: "ab" |
+| 2       | 'c'           | {'a': 0, 'b': 1}        | 否                                         | 0               | {'a': 0, 'b': 1, 'c': 2}| 2 - 0 + 1 = 3                                | 3        | 窗口: "abc" |
+| 3       | 'a'           | {'a': 0, 'b': 1, 'c': 2}| `map.get('a')` (0) >= `left` (0)? 是       | 0 + 1 = 1       | {'a': 3, 'b': 1, 'c': 2}| 3 - 1 + 1 = 3                                | 3        | 'a' 重复，`left` 移到 1。窗口: "bca" |
+| 4       | 'b'           | {'a': 3, 'b': 1, 'c': 2}| `map.get('b')` (1) >= `left` (1)? 是       | 1 + 1 = 2       | {'a': 3, 'b': 4, 'c': 2}| 4 - 2 + 1 = 3                                | 3        | 'b' 重复，`left` 移到 2。窗口: "cab" |
+| 5       | 'c'           | {'a': 3, 'b': 4, 'c': 2}| `map.get('c')` (2) >= `left` (2)? 是       | 2 + 1 = 3       | {'a': 3, 'b': 4, 'c': 5}| 5 - 3 + 1 = 3                                | 3        | 'c' 重复，`left` 移到 3。窗口: "abc" |
+| 6       | 'b'           | {'a': 3, 'b': 4, 'c': 5}| `map.get('b')` (4) >= `left` (3)? 是       | 4 + 1 = 5       | {'a': 3, 'b': 6, 'c': 5}| 6 - 5 + 1 = 2                                | 3        | 'b' 重复，`left` 移到 5。窗口: "bb" (但实际是 'b') |
+| 7       | 'b'           | {'a': 3, 'b': 6, 'c': 5}| `map.get('b')` (6) >= `left` (5)? 是       | 6 + 1 = 7       | {'a': 3, 'b': 7, 'c': 5}| 7 - 7 + 1 = 1                                | 3        | 'b' 重复，`left` 移到 7。窗口: "b" |
+
+最终 `maxLen` 为 3。
+
+---
+
+8. 复杂度分析
+
+*   **时间复杂度**: `O(N)`。
+    *   `N` 是输入字符串 `s` 的长度。
+    *   `right` 指针从头到尾遍历了字符串一次。
+    *   `left` 指针也最多从头到尾遍历字符串一次（它只会向右移动，不会回退）。
+    *   `HashMap` 的操作（`containsKey`, `get`, `put`）在平均情况下是 `O(1)` 的时间复杂度。
+    *   因此，总的时间复杂度是线性的，非常高效。
+
+*   **空间复杂度**: `O(min(N, M))`。
+    *   `M` 是字符集的大小。对于英文字母、数字、符号和空格组成的字符串，`M` 是一个常数（例如，ASCII 字符集大小为 128 或 Unicode 字符集更大，但实际使用的字符种类通常有限）。
+    *   `HashMap` 最多存储 `min(N, M)` 个不重复的字符。
+    *   在最坏情况下，如果所有字符都不重复，`HashMap` 会存储 `N` 个字符。但如果字符集很小，比如只有小写字母，那么最多存储 26 个字符。
+    *   因此，空间复杂度取决于字符串长度和字符集大小中的较小者。
+
+---
+
+希望这个详细的解释和代码能帮助你完全理解并掌握这道算法题！
+
+
+
+
+
+
+
+
+
+
+#### 二刷，错误总结
+
+
+
+
+好的，我来帮你分析一下你在 LeetCode 3. “无重复字符的最长子串”这道题中，Java 代码的错误原因。
+
+
+3. 无重复字符的最长子串
+
+**题目描述回顾：**
+
+给定一个字符串 `s` ，请你找出其中不含有重复字符的 最长 子串 的长度。
+
+**你的 Java 代码：**
+
+```java
+class Solution {
+    public int lengthOfLongestSubstring(String s) {
+        if( s== null || s.length() == 0 ) {
+            return 0;
+        }
+
+        Map hashmap = new HashMap<Character,Integer>(); // 注意这里直接用了 Map，没有泛型，会导致类型转换警告
+                                                         // 应该用 Map<Character, Integer> hashmap = new HashMap<>();
+
+        int left=0;
+        int right=0;
+        int curSubLen=0;
+        int maxSubLen=0;
+
+        while( right < s.length() ) {
+            // 错误点在这里：当发现重复字符时，left 的更新逻辑不正确
+            if( hashmap.get( s.charAt( right ) ) != null ) {
+                // 问题：当 s.charAt(right) 已经存在于 hashmap 中时，
+                // hashmap.get(s.charAt(right)) 会返回该字符上一次出现的索引。
+                // 你将其赋值给 left，并 +1。
+                // 但如果这个上一次出现的索引比当前的 left 还要小，
+                // 那么 left 就会“回退”，导致跳过了当前滑动窗口内的其他重复字符。
+                // 正确的做法是：left 应该取 max(current_left, last_occurrence_index + 1)
+                left = (int)hashmap.get( s.charAt( right ) ) + 1; 
+                
+                // 另一个问题：无论是否是重复字符，你都在这里更新了 hashmap。
+                // 如果是重复字符，应该先更新 left，再更新当前字符的最新位置。
+                // 如果不是重复字符，也应该更新它的位置。
+                // 所以，hashmap.put 应该在 if-else 块的外面，每次循环都更新当前 right 指向字符的最新位置。
+                hashmap.put( s.charAt( right ), right ); 
+            } else {
+                // hashmap.get( s.charAt( right ) ) == null
+                hashmap.put( s.charAt( right ), right );
+            }
+
+            curSubLen = right - left + 1;
+            maxSubLen = Math.max( maxSubLen, curSubLen );
+
+            right++;
+        }
+
+        return maxSubLen;
+    }
+}
+```
+
+---
+
+ 错误原因分析
+
+你的代码在处理重复字符时，更新 `left` 指针的逻辑是错误的，导致滑动窗口的左边界可能回退，从而计算出错误的子串长度。
+
+我们用你的测试用例 `s = "abba"` 来一步步分析：
+
+*   `s = "abba"`
+*   `n = 4`
+*   `hashmap = {}`
+*   `left = 0`, `right = 0`
+*   `maxSubLen = 0`
+
+**1. `right = 0`, `s.charAt(0) = 'a'`**
+    *   `hashmap.get('a')` 为 `null`。
+    *   `hashmap.put('a', 0)`。`hashmap = {'a': 0}`。
+    *   `curSubLen = 0 - 0 + 1 = 1`。
+    *   `maxSubLen = max(0, 1) = 1`。
+    *   `right++`。`right` 变为 `1`。
+    *   窗口：`[a]`
+
+**2. `right = 1`, `s.charAt(1) = 'b'`**
+    *   `hashmap.get('b')` 为 `null`。
+    *   `hashmap.put('b', 1)`。`hashmap = {'a': 0, 'b': 1}`。
+    *   `curSubLen = 1 - 0 + 1 = 2`。
+    *   `maxSubLen = max(1, 2) = 2`。
+    *   `right++`。`right` 变为 `2`。
+    *   窗口：`[a, b]`
+
+**3. `right = 2`, `s.charAt(2) = 'b'`**
+    *   `hashmap.get('b')` **不为 `null`**，返回 `1`。
+    *   **你的代码逻辑：`left = (int)hashmap.get('b') + 1 = 1 + 1 = 2`。**
+        *   这里 `left` 从 `0` 变为 `2`。
+    *   `hashmap.put('b', 2)`。`hashmap = {'a': 0, 'b': 2}`。
+    *   `curSubLen = 2 - 2 + 1 = 1`。
+    *   `maxSubLen = max(2, 1) = 2`。
+    *   `right++`。`right` 变为 `3`。
+    *   窗口：`[b]` (此时窗口是 `s[2...2]`)
+
+**4. `right = 3`, `s.charAt(3) = 'a'`**
+    *   `hashmap.get('a')` **不为 `null`**，返回 `0`。
+    *   **你的代码逻辑：`left = (int)hashmap.get('a') + 1 = 0 + 1 = 1`。**
+        *   **这是核心错误！** 此时 `left` 从 `2` 变成了 `1`。
+        *   这意味着你的滑动窗口左边界回退了。当 `right` 指向 `s[3]` ('a') 时，`left` 应该至少在 `s[2]` ('b') 的位置，因为 `s[2]` 和 `s[3]` 之间的子串 `s[2...3]` ("ba") 是无重复字符的。
+        *   但是，由于 `hashmap.get('a')` 返回的是 `0`，`left` 就被设置成了 `1`，使得滑动窗口变成了 `s[1...3]` ("bba")，这个子串是有重复字符 'b' 的。
+        *   正确的 `left` 应该保持在 `2`（因为 `s[2]` 'b' 是当前窗口的起点），而 `s[0]` 'a' 已经在当前窗口 `s[2...3]` 之外了，所以 `s[0]` 的位置不应该影响当前的 `left`。
+    *   `hashmap.put('a', 3)`。`hashmap = {'a': 3, 'b': 2}`。
+    *   `curSubLen = 3 - 1 + 1 = 3`。
+    *   `maxSubLen = max(2, 3) = 3`。
+    *   `right++`。`right` 变为 `4`。
+    *   窗口：`[b, b, a]` (此时窗口是 `s[1...3]`)
+
+**循环结束。** 返回 `maxSubLen = 3`。
+
+**预期结果是 `2`。**
+对于 "abba"，最长无重复字符子串是 "ab" (长度2) 或 "ba" (长度2)。
+
+**正确的 `left` 更新逻辑：**
+
+当 `s.charAt(right)` 在 `hashmap` 中存在时，这意味着 `s.charAt(right)` 是一个重复字符。
+*   我们需要将 `left` 移动到 `s.charAt(right)` 上一次出现位置的 `+1` 处。
+*   **但是，这个新的 `left` 必须保证 `大于等于` 当前的 `left`。** 为什么？因为 `left` 永远只能向右移动，不能回退。如果 `s.charAt(right)` 上次出现的位置在当前 `left` 之前，那么那个重复字符已经不在当前滑动窗口内了，我们就不需要调整 `left`。
+
+所以，正确的 `left` 更新应该是：
+`left = Math.max(left, hashmap.get(s.charAt(right)) + 1);`
+
+并且，`hashmap.put(s.charAt(right), right);` 这一行应该放在 `if-else` 块的外面，每次循环都更新当前字符的最新位置。
+
+---
+
+ 修正后的代码与详细解释
+
+**Java 版修正代码：**
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+class Solution {
+    public int lengthOfLongestSubstring(String s) {
+        // 1. 特殊情况处理：空字符串或null，返回0
+        if (s == null || s.length() == 0) {
+            return 0;
+        }
+
+        // 使用 HashMap 存储字符及其在字符串中最新出现的索引。
+        // key: 字符 (Character)
+        // value: 字符最新出现的索引 (Integer)
+        Map<Character, Integer> charIndexMap = new HashMap<>();
+
+        // left: 滑动窗口的左边界
+        int left = 0;
+        // maxSubLen: 记录找到的最长无重复字符子串的长度
+        int maxSubLen = 0;
+
+        // right: 滑动窗口的右边界，从左向右遍历字符串
+        for (int right = 0; right < s.length(); right++) {
+            char currentChar = s.charAt(right); // 获取当前右边界的字符
+
+            // 2. 检查当前字符是否在滑动窗口内已经出现过
+            // charIndexMap.containsKey(currentChar) 检查字符是否出现过
+            // charIndexMap.get(currentChar) >= left 检查该字符上次出现的索引是否在当前窗口内
+            if (charIndexMap.containsKey(currentChar) && charIndexMap.get(currentChar) >= left) {
+                // 如果当前字符在当前滑动窗口内重复出现，
+                // 则需要收缩滑动窗口的左边界 (left)。
+                // left 应该移动到重复字符上一次出现位置的下一个位置。
+                // 这样，滑动窗口 [left, right] 就能保持无重复字符。
+                left = charIndexMap.get(currentChar) + 1;
+            }
+
+            // 3. 更新当前字符的最新索引
+            // 无论字符是否重复，都需要更新它在 HashMap 中的最新位置。
+            // 这样，下次遇到这个字符时，hashmap.get() 就能返回正确的最新索引。
+            charIndexMap.put(currentChar, right);
+
+            // 4. 计算当前滑动窗口的长度，并更新最大长度
+            // 当前子串长度 = 右边界索引 - 左边界索引 + 1
+            maxSubLen = Math.max(maxSubLen, right - left + 1);
+        }
+
+        // 5. 返回最长无重复字符子串的长度
+        return maxSubLen;
+    }
+}
+```
+
+**Python 版修正代码 (与 Java 逻辑一致)：**
+
+```python
+class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
+        # 1. 特殊情况处理：空字符串或None，返回0
+        if not s:
+            return 0
+
+        # 使用字典 (HashMap) 存储字符及其在字符串中最新出现的索引。
+        # key: 字符
+        # value: 字符最新出现的索引
+        char_index_map = {}
+
+        # left: 滑动窗口的左边界
+        left = 0
+        # max_sub_len: 记录找到的最长无重复字符子串的长度
+        max_sub_len = 0
+
+        # right: 滑动窗口的右边界，从左向右遍历字符串
+        for right in range(len(s)):
+            current_char = s[right] # 获取当前右边界的字符
+
+            # 2. 检查当前字符是否在滑动窗口内已经出现过
+            # current_char in char_index_map 检查字符是否出现过
+            # char_index_map[current_char] >= left 检查该字符上次出现的索引是否在当前窗口内
+            if current_char in char_index_map and char_index_map[current_char] >= left:
+                # 如果当前字符在当前滑动窗口内重复出现，
+                # 则需要收缩滑动窗口的左边界 (left)。
+                # left 应该移动到重复字符上一次出现位置的下一个位置。
+                # 这样，滑动窗口 [left, right] 就能保持无重复字符。
+                left = char_index_map[current_char] + 1
+            
+            # 3. 更新当前字符的最新索引
+            # 无论字符是否重复，都需要更新它在字典中的最新位置。
+            # 这样，下次遇到这个字符时，char_index_map[current_char] 就能返回正确的最新索引。
+            char_index_map[current_char] = right
+
+            # 4. 计算当前滑动窗口的长度，并更新最大长度
+            # 当前子串长度 = 右边界索引 - 左边界索引 + 1
+            max_sub_len = max(max_sub_len, right - left + 1)
+        
+        # 5. 返回最长无重复字符子串的长度
+        return max_sub_len
+
+```
+
+---
+
+ 修正后代码的示例演示 (`s = "abba"`)
+
+我们再次用 `s = "abba"` 来演示修正后的代码：
+
+*   `s = "abba"`
+*   `n = 4`
+*   `char_index_map = {}`
+*   `left = 0`, `max_sub_len = 0`
+
+**1. `right = 0`, `current_char = 'a'`**
+    *   `'a'` 不在 `char_index_map` 中。
+    *   `char_index_map['a'] = 0`。`char_index_map = {'a': 0}`。
+    *   `max_sub_len = max(0, 0 - 0 + 1) = 1`。
+    *   窗口：`[a]`
+
+**2. `right = 1`, `current_char = 'b'`**
+    *   `'b'` 不在 `char_index_map` 中。
+    *   `char_index_map['b'] = 1`。`char_index_map = {'a': 0, 'b': 1}`。
+    *   `max_sub_len = max(1, 1 - 0 + 1) = 2`。
+    *   窗口：`[a, b]`
+
+**3. `right = 2`, `current_char = 'b'`**
+    *   `'b'` 在 `char_index_map` 中，`char_index_map['b'] = 1`。
+    *   `char_index_map['b']` (1) `>= left` (0) **为 True**。
+        *   **`left = char_index_map['b'] + 1 = 1 + 1 = 2`。**
+    *   `char_index_map['b'] = 2`。`char_index_map = {'a': 0, 'b': 2}`。
+    *   `max_sub_len = max(2, 2 - 2 + 1) = max(2, 1) = 2`。
+    *   窗口：`[b]` (此时窗口是 `s[2...2]`)
+
+**4. `right = 3`, `current_char = 'a'`**
+    *   `'a'` 在 `char_index_map` 中，`char_index_map['a'] = 0`。
+    *   `char_index_map['a']` (0) `>= left` (2) **为 False**。
+        *   这意味着字符 'a' 虽然出现过，但它上次出现的位置 `0` 已经不在当前滑动窗口 `[2, right]` 的范围内了，所以它不会造成当前窗口的重复。`left` 保持不变。
+    *   `char_index_map['a'] = 3`。`char_index_map = {'a': 3, 'b': 2}`。
+    *   `max_sub_len = max(2, 3 - 2 + 1) = max(2, 2) = 2`。
+    *   窗口：`[b, a]` (此时窗口是 `s[2...3]`)
+
+**循环结束。** 返回 `max_sub_len = 2`。
+
+这个结果与预期结果 `2` 完全一致。
+
+**总结：**
+
+核心错误在于 `left = (int)hashmap.get(s.charAt(right)) + 1;` 这一行。它没有考虑 `left` 只能单调递增的特性。正确的逻辑应该是 `left = Math.max(left, charIndexMap.get(currentChar) + 1);` 来确保 `left` 不会回退，并且只在重复字符在当前窗口内时才移动 `left`。同时，`put` 操作应该在 `if` 语句之外，确保每次都更新字符的最新位置。
+
+
+
+
+
+
+
+
+
+
 
 
 
