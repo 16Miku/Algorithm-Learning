@@ -3989,6 +3989,334 @@ class Solution:
 
 
 
+### 239. 滑动窗口最大值（难题）
+
+**题目描述：**
+
+给你一个整数数组 `nums`，有一个大小为 `k` 的滑动窗口从数组的最左侧移动到数组的最右侧。你只可以看到在滑动窗口内的 `k` 个数字。滑动窗口每次只向右移动一位。
+
+返回 滑动窗口中的最大值 。
+
+**示例 1：**
+
+输入：`nums = [1,3,-1,-3,5,3,6,7], k = 3`
+输出：`[3,3,5,5,6,7]`
+解释：
+```
+滑动窗口的位置                最大值
+---------------               -----
+[1  3  -1] -3  5  3  6  7       3
+ 1 [3  -1  -3] 5  3  6  7       3
+ 1  3 [-1  -3  5] 3  6  7       5
+ 1  3  -1 [-3  5  3] 6  7       5
+ 1  3  -1  -3 [5  3  6] 7       6
+ 1  3  -1  -3  5 [3  6  7]      7
+```
+
+**示例 2：**
+
+输入：`nums = [1], k = 1`
+输出：`[1]`
+
+**提示：**
+
+*   `1 <= nums.length <= 10^5`
+*   `-10^4 <= nums[i] <= 10^4`
+*   `1 <= k <= nums.length`
+
+---
+
+
+
+
+
+
+
+#### 单调队列解法（难题）
+
+题目解析与思路分析
+
+这道题目要求我们找到一个固定大小 `k` 的滑动窗口在数组中移动时，每个窗口内的最大值。由于数组长度 `N` 和窗口大小 `k` 都可能达到 `10^5`，因此 `O(N*k)` 的暴力解法（每个窗口都遍历一遍找最大值）会超时。我们需要一个更高效的算法，理想情况下是 `O(N)`。
+
+1. 方法一：暴力法 (Brute Force)
+
+**思路：**
+简单地遍历所有可能的滑动窗口，对每个窗口内的 `k` 个元素进行遍历，找出最大值。
+
+**时间复杂度：** O((N-k+1) * k) = O(N*k)。当 `k` 接近 `N/2` 时，接近 `O(N^2)`。
+**空间复杂度：** O(1) (不计结果数组)。
+
+对于 `N=10^5, k=10^5`，`10^5 * 10^5 = 10^{10}`，肯定超时。
+
+2. 方法二：使用优先队列 / 大顶堆 (PriorityQueue / Max-Heap)
+
+**思路：**
+我们可以维护一个大顶堆，里面存储当前窗口内的所有元素。堆顶元素就是当前窗口的最大值。
+当窗口滑动时：
+1.  将新进入窗口的元素加入堆。
+2.  将离开窗口的元素从堆中移除。
+3.  获取堆顶元素作为当前窗口的最大值。
+
+**挑战：**
+标准库的优先队列（如 Java 的 `PriorityQueue`）不支持 O(1) 地删除任意元素。删除特定元素通常需要 O(k) 时间来查找并删除，或者 O(log k) 如果你有元素的引用。
+为了解决这个问题，可以采用“延迟删除”策略：
+*   堆中存储 `(值, 索引)` 对。
+*   每次获取堆顶元素时，检查其索引是否在当前窗口范围内。
+*   如果不在，就将其弹出，继续检查新的堆顶，直到找到一个在窗口内的元素。
+
+**时间复杂度：** O(N log k)。每次添加和删除（包括延迟删除）堆元素都是 `O(log k)`。共有 `N` 个元素进出窗口。
+**空间复杂度：** O(k)，堆中最多存储 `k` 个元素。
+
+对于 `N=10^5, k=10^5`，`10^5 * log(10^5)` 大约是 `10^5 * 17`，可能勉强能过。但通常有更优的 O(N) 方法。
+
+3. 方法三：单调队列 (Monotonic Queue / Deque)
+
+这是解决此类问题的**最优方法**，时间复杂度为 O(N)，空间复杂度为 O(k)。
+
+**核心思想：**
+维护一个**双端队列 (Deque)**，它存储的是数组元素的**索引**。这个队列具有以下两个关键性质：
+
+1.  **单调性：** 队列中存储的索引对应的 `nums` 值是**从大到小排列**的。即 `nums[deque.front()] >= nums[deque.second()] >= ...`
+2.  **有效性：** 队列中的所有索引都在当前滑动窗口的范围内。
+
+**如何维护这个单调队列？**
+
+*   **添加新元素 `nums[right]` (从右侧进入窗口)：**
+    *   当 `nums[right]` 进入窗口时，它可能成为新的最大值。
+    *   从队列的**尾部**开始，移除所有比 `nums[right]` 小（或等于）的元素的索引。因为这些元素既然比 `nums[right]` 小（或等于），并且比 `nums[right]` 更早进入队列，那么它们永远不可能成为当前窗口的最大值（`nums[right]` 更大且更晚过期）。
+    *   将 `right` 的索引添加到队列的尾部。
+
+*   **移除旧元素 `nums[left-1]` (从左侧离开窗口)：**
+    *   当窗口滑动时，最左边的元素 `nums[left-1]` 离开了窗口。
+    *   检查队列的**头部**。如果队列头部的索引就是 `left-1`，说明当前最大值（或潜在最大值）恰好是离开窗口的那个元素，需要将其从队列头部移除。
+    *   如果队列头部的索引不是 `left-1`，说明 `left-1` 对应的元素已经因为比后来进入的元素小，而在之前被从队列尾部移除了。
+
+*   **获取当前窗口最大值：**
+    *   由于队列是单调递减的，队列的**头部**元素（索引）对应的 `nums` 值就是当前窗口的最大值。
+
+**详细步骤：**
+
+1.  初始化一个空的双端队列 `deque` (存储索引)。
+2.  初始化一个空的 `result` 列表，用于存储每个窗口的最大值。
+3.  遍历数组 `nums`，用 `right` 作为当前窗口的右边界索引 (从 `0` 到 `n-1`)。
+4.  在每次循环中：
+    a.  **处理队列尾部 (维护单调性)：**
+        *   当队列不为空，并且队列尾部索引对应的 `nums` 值小于或等于 `nums[right]` 时，将队列尾部的索引移除。重复此操作直到队列为空或队列尾部索引对应的 `nums` 值大于 `nums[right]`。
+        *   `while (!deque.isEmpty() && nums[deque.peekLast()] <= nums[right]) { deque.removeLast(); }`
+    b.  **将当前元素索引加入队列尾部：**
+        *   `deque.addLast(right);`
+    c.  **处理队列头部 (维护有效性)：**
+        *   如果队列头部的索引是 `right - k`（即该元素已经滑出窗口），将其从队列头部移除。
+        *   `if (deque.peekFirst() == right - k) { deque.removeFirst(); }`
+    d.  **记录结果：**
+        *   当 `right` 达到 `k-1` 时，表示第一个完整的窗口已经形成。从此时开始，每个 `right` 都会对应一个完整的滑动窗口。
+        *   将当前窗口的最大值（即 `nums[deque.peekFirst()]`）添加到 `result` 列表。
+        *   `if (right >= k - 1) { result.add(nums[deque.peekFirst()]); }`
+
+5.  循环结束后，返回 `result`。
+
+**时间复杂度：** O(N)。虽然有嵌套的 `while` 循环，但每个元素最多被添加到队列一次，也最多从队列中移除一次。因此总操作次数是线性的。
+**空间复杂度：** O(k)。双端队列中最多存储 `k` 个元素的索引。
+
+
+---
+
+代码实现
+
+Java 解法 (单调队列)
+
+```java
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.ArrayList;
+import java.util.List;
+
+class Solution {
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        int n = nums.length;
+        // 如果数组为空，或者窗口大小为0，或者窗口大小大于数组长度，返回空数组
+        if (n == 0 || k == 0 || k > n) {
+            return new int[0];
+        }
+
+        // 使用 ArrayDeque 作为双端队列，存储元素的索引
+        // 队列中存储的索引对应的 nums 值是单调递减的
+        Deque<Integer> deque = new ArrayDeque<>();
+        // 存储结果的列表
+        List<Integer> resultList = new ArrayList<>();
+
+        // 遍历数组，right 指针作为滑动窗口的右边界
+        for (int right = 0; right < n; right++) {
+            // 1. 维护队列的单调性：
+            // 移除队列尾部所有小于或等于当前元素 nums[right] 的索引。
+            // 因为 nums[right] 更大且更“新”，之前的较小元素永远不可能成为最大值。
+            while (!deque.isEmpty() && nums[deque.peekLast()] <= nums[right]) {
+                deque.removeLast();
+            }
+            // 将当前元素的索引添加到队列尾部
+            deque.addLast(right);
+
+            // 2. 维护队列的有效性：
+            // 检查队列头部索引是否已经滑出当前窗口。
+            // 窗口的左边界索引是 right - k + 1。
+            // 如果队列头部索引等于 right - k，说明它就是即将离开窗口的元素。
+            // (或者说，如果队列头部索引 < right - k + 1，即 deque.peekFirst() <= right - k)
+            // 严格来说，是当 deque.peekFirst() == right - k 的时候，它正好是窗口外的第一个元素
+            if (deque.peekFirst() == right - k) {
+                deque.removeFirst();
+            }
+
+            // 3. 记录结果：
+            // 当 right 达到 k-1 时，第一个完整的窗口形成。
+            // 从此时开始，每个 right 都会对应一个完整的滑动窗口。
+            // 队列头部索引对应的元素就是当前窗口的最大值。
+            if (right >= k - 1) {
+                resultList.add(nums[deque.peekFirst()]);
+            }
+        }
+
+        // 将结果列表转换为 int 数组并返回
+        int[] result = new int[resultList.size()];
+        for (int i = 0; i < resultList.size(); i++) {
+            result[i] = resultList.get(i);
+        }
+        return result;
+    }
+}
+```
+
+Python 解法 (单调队列)
+
+```python
+import collections
+from typing import List
+
+class Solution:
+    def maxSlidingWindow(self, nums: List[int], k: int) -> List[int]:
+        n = len(nums)
+        # 如果数组为空，或者窗口大小为0，或者窗口大小大于数组长度，返回空列表
+        if n == 0 or k == 0 or k > n:
+            return []
+        
+        # 使用 collections.deque 作为双端队列，存储元素的索引
+        # 队列中存储的索引对应的 nums 值是单调递减的
+        deque = collections.deque()
+        # 存储结果的列表
+        result = []
+
+        # 遍历数组，right 指针作为滑动窗口的右边界
+        for right in range(n):
+            # 1. 维护队列的单调性：
+            # 移除队列尾部所有小于或等于当前元素 nums[right] 的索引。
+            # 因为 nums[right] 更大且更“新”，之前的较小元素永远不可能成为最大值。
+            while deque and nums[deque[-1]] <= nums[right]:
+                deque.pop()
+            # 将当前元素的索引添加到队列尾部
+            deque.append(right)
+
+            # 2. 维护队列的有效性：
+            # 检查队列头部索引是否已经滑出当前窗口。
+            # 窗口的左边界索引是 right - k + 1。
+            # 如果队列头部索引等于 right - k，说明它就是即将离开窗口的元素。
+            if deque[0] == right - k:
+                deque.popleft() # 从队列头部移除
+
+            # 3. 记录结果：
+            # 当 right 达到 k-1 时，表示第一个完整的窗口形成。
+            # 从此时开始，每个 right 都会对应一个完整的滑动窗口。
+            # 队列头部索引对应的元素就是当前窗口的最大值。
+            if right >= k - 1:
+                result.append(nums[deque[0]])
+        
+        return result
+
+```
+
+---
+
+结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示单调队列法的执行过程：
+
+输入：`nums = [1,3,-1,-3,5,3,6,7], k = 3`
+
+**初始状态：**
+`n = 9`, `k = 3`
+`deque = []`
+`result = []`
+
+**循环 `for right in range(n)`：**
+
+1.  **`right = 0, nums[0] = 1`**
+    *   `deque` 空，`nums[0]` (1) 不小于/等于任何元素。
+    *   `deque.append(0)`。`deque = [0]`
+    *   `deque[0]` (0) != `0 - 3` (-3)。不移除。
+    *   `right` (0) < `k-1` (2)。不记录结果。
+
+2.  **`right = 1, nums[1] = 3`**
+    *   `deque` 不空，`nums[deque[-1]]` (`nums[0]=1`) `<= nums[1]` (3)。`deque.pop()`。`deque = []`
+    *   `deque.append(1)`。`deque = [1]`
+    *   `deque[0]` (1) != `1 - 3` (-2)。不移除。
+    *   `right` (1) < `k-1` (2)。不记录结果。
+
+3.  **`right = 2, nums[2] = -1`**
+    *   `deque` 不空，`nums[deque[-1]]` (`nums[1]=3`) `> nums[2]` (-1)。不移除。
+    *   `deque.append(2)`。`deque = [1, 2]`
+    *   `deque[0]` (1) != `2 - 3` (-1)。不移除。
+    *   `right` (2) `>= k-1` (2)。记录结果。`nums[deque[0]] = nums[1] = 3`。
+    *   `result = [3]`
+
+4.  **`right = 3, nums[3] = -3`**
+    *   `deque` 不空，`nums[deque[-1]]` (`nums[2]=-1`) `> nums[3]` (-3)。不移除。
+    *   `deque.append(3)`。`deque = [1, 2, 3]`
+    *   `deque[0]` (1) == `3 - 3` (0) **为 False**。 (注意这里 `deque[0]` 是 1，而 `right-k` 是 0，所以不移除，因为 `nums[0]` 已经在 `right=1` 时被移除了)
+    *   `right` (3) `>= k-1` (2)。记录结果. `nums[deque[0]] = nums[1] = 3`。
+    *   `result = [3, 3]`
+
+5.  **`right = 4, nums[4] = 5`**
+    *   `deque` 不空，`nums[deque[-1]]` (`nums[3]=-3`) `<= nums[4]` (5)。`deque.pop()`。`deque = [1, 2]`
+    *   `deque` 不空，`nums[deque[-1]]` (`nums[2]=-1`) `<= nums[4]` (5)。`deque.pop()`。`deque = [1]`
+    *   `deque` 不空，`nums[deque[-1]]` (`nums[1]=3`) `<= nums[4]` (5)。`deque.pop()`。`deque = []`
+    *   `deque.append(4)`。`deque = [4]`
+    *   `deque[0]` (4) != `4 - 3` (1)。不移除。
+    *   `right` (4) `>= k-1` (2)。记录结果. `nums[deque[0]] = nums[4] = 5`。
+    *   `result = [3, 3, 5]`
+
+6.  **`right = 5, nums[5] = 3`**
+    *   `deque` 不空，`nums[deque[-1]]` (`nums[4]=5`) `> nums[5]` (3)。不移除。
+    *   `deque.append(5)`。`deque = [4, 5]`
+    *   `deque[0]` (4) == `5 - 3` (2) **为 False**。不移除。
+    *   `right` (5) `>= k-1` (2)。记录结果. `nums[deque[0]] = nums[4] = 5`。
+    *   `result = [3, 3, 5, 5]`
+
+7.  **`right = 6, nums[6] = 6`**
+    *   `deque` 不空, `nums[deque[-1]]` (`nums[5]=3`) `<= nums[6]` (6)。`deque.pop()`。`deque = [4]`
+    *   `deque` 不空, `nums[deque[-1]]` (`nums[4]=5`) `<= nums[6]` (6)。`deque.pop()`。`deque = []`
+    *   `deque.append(6)`。`deque = [6]`
+    *   `deque[0]` (6) != `6 - 3` (3)。不移除。
+    *   `right` (6) `>= k-1` (2)。记录结果. `nums[deque[0]] = nums[6] = 6`。
+    *   `result = [3, 3, 5, 5, 6]`
+
+8.  **`right = 7, nums[7] = 7`**
+    *   `deque` 不空, `nums[deque[-1]]` (`nums[6]=6`) `<= nums[7]` (7)。`deque.pop()`。`deque = []`
+    *   `deque.append(7)`。`deque = [7]`
+    *   `deque[0]` (7) != `7 - 3` (4)。不移除。
+    *   `right` (7) `>= k-1` (2)。记录结果. `nums[deque[0]] = nums[7] = 7`。
+    *   `result = [3, 3, 5, 5, 6, 7]`
+
+**循环结束。** 返回 `result = [3,3,5,5,6,7]`，与示例输出完全一致。
+
+这个过程清晰地展示了单调队列如何通过维护队列的单调性和有效性，以 O(N) 的时间复杂度高效地找到每个滑动窗口的最大值。
+
+
+
+
+
+
+
+
+
+
 
 
 
