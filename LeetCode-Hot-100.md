@@ -3673,6 +3673,320 @@ class Solution:
 
 
 
+### 560. 和为 K 的子数组
+
+**题目描述：**
+
+给你一个整数数组 `nums` 和一个整数 `k` ，请你统计并返回 **该数组中和为 `k` 的子数组的个数** 。
+子数组是数组中元素的 **连续非空序列**。
+
+**示例 1：**
+
+输入：`nums = [1,1,1], k = 2`
+输出：`2`
+解释：和为 2 的子数组有 `[1,1]` (索引 0-1) 和 `[1,1]` (索引 1-2)。
+
+**示例 2：**
+
+输入：`nums = [1,2,3], k = 3`
+输出：`2`
+解释：和为 3 的子数组有 `[1,2]` (索引 0-1) 和 `[3]` (索引 2-2)。
+
+**提示：**
+
+*   `1 <= nums.length <= 2 * 10^4`
+*   `-1000 <= nums[i] <= 1000`
+*   `-10^7 <= k <= 10^7`
+
+---
+
+
+
+
+
+
+
+
+#### 前缀和+哈希表解法
+
+题目解析与思路分析
+
+这道题目要求我们找到一个数组中所有和为 `k` 的连续子数组的数量。
+
+**关键挑战：**
+
+1.  **子数组是连续的：** 这是与子序列的主要区别。
+2.  **效率：** 数组长度 `2 * 10^4`，意味着 `O(N^2)` 的解法勉强能过（`4 * 10^8` 次操作，可能超时），最好是 `O(N)`。
+
+1. 方法一：暴力枚举 (Brute Force)
+
+**思路：**
+枚举所有可能的子数组，然后计算它们的和，判断是否等于 `k`。
+
+**步骤：**
+1.  遍历所有可能的起始索引 `i` (从 0 到 `n-1`)。
+2.  对于每个 `i`，遍历所有可能的结束索引 `j` (从 `i` 到 `n-1`)。
+3.  对于每个子数组 `nums[i...j]`，计算其和。
+4.  如果和等于 `k`，则计数器加一。
+
+**时间复杂度：** O(N^3)。
+*   两层循环确定子数组的起点和终点：O(N^2)。
+*   内层循环计算子数组的和：O(N)。
+*   总时间复杂度：O(N^3)。
+*   这肯定会超时。
+
+**优化暴力法 (O(N^2))：**
+在确定起始索引 `i` 后，我们可以在遍历结束索引 `j` 的同时，累加当前子数组的和。
+
+**步骤：**
+1.  `count = 0`。
+2.  遍历起始索引 `i` (从 0 到 `n-1`)。
+3.  在内层循环中，`current_sum = 0`。
+4.  遍历结束索引 `j` (从 `i` 到 `n-1`)。
+    *   `current_sum += nums[j]`。
+    *   如果 `current_sum == k`，则 `count++`。
+
+**时间复杂度：** O(N^2)。
+*   外层循环 O(N)。
+*   内层循环 O(N)。
+*   总时间复杂度：O(N^2)。
+*   对于 `N = 2 * 10^4`，`N^2 = 4 * 10^8`，这在某些语言（如 C++）中可能勉强通过，但在 Java/Python 中可能会超时。我们需要 `O(N)` 解法。
+
+2. 方法二：前缀和 + 哈希表 (Prefix Sum + HashMap)
+
+**核心思想：**
+利用前缀和的概念。
+定义 `prefixSum[i]` 为从 `nums[0]` 到 `nums[i-1]` 的所有元素的和。
+那么，任意子数组 `nums[i...j]` 的和可以表示为 `prefixSum[j+1] - prefixSum[i]`。
+
+我们的目标是找到 `nums[i...j]` 的和等于 `k`，即：
+`prefixSum[j+1] - prefixSum[i] = k`
+`prefixSum[j+1] - k = prefixSum[i]`
+
+这意味着，当我们遍历到数组的某个位置 `j`，计算出当前的**前缀和 `current_prefix_sum`** (`prefixSum[j+1]`) 时，如果存在一个之前的索引 `i`，使得 `prefixSum[i]` 的值等于 `current_prefix_sum - k`，那么就找到了一个和为 `k` 的子数组。
+
+为了高效地查找之前是否存在这样的 `prefixSum[i]`，我们可以使用一个哈希表。
+
+**哈希表 `map` 的作用：**
+`map` 存储 `(前缀和, 该前缀和出现的次数)`。
+
+**详细步骤：**
+
+1.  初始化 `count = 0` (记录和为 `k` 的子数组数量)。
+2.  初始化 `current_sum = 0` (当前遍历到的前缀和)。
+3.  创建一个哈希表 `map`。
+    *   **重要：** 将 `(0, 1)` 放入 `map` 中。这表示前缀和为 0 的情况出现了一次（对应空的前缀）。这用于处理从数组开头就满足 `k` 的子数组，例如 `nums = [1,1,1], k = 1`，当 `current_sum = 1` 时，需要查找 `current_sum - k = 0` 是否存在。如果 `0` 存在，则表示 `nums[0]` 到当前位置的子数组和为 `k`。
+
+4.  遍历数组 `nums` 的每个元素 `num` (从 `nums[0]` 到 `nums[n-1]`)：
+    *   `current_sum += num`。
+    *   **查找：** 检查 `map` 中是否存在键 `(current_sum - k)`。
+        *   如果存在，说明找到了若干个以当前位置 `j` 结尾、和为 `k` 的子数组。
+        *   `count += map.get(current_sum - k)`。
+    *   **更新：** 将当前的 `current_sum` 及其出现次数存入 `map`。
+        *   `map.put(current_sum, map.getOrDefault(current_sum, 0) + 1)`。
+
+5.  返回 `count`。
+
+**为什么 `map.put(0, 1)` 很重要？**
+
+考虑 `nums = [1,1,1], k = 2`。
+*   `map = {0: 1}`, `current_sum = 0`, `count = 0`
+
+1.  `num = 1` (索引 0)
+    *   `current_sum = 0 + 1 = 1`
+    *   查找 `map` 中是否有 `(1 - 2) = -1`。没有。
+    *   `map.put(1, 1)`。`map = {0: 1, 1: 1}`
+
+2.  `num = 1` (索引 1)
+    *   `current_sum = 1 + 1 = 2`
+    *   查找 `map` 中是否有 `(2 - 2) = 0`。有！`map.get(0)` 是 `1`。
+    *   `count += 1`。`count = 1`。 (对应子数组 `[1,1]` from `nums[0...1]`)
+    *   `map.put(2, 1)`。`map = {0: 1, 1: 1, 2: 1}`
+
+3.  `num = 1` (索引 2)
+    *   `current_sum = 2 + 1 = 3`
+    *   查找 `map` 中是否有 `(3 - 2) = 1`。有！`map.get(1)` 是 `1`。
+    *   `count += 1`。`count = 2`。 (对应子数组 `[1,1]` from `nums[1...2]`)
+    *   `map.put(3, 1)`。`map = {0: 1, 1: 1, 2: 1, 3: 1}`
+
+最终返回 `count = 2`，正确。
+
+`map.put(0, 1)` 实际上是处理了 `current_sum == k` 的情况，即子数组从索引 0 开始的情况。如果 `current_sum` 恰好等于 `k`，那么 `current_sum - k` 就是 `0`，此时 `map` 中有 `0`，就会正确计数。
+
+**时间复杂度：** O(N)。遍历数组一次，哈希表的查找和插入操作平均为 O(1)。
+**空间复杂度：** O(N)。在最坏情况下（所有前缀和都不同），哈希表可能存储 N 个不同的前缀和。
+
+---
+
+
+代码实现
+
+Java 解法
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+class Solution {
+    public int subarraySum(int[] nums, int k) {
+        int count = 0; // 统计和为 k 的子数组数量
+        int currentSum = 0; // 记录从数组开头到当前位置的累加和（前缀和）
+
+        // 使用 HashMap 存储前缀和及其出现的次数
+        // key: 前缀和的值
+        // value: 该前缀和出现的次数
+        Map<Integer, Integer> prefixSumCount = new HashMap<>();
+
+        // 初始时，前缀和为 0 的情况出现一次（对应空的前缀，用于处理子数组从索引 0 开始的情况）
+        prefixSumCount.put(0, 1);
+
+        // 遍历数组中的每一个元素
+        for (int num : nums) {
+            // 累加当前元素到 currentSum
+            currentSum += num;
+
+            // 查找是否存在一个之前的前缀和 preSum，使得 preSum = currentSum - k
+            // 如果存在，说明从 preSum 对应的位置到当前位置的子数组和为 k
+            // map.getOrDefault(currentSum - k, 0) 获取 (currentSum - k) 出现的次数
+            count += prefixSumCount.getOrDefault(currentSum - k, 0);
+
+            // 将当前的前缀和 currentSum 及其出现次数存入 HashMap
+            // 如果 currentSum 已经存在，则将其次数加 1；否则，添加并设置次数为 1。
+            prefixSumCount.put(currentSum, prefixSumCount.getOrDefault(currentSum, 0) + 1);
+        }
+
+        // 返回总的子数组数量
+        return count;
+    }
+}
+```
+
+Python 解法
+
+```python
+from typing import List
+from collections import defaultdict
+
+class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        count = 0        # 统计和为 k 的子数组数量
+        current_sum = 0  # 记录从数组开头到当前位置的累加和（前缀和）
+
+        # 使用 defaultdict(int) 存储前缀和及其出现的次数
+        # defaultdict(int) 在访问不存在的键时会自动创建一个默认值 0，简化代码
+        # key: 前缀和的值
+        # value: 该前缀和出现的次数
+        prefix_sum_count = defaultdict(int)
+
+        # 初始时，前缀和为 0 的情况出现一次（对应空的前缀，用于处理子数组从索引 0 开始的情况）
+        prefix_sum_count[0] = 1
+
+        # 遍历数组中的每一个元素
+        for num in nums:
+            # 累加当前元素到 current_sum
+            current_sum += num
+
+            # 查找是否存在一个之前的前缀和 pre_sum，使得 pre_sum = current_sum - k
+            # 如果存在，说明从 pre_sum 对应的位置到当前位置的子数组和为 k
+            # prefix_sum_count[current_sum - k] 直接获取 (current_sum - k) 出现的次数
+            count += prefix_sum_count[current_sum - k]
+
+            # 将当前的前缀和 current_sum 及其出现次数存入 defaultdict
+            # 如果 current_sum 已经存在，则将其次数加 1；否则，添加并设置次数为 1。
+            prefix_sum_count[current_sum] += 1
+        
+        # 返回总的子数组数量
+        return count
+
+```
+
+---
+
+结合示例演示代码执行过程
+
+我们使用**示例 1** 来演示前缀和 + 哈希表方法的执行过程：
+
+输入：`nums = [1,1,1], k = 2`
+
+**初始状态：**
+`count = 0`
+`current_sum = 0`
+`prefix_sum_count = {0: 1}`
+
+**循环 `for num in nums`：**
+
+1.  **`num = 1` (索引 0)**
+    *   `current_sum = 0 + 1 = 1`
+    *   查找 `prefix_sum_count` 中是否有 `(current_sum - k) = (1 - 2) = -1`。
+        *   `prefix_sum_count.getOrDefault(-1, 0)` 返回 `0`。
+        *   `count += 0`。`count` 仍为 `0`。
+    *   更新 `prefix_sum_count`：`prefix_sum_count.put(1, prefix_sum_count.getOrDefault(1, 0) + 1)`。
+        *   `prefix_sum_count` 变为 `{0: 1, 1: 1}`。
+
+2.  **`num = 1` (索引 1)**
+    *   `current_sum = 1 + 1 = 2`
+    *   查找 `prefix_sum_count` 中是否有 `(current_sum - k) = (2 - 2) = 0`。
+        *   `prefix_sum_count.getOrDefault(0, 0)` 返回 `1`。
+        *   `count += 1`。`count` 变为 `1`。 (对应子数组 `[1,1]`，即 `nums[0...1]`)
+    *   更新 `prefix_sum_count`：`prefix_sum_count.put(2, prefix_sum_count.getOrDefault(2, 0) + 1)`。
+        *   `prefix_sum_count` 变为 `{0: 1, 1: 1, 2: 1}`。
+
+3.  **`num = 1` (索引 2)**
+    *   `current_sum = 2 + 1 = 3`
+    *   查找 `prefix_sum_count` 中是否有 `(current_sum - k) = (3 - 2) = 1`。
+        *   `prefix_sum_count.getOrDefault(1, 0)` 返回 `1`。
+        *   `count += 1`。`count` 变为 `2`。 (对应子数组 `[1,1]`，即 `nums[1...2]`)
+    *   更新 `prefix_sum_count`：`prefix_sum_count.put(3, prefix_sum_count.getOrDefault(3, 0) + 1)`。
+        *   `prefix_sum_count` 变为 `{0: 1, 1: 1, 2: 1, 3: 1}`。
+
+**循环结束。**
+
+最终返回 `count = 2`，与示例输出一致。
+
+---
+
+我们使用**示例 2** 来演示前缀和 + 哈希表方法的执行过程：
+
+输入：`nums = [1,2,3], k = 3`
+
+**初始状态：**
+`count = 0`
+`current_sum = 0`
+`prefix_sum_count = {0: 1}`
+
+**循环 `for num in nums`：**
+
+1.  **`num = 1` (索引 0)**
+    *   `current_sum = 0 + 1 = 1`
+    *   查找 `prefix_sum_count` 中是否有 `(1 - 3) = -2`。没有。
+    *   `count` 仍为 `0`。
+    *   `prefix_sum_count` 变为 `{0: 1, 1: 1}`。
+
+2.  **`num = 2` (索引 1)**
+    *   `current_sum = 1 + 2 = 3`
+    *   查找 `prefix_sum_count` 中是否有 `(3 - 3) = 0`。
+        *   `prefix_sum_count.getOrDefault(0, 0)` 返回 `1`。
+        *   `count += 1`。`count` 变为 `1`。 (对应子数组 `[1,2]` from `nums[0...1]`)
+    *   `prefix_sum_count` 变为 `{0: 1, 1: 1, 3: 1}`。
+
+3.  **`num = 3` (索引 2)**
+    *   `current_sum = 3 + 3 = 6`
+    *   查找 `prefix_sum_count` 中是否有 `(6 - 3) = 3`。
+        *   `prefix_sum_count.getOrDefault(3, 0)` 返回 `1`。
+        *   `count += 1`。`count` 变为 `2`。 (对应子数组 `[3]` from `nums[2...2]`)
+    *   `prefix_sum_count` 变为 `{0: 1, 1: 1, 3: 1, 6: 1}`。
+
+**循环结束。**
+
+最终返回 `count = 2`，与示例输出一致。
+
+这个过程清晰地展示了前缀和与哈希表如何协同工作，高效地统计出和为 `k` 的连续子数组的数量。
+
+
+
+
+
+
 
 
 
