@@ -4333,6 +4333,1073 @@ class Solution:
 
 
 
+### 力扣53. 最大子数组和
+已解答
+中等
+
+给你一个整数数组 nums ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
+
+子数组是数组中的一个连续部分。
+
+ 
+
+示例 1：
+
+输入：nums = [-2,1,-3,4,-1,2,1,-5,4]
+输出：6
+解释：连续子数组 [4,-1,2,1] 的和最大，为 6 。
+
+示例 2：
+
+输入：nums = [1]
+输出：1
+
+示例 3：
+
+输入：nums = [5,4,-1,7,8]
+输出：23
+ 
+
+提示：
+
+1 <= nums.length <= 10^5
+-10^4 <= nums[i] <= 10^4
+
+
+
+
+
+
+
+
+
+
+#### 贪心算法，无注释
+
+
+```java
+
+
+
+
+class Solution {
+    public int maxSubArray(int[] nums) {
+        /**
+        局部最优：当前“连续和”为负数的时候立刻放弃，从下一个元素重新计算“连续和”，因为负数加上下一个元素 “连续和”只会越来越小。
+        全局最优：选取最大“连续和”。
+        局部最优的情况下，并记录最大的“连续和”，可以推出全局最优。
+        */
+
+
+        int sum=0;
+
+        int maxSum = Integer.MIN_VALUE;
+
+        for( int i=0; i < nums.length; i++ ) {
+
+            sum += nums[i];
+
+            if( sum > maxSum ) {
+
+                maxSum = sum;
+
+
+            }
+
+            if( sum < 0 ) {
+
+                sum = 0;
+
+            }
+
+
+
+        }
+
+
+        return maxSum;
+        
+    }
+}
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+#### 贪心算法，注释版
+
+
+
+命令：
+
+1.在我的代码中，逐行嵌入详细注释说明，在类注释中嵌入解题思路总结，使其易于理解和复习。
+
+2.结合示例和代码进行详细讲解说明
+
+
+
+
+
+
+好的，我们来为你在 <mcfile name="数据结构与算法学习记录.md" path="a:\study\学习笔记\数据结构与算法学习记录.md"></mcfile> 中 LeetCode 53 "最大子数组和" 问题的贪心算法 Java 代码添加详细注释，并结合示例进行讲解。
+
+```java
+/**
+ * LeetCode 53: 最大子数组和
+ *
+ * 问题描述：
+ * 给定一个整数数组 nums，找到一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
+ *
+ * 解题思路总结 (贪心算法):
+ * 核心思想：遍历数组，维护一个当前的连续子数组和 `sum`。
+ *
+ * 策略：
+ * 1. 初始化当前连续和 `sum = 0`，以及全局最大和 `maxSum = Integer.MIN_VALUE` (确保能正确处理全是负数的情况)。
+ * 2. 遍历数组中的每个元素 `nums[i]`：
+ *    a. 将当前元素加到 `sum` 上：`sum += nums[i]`。
+ *    b. 更新全局最大和：如果当前的 `sum` 大于 `maxSum`，则更新 `maxSum = sum`。
+ *    c. **贪心选择的关键**：如果 `sum` 变为负数 (`sum < 0`)，说明以当前元素结尾的这段连续子数组的和已经是负值了。
+ *       对于后续的元素来说，再加上这个负的 `sum` 只会让总和变得更小。因此，我们应该放弃之前的负和子数组，
+ *       从下一个元素开始重新计算连续和。所以，将 `sum` 重置为 0。
+ * 3. 遍历结束后，`maxSum` 中存储的就是整个数组中最大子数组的和。
+ *
+ * 局部最优与全局最优：
+ * - 局部最优：在每一步，如果当前连续和 `sum` 为负，就将其丢弃并从 0 开始重新累加。这是因为负的 `sum` 对后续求和没有贡献，保留它不是当前步骤的最优选择。
+ * - 全局最优：通过不断维护和更新 `maxSum`，确保记录了整个遍历过程中出现过的最大的连续子数组和。局部最优的决策（丢弃负和）保证了我们不会错过可能的最大和。
+ */
+class Solution {
+    /**
+     * 计算最大子数组和
+     * @param nums 输入的整数数组
+     * @return 最大子数组的和
+     */
+    public int maxSubArray(int[] nums) {
+        // 局部最优：当前“连续和”为负数的时候立刻放弃，从下一个元素重新计算“连续和”，因为负数加上下一个元素 “连续和”只会越来越小。
+        // 全局最优：选取最大“连续和”。
+        // 局部最优的情况下，并记录最大的“连续和”，可以推出全局最优。
+
+        // 用于记录当前的连续子数组和
+        int sum = 0;
+        // 用于记录遍历过程中遇到的最大子数组和，初始化为整数最小值以正确处理负数数组
+        int maxSum = Integer.MIN_VALUE;
+
+        // 遍历数组中的每一个元素
+        for (int i = 0; i < nums.length; i++) {
+            // 将当前元素累加到当前的连续和 sum 中
+            sum += nums[i];
+
+            // 更新最大和：如果当前的连续和 sum 比已记录的最大和 maxSum 更大
+            if (sum > maxSum) {
+                // 则更新 maxSum 为当前的 sum
+                maxSum = sum;
+            }
+
+            // 贪心选择：如果当前的连续和 sum 变成了负数
+            if (sum < 0) {
+                // 说明从之前的某个起点到当前元素的这段子数组的和为负，
+                // 它对于后续子数组的和只会起到负面作用。
+                // 因此，放弃这段子数组，将 sum 重置为 0，准备从下一个元素开始重新计算连续和。
+                sum = 0;
+            }
+        }
+
+        // 遍历结束后，maxSum 中存储的就是整个数组的最大子数组和
+        return maxSum;
+    }
+}
+```
+
+**结合示例和代码进行详细讲解说明**
+
+**示例 1: `nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]`**
+
+1.  **初始化:** `sum = 0`, `maxSum = Integer.MIN_VALUE`.
+2.  **循环:**
+    *   `i = 0` (`nums[0] = -2`):
+        *   `sum = 0 + (-2) = -2`.
+        *   `sum (-2) > maxSum (MIN_VALUE)`? Yes. `maxSum` 变为 -2.
+        *   `sum (-2) < 0`? Yes. `sum` 变为 0.
+    *   `i = 1` (`nums[1] = 1`):
+        *   `sum = 0 + 1 = 1`.
+        *   `sum (1) > maxSum (-2)`? Yes. `maxSum` 变为 1.
+        *   `sum (1) < 0`? No.
+    *   `i = 2` (`nums[2] = -3`):
+        *   `sum = 1 + (-3) = -2`.
+        *   `sum (-2) > maxSum (1)`? No.
+        *   `sum (-2) < 0`? Yes. `sum` 变为 0.
+    *   `i = 3` (`nums[3] = 4`):
+        *   `sum = 0 + 4 = 4`.
+        *   `sum (4) > maxSum (1)`? Yes. `maxSum` 变为 4.
+        *   `sum (4) < 0`? No.
+    *   `i = 4` (`nums[4] = -1`):
+        *   `sum = 4 + (-1) = 3`.
+        *   `sum (3) > maxSum (4)`? No.
+        *   `sum (3) < 0`? No.
+    *   `i = 5` (`nums[5] = 2`):
+        *   `sum = 3 + 2 = 5`.
+        *   `sum (5) > maxSum (4)`? Yes. `maxSum` 变为 5.
+        *   `sum (5) < 0`? No.
+    *   `i = 6` (`nums[6] = 1`):
+        *   `sum = 5 + 1 = 6`.
+        *   `sum (6) > maxSum (5)`? Yes. `maxSum` 变为 6.
+        *   `sum (6) < 0`? No.
+    *   `i = 7` (`nums[7] = -5`):
+        *   `sum = 6 + (-5) = 1`.
+        *   `sum (1) > maxSum (6)`? No.
+        *   `sum (1) < 0`? No.
+    *   `i = 8` (`nums[8] = 4`):
+        *   `sum = 1 + 4 = 5`.
+        *   `sum (5) > maxSum (6)`? No.
+        *   `sum (5) < 0`? No.
+3.  **循环结束.**
+4.  **返回 `maxSum = 6`**.
+
+**输出:**
+
+`6`
+
+这个过程清晰地展示了贪心算法如何工作：它只关注当前的连续和 `sum`。一旦 `sum` 变为负数，就意味着继续累加这个负和是没有意义的（对于寻找最大和而言），因此果断将其重置为 0，相当于开始了新的子数组求和。同时，`maxSum` 始终记录着整个过程中出现过的最大 `sum` 值。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 力扣56. 合并区间
+已解答
+中等
+
+以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi] 。请你合并所有重叠的区间，并返回 一个不重叠的区间数组，该数组需恰好覆盖输入中的所有区间 。
+
+ 
+
+示例 1：
+
+输入：intervals = [[1,3],[2,6],[8,10],[15,18]]
+输出：[[1,6],[8,10],[15,18]]
+解释：区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6].
+
+示例 2：
+
+输入：intervals = [[1,4],[4,5]]
+输出：[[1,5]]
+解释：区间 [1,4] 和 [4,5] 可被视为重叠区间。
+ 
+
+提示：
+
+1 <= intervals.length <= 10^4
+
+intervals[i].length == 2
+
+0 <= starti <= endi <= 10^4
+
+
+
+
+
+
+
+
+
+#### 贪心算法，重叠区间问题，无注释
+
+
+
+
+```java
+
+
+
+
+class Solution {
+    public int[][] merge(int[][] intervals) {
+
+        if (intervals == null || intervals.length <= 1) {
+            // 处理输入为空或只有一个区间的情况
+            return intervals;
+        }
+
+
+        LinkedList<int[]> result = new LinkedList<int[]>(); 
+        // 使用 LinkedList 来存储合并后的区间
+        // LinkedList 方便在末尾添加和获取/修改最后一个元素
+        // LinkedList<LinkedList<int>> 类型错误： int 是基本数据类型，不能直接作为泛型参数。您应该使用包装类 Integer 或者更常见的是使用 int[] 来表示一个区间。由于您处理的是 int[] 类型的区间，所以 result 应该声明为 LinkedList<int[]>。
+
+        Arrays.sort( intervals, ( a,b ) -> { return Integer.compare( a[0],b[0] ); }  );
+        // 对区间按照起始位置进行排序
+        // 使用 Lambda 表达式作为 Comparator，比较两个区间数组 a 和 b 的第一个元素 (起始位置)
+
+
+        result.add( intervals[0] );
+
+
+        for( int i=1; i < intervals.length; i++ ) {
+            // 遍历排序后的区间
+
+            if( intervals[i][0] <= result.getLast()[1] ) {
+
+
+                result.getLast()[1] = Math.max( result.getLast()[1], intervals[i][1] );
+                // 合并逻辑错误： 在合并重叠区间时，您应该比较当前区间 intervals[i] 的起始位置与 result 中 最后一个已合并区间 的结束位置，而不是与 intervals[i-1] 的结束位置比较。并且更新时，应该更新 result 中最后一个区间的结束位置，而不是创建一个新的区间并替换。
+                // Java 中创建数组的语法错误： 在 Java 中，您不能使用 [ element1, element2, ... ] 这种语法来创建一个数组字面量。这种语法在 JavaScript 或 Python 中是有效的，但在 Java 中是无效的。要创建一个新的 int 数组，您需要使用 new int[]{ element1, element2, ... }。
+
+            }
+            else {
+
+                result.add( intervals[i] );
+
+            }
+
+
+        }
+
+
+        return result.toArray(new int[0][]);
+        // 将 LinkedList 转换为 int[][] 数组并返回
+        // toArray(T[] a) 方法可以将集合转换为指定类型的数组
+        // new int[0][] 创建一个长度为 0 的 int[][] 数组，作为 toArray 方法的参数，
+        // 这样 toArray 方法会创建一个新的、大小合适的 int[][] 数组来存储 merged 中的元素
+
+        
+    }
+}
+
+
+
+```
+
+
+
+
+
+
+
+
+
+#### 贪心算法，重叠区间问题，注释版
+
+
+
+命令：
+
+1.在我的代码中，逐行嵌入详细注释说明，在类注释中嵌入解题思路总结，使其易于理解和复习。
+
+2.结合示例和代码进行详细讲解说明
+
+3.不需要更改代码逻辑或更改解法
+
+
+
+
+
+
+
+
+
+
+
+
+          
+好的，我们来为 <mcfile name="数据结构与算法学习记录.md" path="a:\study\学习笔记\算法学习记录\数据结构与算法学习记录.md"></mcfile> 文件中 LeetCode 56 "合并区间" 的 Java 代码添加详细的逐行注释、解题思路总结，并结合示例进行讲解。
+
+
+
+**解题思路总结:**
+
+本题要求合并所有重叠的区间。我们可以采用贪心算法来解决。核心思想是：
+
+1.  **排序:** 首先将所有区间按照起始位置升序排序。这使得我们可以按顺序处理区间，并且保证当我们考虑一个区间时，所有起始位置比它早的区间都已经被处理过了。
+2.  **合并:** 维护一个结果列表 `result`，用于存储合并后的不重叠区间。
+    *   将第一个排序后的区间加入 `result`。
+    *   遍历剩余的已排序区间：
+        *   获取 `result` 中的最后一个区间（即当前已合并的最大区间）`lastMerged`。
+        *   获取当前正在遍历的区间 `currentInterval`。
+        *   **判断重叠:** 如果 `currentInterval` 的起始位置小于等于 `lastMerged` 的结束位置 (`currentInterval.start <= lastMerged.end`)，说明它们重叠。
+        *   **执行合并:** 如果重叠，更新 `lastMerged` 的结束位置为 `max(lastMerged.end, currentInterval.end)`。这样就将 `currentInterval` 合并到了 `lastMerged` 中。
+        *   **不重叠:** 如果 `currentInterval` 的起始位置大于 `lastMerged` 的结束位置，说明它们不重叠，`currentInterval` 是一个新的不重叠区间的开始。将 `currentInterval` 加入 `result` 列表。
+3.  **返回结果:** 遍历结束后，`result` 列表中存储的就是所有合并后的不重叠区间。将其转换为题目要求的二维数组格式返回。
+
+
+
+
+```java
+import java.util.Arrays;      // 导入 Arrays 类，用于数组排序
+import java.util.LinkedList; // 导入 LinkedList 类，用于存储合并后的区间
+
+/**
+ * LeetCode 56. 合并区间
+ *
+ * 解题思路：
+ * 1. 将区间按起始位置升序排序。
+ * 2. 初始化结果列表，并将第一个区间加入。
+ * 3. 遍历排序后的区间：
+ *    a. 如果当前区间与结果列表最后一个区间重叠，则合并（更新最后一个区间的结束位置）。
+ *    b. 如果不重叠，则将当前区间直接加入结果列表。
+ * 4. 将结果列表转换为二维数组返回。
+ */
+class Solution {
+    /**
+     * 合并所有重叠的区间。
+     * @param intervals 一个包含若干区间的二维数组，intervals[i] = [start_i, end_i]。
+     * @return 一个不重叠的区间数组，覆盖输入中的所有区间。
+     */
+    public int[][] merge(int[][] intervals) {
+
+        // 边界情况处理：如果输入为空或只有一个区间，无需合并，直接返回
+        if (intervals == null || intervals.length <= 1) {
+            return intervals;
+        }
+
+        // 1. 排序：按照区间的起始位置 (intervals[i][0]) 升序排序
+        // 使用 Lambda 表达式定义比较器：比较两个区间 a 和 b 的第一个元素 a[0] 和 b[0]
+        Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
+        // 或者使用匿名内部类：
+        // Arrays.sort(intervals, new Comparator<int[]>() {
+        //     @Override
+        //     public int compare(int[] a, int[] b) {
+        //         return Integer.compare(a[0], b[0]);
+        //     }
+        // });
+
+        // 2. 初始化结果列表：使用 LinkedList 存储合并后的区间
+        // LinkedList 提供了方便的 getLast() 方法来访问和修改最后一个元素
+        LinkedList<int[]> result = new LinkedList<>();
+        // 将排序后的第一个区间作为初始合并区间加入结果列表
+        result.add(intervals[0]);
+
+        // 3. 遍历与合并：从第二个区间开始遍历排序后的区间
+        for (int i = 1; i < intervals.length; i++) {
+            // 获取当前正在处理的区间
+            int[] currentInterval = intervals[i];
+            // 获取结果列表中最后一个已合并的区间
+            int[] lastMerged = result.getLast();
+
+            // 判断是否重叠：当前区间的起始位置 <= 最后一个合并区间的结束位置
+            if (currentInterval[0] <= lastMerged[1]) {
+                // 重叠，需要合并：更新最后一个合并区间的结束位置
+                // 新的结束位置取 原结束位置 和 当前区间结束位置 中的较大值
+                // 例如：lastMerged=[1,3], currentInterval=[2,6] -> 合并后 lastMerged 变为 [1,6]
+                // 例如：lastMerged=[1,6], currentInterval=[2,4] -> 合并后 lastMerged 仍为 [1,6]
+                lastMerged[1] = Math.max(lastMerged[1], currentInterval[1]);
+                // 注意：这里是直接修改 result 列表中最后一个数组元素的值，因为数组是引用类型
+            } else {
+                // 不重叠：当前区间与最后一个合并区间没有交集
+                // 将当前区间作为一个新的独立区间添加到结果列表中
+                result.add(currentInterval);
+            }
+        }
+
+        // 4. 返回结果：将 LinkedList 转换为 int[][] 数组
+        // toArray 方法需要一个指定类型的数组作为参数，用于确定返回数组的类型
+        // new int[result.size()][2] 创建了一个正确大小的二维数组
+        // 如果传入 new int[0][]，toArray 内部也会自动创建合适大小的数组
+        return result.toArray(new int[result.size()][]);
+        // return result.toArray(new int[0][]); // 这种写法也可以
+    }
+}
+```
+
+**结合示例 `intervals = [[1,3],[2,6],[8,10],[15,18]]` 进行讲解:**
+
+1.  **排序:**
+    *   输入: `[[1,3],[2,6],[8,10],[15,18]]`
+    *   按起始位置排序后: `[[1,3],[2,6],[8,10],[15,18]]` (在这个例子中，输入已经是排序好的)
+
+2.  **初始化:**
+    *   `result = new LinkedList<>()`
+    *   将第一个区间 `[1,3]` 加入 `result`。 `result = [[1,3]]`
+
+3.  **遍历与合并:**
+    *   **i = 1:** `currentInterval = [2,6]`. `lastMerged = result.getLast() = [1,3]`.
+        *   判断重叠: `currentInterval[0] (2) <= lastMerged[1] (3)` 为 `true`。
+        *   合并: `lastMerged[1] = Math.max(lastMerged[1] (3), currentInterval[1] (6)) = 6`.
+        *   `result` 中最后一个元素被修改为 `[1,6]`. `result = [[1,6]]`.
+    *   **i = 2:** `currentInterval = [8,10]`. `lastMerged = result.getLast() = [1,6]`.
+        *   判断重叠: `currentInterval[0] (8) <= lastMerged[1] (6)` 为 `false`。
+        *   不重叠: 将 `currentInterval [8,10]` 加入 `result`.
+        *   `result = [[1,6], [8,10]]`.
+    *   **i = 3:** `currentInterval = [15,18]`. `lastMerged = result.getLast() = [8,10]`.
+        *   判断重叠: `currentInterval[0] (15) <= lastMerged[1] (10)` 为 `false`。
+        *   不重叠: 将 `currentInterval [15,18]` 加入 `result`.
+        *   `result = [[1,6], [8,10], [15,18]]`.
+
+4.  **返回结果:**
+    *   将 `result` 转换为二维数组。
+    *   返回 `[[1,6], [8,10], [15,18]]`。
+
+
+
+
+
+---
+        
+
+
+
+
+
+
+
+
+
+
+
+### 189. 轮转数组
+
+**题目描述：**
+
+给定一个整数数组 `nums`，将数组中的元素向右轮转 `k` 个位置，其中 `k` 是非负数。
+
+**示例 1:**
+
+输入: `nums = [1,2,3,4,5,6,7], k = 3`
+输出: `[5,6,7,1,2,3,4]`
+解释:
+向右轮转 1 步: `[7,1,2,3,4,5,6]`
+向右轮转 2 步: `[6,7,1,2,3,4,5]`
+向右轮转 3 步: `[5,6,7,1,2,3,4]`
+
+**示例 2:**
+
+输入：`nums = [-1,-100,3,99], k = 2`
+输出：`[3,99,-1,-100]`
+解释:
+向右轮转 1 步: `[99,-1,-100,3]`
+向右轮转 2 步: `[3,99,-1,-100]`
+
+**提示：**
+
+*   `1 <= nums.length <= 10^5`
+*   `-2^31 <= nums[i] <= 2^31 - 1`
+*   `0 <= k <= 10^5`
+
+**进阶：**
+
+*   尽可能想出更多的解决方案，至少有 **三种** 不同的方法可以解决这个问题。
+*   你可以使用空间复杂度为 `O(1)` 的 **原地** 算法解决这个问题吗？
+
+---
+
+ 题目解析与通用预处理
+
+题目要求将数组元素向右轮转 `k` 个位置。向右轮转 `k` 个位置意味着原数组末尾的 `k` 个元素会移动到数组的前面，而前面的元素则依次向后移动。
+
+一个重要的观察是，如果 `k` 大于数组的长度 `n`，那么实际的轮转次数是 `k % n`。例如，`[1,2,3,4,5]` 轮转 5 次和轮转 0 次效果一样，轮转 6 次和轮转 1 次效果一样。所以，我们首先需要对 `k` 进行预处理：
+
+`k = k % nums.length`
+
+如果 `k` 经过取模后为 `0`，则表示无需进行任何轮转，可以直接返回。
+
+接下来，我们将探讨三种常用的解法。
+
+---
+
+#### 解法一：使用额外数组 (Auxiliary Array)
+
+ 1. 详细讲解
+
+**思路：**
+这是最直观的解法。由于轮转操作会改变元素的最终位置，我们可以创建一个新的数组，然后将原数组中的元素按照轮转后的位置关系依次放入新数组中。最后，再将新数组的元素复制回原数组。
+
+**位置映射关系：**
+对于原数组 `nums` 中的元素 `nums[i]`，它在轮转 `k` 次后会移动到新数组的索引 `(i + k) % n` 处。
+
+**例如：** `nums = [1,2,3,4,5,6,7], k = 3`
+`n = 7`, `k = 3`
+*   `nums[0]` (1) 移动到 `(0+3)%7 = 3`
+*   `nums[1]` (2) 移动到 `(1+3)%7 = 4`
+*   `nums[2]` (3) 移动到 `(2+3)%7 = 5`
+*   `nums[3]` (4) 移动到 `(3+3)%7 = 6`
+*   `nums[4]` (5) 移动到 `(4+3)%7 = 0`
+*   `nums[5]` (6) 移动到 `(5+3)%7 = 1`
+*   `nums[6]` (7) 移动到 `(6+3)%7 = 2`
+
+最终新数组 `newNums` 为 `[5,6,7,1,2,3,4]`。
+
+**优点：**
+*   逻辑简单，易于理解和实现。
+
+**缺点：**
+*   需要额外的 `O(N)` 空间来创建新数组，不满足进阶要求中的 `O(1)` 空间复杂度。
+
+ 2. 复杂度分析
+
+*   **时间复杂度：** O(N)。
+    *   遍历一次原数组将元素放入新数组：O(N)。
+    *   遍历一次新数组将元素复制回原数组：O(N)。
+    *   总计 O(N)。
+*   **空间复杂度：** O(N)。需要一个与原数组大小相同的新数组。
+
+ 3. 流程图 (Mermaid)
+
+ 4. Java 代码
+
+```java
+class Solution {
+    public void rotate(int[] nums, int k) {
+        int n = nums.length;
+        // 预处理 k：如果 k 大于 n，实际轮转次数是 k % n
+        k = k % n;
+
+        // 如果 k 为 0，表示无需轮转，直接返回
+        if (k == 0) {
+            return;
+        }
+
+        // 创建一个临时数组，用于存储轮转后的元素
+        int[] newNums = new int[n];
+
+        // 遍历原数组，将每个元素放到它在轮转后应该出现的位置
+        // 原数组索引 i 的元素，轮转 k 步后，会移动到 (i + k) % n 的位置
+        for (int i = 0; i < n; i++) {
+            newNums[(i + k) % n] = nums[i];
+        }
+
+        // 将临时数组中的元素复制回原数组
+        // System.arraycopy(src, srcPos, dest, destPos, length) 是 Java 提供的数组复制方法
+        System.arraycopy(newNums, 0, nums, 0, n);
+
+        // 或者手动复制：
+        // for (int i = 0; i < n; i++) {
+        //     nums[i] = newNums[i];
+        // }
+    }
+}
+```
+
+ 5. Python 代码
+
+```python
+from typing import List
+
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        n = len(nums)
+        # 预处理 k：如果 k 大于 n，实际轮转次数是 k % n
+        k = k % n
+
+        # 如果 k 为 0，表示无需轮转，直接返回
+        if k == 0:
+            return
+
+        # 创建一个临时列表（Python中列表是动态数组）
+        # 使用切片操作可以方便地创建新列表，并进行元素放置
+        # 后 k 个元素 (nums[n-k:]) 放到前面，前 n-k 个元素 (nums[:n-k]) 放到后面
+        new_nums = nums[n-k:] + nums[:n-k]
+        
+        # 将新列表的元素复制回原列表
+        # 注意：直接 nums = new_nums 不会修改原列表的引用，而是创建一个新列表并赋值给 nums 变量。
+        # 为了原地修改，需要逐个元素赋值或者使用切片赋值。
+        for i in range(n):
+            nums[i] = new_nums[i]
+        
+        # 或者更简洁的原地修改方式（Python特有）：
+        # nums[:] = nums[n-k:] + nums[:n-k]
+```
+
+ 6. 示例演示 (`nums = [1,2,3,4,5,6,7], k = 3`)
+
+1.  **预处理 `k`：** `n = 7`, `k = 3 % 7 = 3`。
+2.  **创建 `newNums`：** `newNums = [0,0,0,0,0,0,0]` (初始化为 0 或其他默认值)。
+3.  **填充 `newNums`：**
+    *   `i = 0, nums[0] = 1`. `newNums[(0+3)%7]` 即 `newNums[3] = 1`. `newNums = [0,0,0,1,0,0,0]`
+    *   `i = 1, nums[1] = 2`. `newNums[(1+3)%7]` 即 `newNums[4] = 2`. `newNums = [0,0,0,1,2,0,0]`
+    *   `i = 2, nums[2] = 3`. `newNums[(2+3)%7]` 即 `newNums[5] = 3`. `newNums = [0,0,0,1,2,3,0]`
+    *   `i = 3, nums[3] = 4`. `newNums[(3+3)%7]` 即 `newNums[6] = 4`. `newNums = [0,0,0,1,2,3,4]`
+    *   `i = 4, nums[4] = 5`. `newNums[(4+3)%7]` 即 `newNums[0] = 5`. `newNums = [5,0,0,1,2,3,4]`
+    *   `i = 5, nums[5] = 6`. `newNums[(5+3)%7]` 即 `newNums[1] = 6`. `newNums = [5,6,0,1,2,3,4]`
+    *   `i = 6, nums[6] = 7`. `newNums[(6+3)%7]` 即 `newNums[2] = 7`. `newNums = [5,6,7,1,2,3,4]`
+4.  **复制回 `nums`：** 将 `newNums` 的内容复制到 `nums`。
+    `nums` 变为 `[5,6,7,1,2,3,4]`。
+5.  **结束。**
+
+---
+
+#### 解法二：环状替换 (Cyclic Replacements / Juggling Algorithm)
+
+ 1. 详细讲解
+
+**思路：**
+这种方法实现了 `O(1)` 空间复杂度，但理解起来稍微复杂一些。它的核心思想是：每个元素最终都会移动到其目标位置，而目标位置上的元素又会移动到其下一个目标位置，形成一个“环”。我们可以沿着这些环进行元素的替换。
+
+**关键点：**
+1.  **起始点：** 从数组的第一个元素 `nums[0]` 开始。
+2.  **目标位置：** `nums[i]` 的目标位置是 `(i + k) % n`。
+3.  **循环：** 沿着 `current_index -> (current_index + k) % n -> ((current_index + k) % n + k) % n -> ...` 这样的路径移动元素。
+4.  **停止条件：** 当我们回到起始点时，一个环就完成了。
+5.  **多个环：** 数组可能由多个不相交的环组成。环的数量等于 `gcd(n, k)` (n 和 k 的最大公约数)。我们需要从 `gcd(n, k)` 个不同的起始点开始，分别完成每个环的替换，直到所有元素都被移动。
+
+**步骤：**
+1.  **预处理 `k = k % n`。** 如果 `k = 0`，直接返回。
+2.  **计算最大公约数 `gcd_val = gcd(n, k)`。**
+3.  **外层循环：** 遍历 `start` 索引从 `0` 到 `gcd_val - 1`。每个 `start` 索引代表一个环的起点。
+4.  **内层循环 (处理一个环)：**
+    *   初始化 `current_index = start`。
+    *   保存 `temp = nums[current_index]` (这是当前环中第一个要移动的元素)。
+    *   初始化 `prev_value = temp`。
+    *   进入 `do-while` 循环 (或 `while` 循环，但需要特殊处理第一次移动)：
+        *   计算 `next_index = (current_index + k) % n`。
+        *   `next_value = nums[next_index]` (保存下一个位置的元素)。
+        *   `nums[next_index] = prev_value` (将 `prev_value` 放到 `next_index` 的位置)。
+        *   `prev_value = next_value` (更新 `prev_value` 为刚刚被覆盖的元素)。
+        *   `current_index = next_index` (移动到下一个位置)。
+    *   循环直到 `current_index` 再次回到 `start`。
+
+**理解为什么 `gcd(n, k)` 个环：**
+因为 `k` 步的移动是周期的，每一步都在模 `n` 意义下进行。当 `current_index` 加上 `k` 的倍数 `m*k` 模 `n` 再次等于 `start` 时，一个环就完成了。这意味着 `(start + m*k) % n == start`，等价于 `(m*k) % n == 0`。
+`m*k` 必须是 `n` 的倍数。最小的 `m` 是 `n / gcd(n, k)`。
+所以每个环的长度是 `n / gcd(n, k)`。总共 `n` 个元素，所以有 `n / (n / gcd(n, k)) = gcd(n, k)` 个环。
+
+**优点：**
+*   原地操作，空间复杂度 `O(1)`。
+*   时间复杂度 `O(N)`。
+
+**缺点：**
+*   逻辑相对复杂，不易理解。
+*   实现时容易出错，特别是循环边界和 `gcd` 的计算。
+
+ 2. 复杂度分析
+
+*   **时间复杂度：** O(N)。每个元素只会被访问和移动一次。计算 `gcd` 也是非常快的。
+*   **空间复杂度：** O(1)。只使用了常数个额外变量。
+
+ 3. 流程图 (Mermaid)
+
+ 4. Java 代码
+
+```java
+class Solution {
+    public void rotate(int[] nums, int k) {
+        int n = nums.length;
+        k = k % n; // 预处理 k
+
+        if (k == 0) {
+            return; // 无需轮转
+        }
+
+        // 计算 n 和 k 的最大公约数
+        // gcd(a, b) = gcd(b, a % b)
+        // 结束条件：当 b == 0 时，gcd(a, 0) = a
+        int gcd_val = gcd(n, k);
+
+        // 共有 gcd_val 个不相交的环
+        // 从每个环的起始点开始进行元素替换
+        for (int start = 0; start < gcd_val; start++) {
+            int current_index = start;
+            // 保存当前环的第一个元素，它最终会回到 start 位置
+            int prev_value = nums[start]; 
+
+            // 内层循环：沿着当前环进行元素替换
+            do {
+                // 计算下一个元素应该放置的位置
+                int next_index = (current_index + k) % n;
+                
+                // 暂存 next_index 位置的元素，因为它将被 prev_value 覆盖
+                int temp = nums[next_index];
+                
+                // 将 prev_value 放置到 next_index 的位置
+                nums[next_index] = prev_value;
+                
+                // 更新 prev_value 为刚刚被覆盖的元素，它将是下一次放置的元素
+                prev_value = temp;
+                
+                // 移动到下一个位置
+                current_index = next_index;
+
+            } while (current_index != start); // 循环直到回到起始点，一个环完成
+        }
+    }
+
+    // 辅助函数：计算最大公约数 (Greatest Common Divisor)
+    private int gcd(int a, int b) {
+        return b == 0 ? a : gcd(b, a % b);
+    }
+}
+```
+
+ 5. Python 代码
+
+```python
+import math # 导入 math 模块用于 gcd 函数
+from typing import List
+
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        n = len(nums)
+        k = k % n # 预处理 k
+
+        if k == 0:
+            return # 无需轮转
+
+        # 计算 n 和 k 的最大公约数
+        # math.gcd(a, b) 函数在 Python 3.5+ 中可用
+        gcd_val = math.gcd(n, k)
+
+        # 共有 gcd_val 个不相交的环
+        # 从每个环的起始点开始进行元素替换
+        for start in range(gcd_val):
+            current_index = start
+            # 保存当前环的第一个元素，它最终会回到 start 位置
+            prev_value = nums[start] 
+
+            # 内层循环：沿着当前环进行元素替换
+            # 使用一个计数器来确保循环至少执行 n/gcd_val 次，直到回到起点
+            # 或者使用 do-while 结构模拟 (Python 没有 do-while)
+            # 这里用一个简单的 while True 并在条件满足时 break
+            while True:
+                # 计算下一个元素应该放置的位置
+                next_index = (current_index + k) % n
+                
+                # 暂存 next_index 位置的元素，因为它将被 prev_value 覆盖
+                temp = nums[next_index]
+                
+                # 将 prev_value 放置到 next_index 的位置
+                nums[next_index] = prev_value
+                
+                # 更新 prev_value 为刚刚被覆盖的元素，它将是下一次放置的元素
+                prev_value = temp
+                
+                # 移动到下一个位置
+                current_index = next_index
+
+                # 如果回到了起始点，则当前环处理完毕
+                if current_index == start:
+                    break
+```
+
+ 6. 示例演示 (`nums = [1,2,3,4,5,6,7], k = 3`)
+
+1.  **预处理 `k`：** `n = 7`, `k = 3 % 7 = 3`。
+2.  **计算 `gcd(7, 3)`：** `gcd(7,3) = 1`。这意味着只有一个环。
+3.  **外层循环 `start = 0` (只有一个环，从索引 0 开始)：**
+    *   `current_index = 0`
+    *   `prev_value = nums[0] = 1`
+    *   **内层 `do-while` 循环 (或 `while True`):**
+        *   **第 1 步：**
+            *   `next_index = (0 + 3) % 7 = 3`
+            *   `temp = nums[3] = 4`
+            *   `nums[3] = prev_value` (即 `nums[3] = 1`). `nums = [1,2,3,1,5,6,7]`
+            *   `prev_value = temp = 4`
+            *   `current_index = 3`
+        *   **第 2 步：**
+            *   `next_index = (3 + 3) % 7 = 6`
+            *   `temp = nums[6] = 7`
+            *   `nums[6] = prev_value` (即 `nums[6] = 4`). `nums = [1,2,3,1,5,6,4]`
+            *   `prev_value = temp = 7`
+            *   `current_index = 6`
+        *   **第 3 步：**
+            *   `next_index = (6 + 3) % 7 = 2`
+            *   `temp = nums[2] = 3`
+            *   `nums[2] = prev_value` (即 `nums[2] = 7`). `nums = [1,2,7,1,5,6,4]`
+            *   `prev_value = temp = 3`
+            *   `current_index = 2`
+        *   **第 4 步：**
+            *   `next_index = (2 + 3) % 7 = 5`
+            *   `temp = nums[5] = 6`
+            *   `nums[5] = prev_value` (即 `nums[5] = 3`). `nums = [1,2,7,1,5,3,4]`
+            *   `prev_value = temp = 6`
+            *   `current_index = 5`
+        *   **第 5 步：**
+            *   `next_index = (5 + 3) % 7 = 1`
+            *   `temp = nums[1] = 2`
+            *   `nums[1] = prev_value` (即 `nums[1] = 6`). `nums = [1,6,7,1,5,3,4]`
+            *   `prev_value = temp = 2`
+            *   `current_index = 1`
+        *   **第 6 步：**
+            *   `next_index = (1 + 3) % 7 = 4`
+            *   `temp = nums[4] = 5`
+            *   `nums[4] = prev_value` (即 `nums[4] = 2`). `nums = [1,6,7,1,2,3,4]`
+            *   `prev_value = temp = 5`
+            *   `current_index = 4`
+        *   **第 7 步：**
+            *   `next_index = (4 + 3) % 7 = 0`
+            *   `temp = nums[0] = 1`
+            *   `nums[0] = prev_value` (即 `nums[0] = 5`). `nums = [5,6,7,1,2,3,4]`
+            *   `prev_value = temp = 1`
+            *   `current_index = 0`
+            *   `current_index` (0) == `start` (0)。循环结束。
+
+4.  **结束。**
+最终 `nums` 变为 `[5,6,7,1,2,3,4]`。
+
+---
+
+#### 解法三：三次翻转 (Three Reversals)
+
+ 1. 详细讲解
+
+**思路：**
+这是最巧妙且优雅的 `O(1)` 空间复杂度解法。它利用了数组翻转的特性。
+核心思想是将数组分成两部分进行翻转。
+
+**观察：**
+原数组 `A B` (A 是前 `n-k` 个元素，B 是后 `k` 个元素)
+目标数组 `B A`
+
+例如：`nums = [1,2,3,4,5,6,7], k = 3`
+`n = 7`, `k = 3`
+`A = [1,2,3,4]` (`n-k = 4` 个元素)
+`B = [5,6,7]` (`k = 3` 个元素)
+目标是 `[5,6,7,1,2,3,4]`
+
+**步骤：**
+1.  **预处理 `k = k % n`。** 如果 `k = 0`，直接返回。
+2.  **翻转整个数组：** 将 `nums[0...n-1]` 翻转。
+    *   `[1,2,3,4,5,6,7]` -> `[7,6,5,4,3,2,1]`
+    *   此时，原先的 `B` 部分 `[5,6,7]` 变成了 `[7,6,5]` (反转后的 B)，在数组的前面。
+    *   原先的 `A` 部分 `[1,2,3,4]` 变成了 `[4,3,2,1]` (反转后的 A)，在数组的后面。
+    *   数组变为 `[B_reversed A_reversed]`
+
+3.  **翻转前 `k` 个元素：** 将 `nums[0...k-1]` 翻转。
+    *   `[7,6,5,4,3,2,1]` (翻转整个数组后)
+    *   `k=3`，翻转 `nums[0...2]` (即 `[7,6,5]`)。
+    *   `[7,6,5]` -> `[5,6,7]` (恢复了 B 的顺序)。
+    *   数组变为 `[B A_reversed]`
+
+4.  **翻转后 `n-k` 个元素：** 将 `nums[k...n-1]` 翻转。
+    *   `[5,6,7,4,3,2,1]` (翻转前 k 个元素后)
+    *   `n-k = 4`，翻转 `nums[3...6]` (即 `[4,3,2,1]`)。
+    *   `[4,3,2,1]` -> `[1,2,3,4]` (恢复了 A 的顺序)。
+    *   数组变为 `[B A]`，正是我们想要的结果。
+
+**优点：**
+*   原地操作，空间复杂度 `O(1)`。
+*   时间复杂度 `O(N)`。
+*   逻辑简洁，易于记忆和实现。
+
+ 2. 复杂度分析
+
+*   **时间复杂度：** O(N)。进行了三次数组翻转，每次翻转都是 O(N) 操作。
+*   **空间复杂度：** O(1)。只使用了常数个额外变量。
+
+
+
+ 4. Java 代码
+
+```java
+class Solution {
+    public void rotate(int[] nums, int k) {
+        int n = nums.length;
+        k = k % n; // 预处理 k
+
+        if (k == 0) {
+            return; // 无需轮转
+        }
+
+        // 步骤 1: 翻转整个数组
+        // [1,2,3,4,5,6,7] -> [7,6,5,4,3,2,1]
+        reverse(nums, 0, n - 1);
+
+        // 步骤 2: 翻转前 k 个元素
+        // [7,6,5,4,3,2,1] -> [5,6,7,4,3,2,1] (翻转 [7,6,5])
+        reverse(nums, 0, k - 1);
+
+        // 步骤 3: 翻转后 n-k 个元素
+        // [5,6,7,4,3,2,1] -> [5,6,7,1,2,3,4] (翻转 [4,3,2,1])
+        reverse(nums, k, n - 1);
+    }
+
+    // 辅助函数：翻转数组的指定范围 [start, end]
+    private void reverse(int[] nums, int start, int end) {
+        while (start < end) {
+            int temp = nums[start];
+            nums[start] = nums[end];
+            nums[end] = temp;
+            start++;
+            end--;
+        }
+    }
+}
+```
+
+ 5. Python 代码
+
+```python
+from typing import List
+
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        n = len(nums)
+        k = k % n # 预处理 k
+
+        if k == 0:
+            return # 无需轮转
+
+        # 辅助函数：翻转列表的指定范围 [start, end]
+        def reverse(arr: List[int], start: int, end: int):
+            while start < end:
+                arr[start], arr[end] = arr[end], arr[start] # Python 简洁的交换语法
+                start += 1
+                end -= 1
+
+        # 步骤 1: 翻转整个数组
+        # [1,2,3,4,5,6,7] -> [7,6,5,4,3,2,1]
+        reverse(nums, 0, n - 1)
+
+        # 步骤 2: 翻转前 k 个元素
+        # [7,6,5,4,3,2,1] -> [5,6,7,4,3,2,1] (翻转 [7,6,5])
+        reverse(nums, 0, k - 1)
+
+        # 步骤 3: 翻转后 n-k 个元素
+        # [5,6,7,4,3,2,1] -> [5,6,7,1,2,3,4] (翻转 [4,3,2,1])
+        reverse(nums, k, n - 1)
+```
+
+ 6. 示例演示 (`nums = [1,2,3,4,5,6,7], k = 3`)
+
+1.  **预处理 `k`：** `n = 7`, `k = 3 % 7 = 3`。
+
+2.  **翻转整个数组 `nums[0...6]`：**
+    *   `nums = [1,2,3,4,5,6,7]`
+    *   调用 `reverse(nums, 0, 6)`
+    *   `nums` 变为 `[7,6,5,4,3,2,1]`
+
+3.  **翻转前 `k` 个元素 `nums[0...2]`：**
+    *   `nums = [7,6,5,4,3,2,1]`
+    *   调用 `reverse(nums, 0, 2)`
+    *   `nums` 变为 `[5,6,7,4,3,2,1]`
+
+4.  **翻转后 `n-k` 个元素 `nums[3...6]`：**
+    *   `nums = [5,6,7,4,3,2,1]`
+    *   调用 `reverse(nums, 3, 6)`
+    *   `nums` 变为 `[5,6,7,1,2,3,4]`
+
+5.  **结束。**
+最终 `nums` 变为 `[5,6,7,1,2,3,4]`。
+
+---
 
 
 ## 矩阵
