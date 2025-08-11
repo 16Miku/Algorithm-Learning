@@ -5402,6 +5402,376 @@ class Solution:
 ---
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+### 238. 除自身以外数组的乘积
+
+**题目描述：**
+
+给你一个整数数组 `nums`，返回 数组 `answer` ，其中 `answer[i]` 等于 `nums` 中除 `nums[i]` 之外其余各元素的乘积 。
+题目数据 保证 数组 `nums` 之中任意元素的全部前缀元素和后缀的乘积都在 32 位 整数范围内。
+请 **不要使用除法**，且在 **O(n) 时间复杂度** 内完成此题。
+
+**示例 1:**
+
+输入: `nums = [1,2,3,4]`
+输出: `[24,12,8,6]`
+解释:
+`answer[0] = 2 * 3 * 4 = 24`
+`answer[1] = 1 * 3 * 4 = 12`
+`answer[2] = 1 * 2 * 4 = 8`
+`answer[3] = 1 * 2 * 3 = 6`
+
+**示例 2:**
+
+输入: `nums = [-1,1,0,-3,3]`
+输出: `[0,0,9,0,0]`
+解释:
+`answer[0] = 1 * 0 * -3 * 3 = 0`
+`answer[1] = -1 * 0 * -3 * 3 = 0`
+`answer[2] = -1 * 1 * -3 * 3 = 9`
+`answer[3] = -1 * 1 * 0 * 3 = 0`
+`answer[4] = -1 * 1 * 0 * -3 = 0`
+
+**提示：**
+
+*   `2 <= nums.length <= 10^5`
+*   `-30 <= nums[i] <= 30`
+*   输入 保证 数组 `answer[i]` 在 32 位 整数范围内
+
+**进阶：** 你可以在 `O(1)` 的额外空间复杂度内完成这个题目吗？（ 出于对空间复杂度分析的目的，输出数组 不被视为 额外空间。）
+
+---
+
+ 题目解析与约束分析
+
+这道题目要求我们计算一个数组 `nums` 中每个元素 `nums[i]` 对应的结果 `answer[i]`，其中 `answer[i]` 是除了 `nums[i]` 之外所有元素的乘积。
+
+**关键约束：**
+
+1.  **不能使用除法：** 这是最大的限制，排除了直接计算总乘积然后除以 `nums[i]` 的简单方法。
+2.  **O(n) 时间复杂度：** 意味着我们只能对数组进行常数次（例如两次）遍历，不能有嵌套循环导致 `O(N^2)`。
+3.  **O(1) 额外空间复杂度 (进阶)：** 这要求我们除了返回结果的数组之外，不能使用与输入数组大小相关的额外空间。
+
+ 暴力法 (不符合要求，仅作思考)
+
+*   **思路：** 对于每个 `nums[i]`，重新遍历整个数组，跳过 `nums[i]`，然后将其他元素相乘。
+*   **时间复杂度：** O(N^2)。不符合 O(N) 要求。
+*   **除法问题：** 如果允许除法，可以先计算所有元素的总乘积 `P`。然后 `answer[i] = P / nums[i]`。但如果有 `0` 存在，就需要特殊处理。题目明确禁用了除法。
+
+---
+
+#### 解法一：两次遍历，使用两个额外数组 (O(N) 时间，O(N) 空间)
+
+ 1. 详细讲解
+
+**思路：**
+对于 `answer[i]`，它等于 `nums[i]` 左边的所有元素的乘积 乘以 `nums[i]` 右边的所有元素的乘积。
+我们可以将这个计算过程分解为两步：
+
+1.  **计算所有前缀乘积：** 创建一个 `left_products` 数组，`left_products[i]` 存储 `nums[0] * nums[1] * ... * nums[i-1]` 的乘积。
+    *   `left_products[0]` 应该为 `1` (因为 `nums[0]` 左边没有元素，乘积为 1)。
+    *   `left_products[i] = left_products[i-1] * nums[i-1]` (对于 `i > 0`)。
+
+2.  **计算所有后缀乘积：** 创建一个 `right_products` 数组，`right_products[i]` 存储 `nums[i+1] * nums[i+2] * ... * nums[n-1]` 的乘积。
+    *   `right_products[n-1]` 应该为 `1` (因为 `nums[n-1]` 右边没有元素，乘积为 1)。
+    *   `right_products[i] = right_products[i+1] * nums[i+1]` (对于 `i < n-1`)。
+
+3.  **组合结果：** 遍历数组，`answer[i] = left_products[i] * right_products[i]`。
+
+**示例：`nums = [1,2,3,4]`**
+
+*   `n = 4`
+
+**Step 1: 计算 `left_products`**
+*   `left_products = [1, 0, 0, 0]` (初始化)
+*   `left_products[0] = 1`
+*   `i = 1`: `left_products[1] = left_products[0] * nums[0] = 1 * 1 = 1`
+*   `i = 2`: `left_products[2] = left_products[1] * nums[1] = 1 * 2 = 2`
+*   `i = 3`: `left_products[3] = left_products[2] * nums[2] = 2 * 3 = 6`
+*   `left_products` 最终为 `[1, 1, 2, 6]`
+
+**Step 2: 计算 `right_products`**
+*   `right_products = [0, 0, 0, 1]` (初始化)
+*   `right_products[3] = 1`
+*   `i = 2`: `right_products[2] = right_products[3] * nums[3] = 1 * 4 = 4`
+*   `i = 1`: `right_products[1] = right_products[2] * nums[2] = 4 * 3 = 12`
+*   `i = 0`: `right_products[0] = right_products[1] * nums[1] = 12 * 2 = 24`
+*   `right_products` 最终为 `[24, 12, 4, 1]`
+
+**Step 3: 组合 `answer`**
+*   `answer = [0, 0, 0, 0]` (初始化)
+*   `i = 0`: `answer[0] = left_products[0] * right_products[0] = 1 * 24 = 24`
+*   `i = 1`: `answer[1] = left_products[1] * right_products[1] = 1 * 12 = 12`
+*   `i = 2`: `answer[2] = left_products[2] * right_products[2] = 2 * 4 = 8`
+*   `i = 3`: `answer[3] = left_products[3] * right_products[3] = 6 * 1 = 6`
+*   `answer` 最终为 `[24, 12, 8, 6]`。
+
+ 2. 复杂度分析
+
+*   **时间复杂度：** O(N)。
+    *   计算 `left_products` 数组需要 O(N) 时间。
+    *   计算 `right_products` 数组需要 O(N) 时间。
+    *   组合 `answer` 数组需要 O(N) 时间。
+    *   总计 O(N)。
+*   **空间复杂度：** O(N)。需要两个额外的数组 `left_products` 和 `right_products`。
+
+ 3. 流程图 (Mermaid)
+
+
+ 4. Java 代码
+
+```java
+class Solution {
+    public int[] productExceptSelf(int[] nums) {
+        int n = nums.length;
+
+        // answer 数组用于存储最终结果，根据题目说明，它不计入额外空间。
+        int[] answer = new int[n];
+        
+        // left_products[i] 存储 nums[0] * ... * nums[i-1] 的乘积
+        int[] leftProducts = new int[n];
+        // right_products[i] 存储 nums[i+1] * ... * nums[n-1] 的乘积
+        int[] rightProducts = new int[n];
+
+        // 1. 计算 leftProducts 数组
+        // leftProducts[0] 左边没有元素，乘积为 1
+        leftProducts[0] = 1;
+        for (int i = 1; i < n; i++) {
+            // leftProducts[i] 等于前一个 leftProducts 乘以 nums[i-1]
+            leftProducts[i] = leftProducts[i - 1] * nums[i - 1];
+        }
+
+        // 2. 计算 rightProducts 数组
+        // rightProducts[n-1] 右边没有元素，乘积为 1
+        rightProducts[n - 1] = 1;
+        for (int i = n - 2; i >= 0; i--) {
+            // rightProducts[i] 等于后一个 rightProducts 乘以 nums[i+1]
+            rightProducts[i] = rightProducts[i + 1] * nums[i + 1];
+        }
+
+        // 3. 组合 answer 数组
+        // answer[i] = (nums[i]左边的乘积) * (nums[i]右边的乘积)
+        for (int i = 0; i < n; i++) {
+            answer[i] = leftProducts[i] * rightProducts[i];
+        }
+
+        return answer;
+    }
+}
+```
+
+ 5. Python 代码
+
+```python
+from typing import List
+
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        n = len(nums)
+
+        # answer 列表用于存储最终结果，根据题目说明，它不计入额外空间。
+        answer = [0] * n
+        
+        # left_products[i] 存储 nums[0] * ... * nums[i-1] 的乘积
+        left_products = [0] * n
+        # right_products[i] 存储 nums[i+1] * ... * nums[n-1] 的乘积
+        right_products = [0] * n
+
+        # 1. 计算 left_products 列表
+        # left_products[0] 左边没有元素，乘积为 1
+        left_products[0] = 1
+        for i in range(1, n):
+            # left_products[i] 等于前一个 left_products 乘以 nums[i-1]
+            left_products[i] = left_products[i - 1] * nums[i - 1]
+
+        # 2. 计算 right_products 列表
+        # right_products[n-1] 右边没有元素，乘积为 1
+        right_products[n - 1] = 1
+        # range(n - 2, -1, -1) 表示从 n-2 倒数到 0 (包括0)
+        for i in range(n - 2, -1, -1):
+            # right_products[i] 等于后一个 right_products 乘以 nums[i+1]
+            right_products[i] = right_products[i + 1] * nums[i + 1]
+
+        # 3. 组合 answer 列表
+        # answer[i] = (nums[i]左边的乘积) * (nums[i]右边的乘积)
+        for i in range(n):
+            answer[i] = left_products[i] * right_products[i]
+
+        return answer
+```
+
+ 6. 示例演示 (`nums = [1,2,3,4]`)
+
+见上述“详细讲解”部分，过程非常直观。
+
+---
+
+#### 解法二：优化空间，一次遍历加一次从右到左的乘积计算 (O(N) 时间，O(1) 额外空间)
+
+ 1. 详细讲解
+
+**思路：**
+为了满足 O(1) 额外空间的要求，我们不能使用 `left_products` 和 `right_products` 这两个完整的辅助数组。我们可以将 `answer` 数组本身作为临时的存储空间。
+
+1.  **第一次遍历 (从左到右)：**
+    *   `answer[i]` 先存储 `nums[i]` 左边的所有元素的乘积。
+    *   初始化 `answer[0] = 1`。
+    *   对于 `i > 0`，`answer[i] = answer[i-1] * nums[i-1]`。
+    *   此时，`answer` 数组实际上扮演了 `left_products` 的角色。
+
+2.  **第二次遍历 (从右到左)：**
+    *   我们需要将 `answer[i]` 乘以 `nums[i]` 右边的所有元素的乘积。
+    *   在这次遍历中，我们维护一个变量 `right_product`，它会动态地存储当前元素右边的所有元素的乘积。
+    *   初始化 `right_product = 1`。
+    *   从 `i = n-1` 倒序遍历到 `0`：
+        *   `answer[i] = answer[i] * right_product` (将左边乘积和右边乘积组合)。
+        *   `right_product = right_product * nums[i]` (更新 `right_product` 以包含当前 `nums[i]`，为下一个左侧元素的计算做准备)。
+
+**示例：`nums = [1,2,3,4]`**
+
+*   `n = 4`
+*   `answer = [0,0,0,0]` (作为输出数组，不计入额外空间)
+
+**Step 1: 第一次遍历 (从左到右)，填充 `answer` 为前缀乘积**
+*   `answer[0] = 1`
+*   `i = 1`: `answer[1] = answer[0] * nums[0] = 1 * 1 = 1`
+*   `i = 2`: `answer[2] = answer[1] * nums[1] = 1 * 2 = 2`
+*   `i = 3`: `answer[3] = answer[2] * nums[2] = 2 * 3 = 6`
+*   `answer` 数组现在是 `[1, 1, 2, 6]` (这是每个元素**左边**的乘积)
+
+**Step 2: 第二次遍历 (从右到左)，结合后缀乘积**
+*   `right_product = 1` (初始化右边乘积)
+
+*   `i = 3`: (`nums[3] = 4`, `answer[3]` 当前是 `6`)
+    *   `answer[3] = answer[3] * right_product = 6 * 1 = 6`
+    *   `right_product = right_product * nums[3] = 1 * 4 = 4`
+    *   `answer` 变为 `[1, 1, 2, 6]`
+
+*   `i = 2`: (`nums[2] = 3`, `answer[2]` 当前是 `2`)
+    *   `answer[2] = answer[2] * right_product = 2 * 4 = 8`
+    *   `right_product = right_product * nums[2] = 4 * 3 = 12`
+    *   `answer` 变为 `[1, 1, 8, 6]`
+
+*   `i = 1`: (`nums[1] = 2`, `answer[1]` 当前是 `1`)
+    *   `answer[1] = answer[1] * right_product = 1 * 12 = 12`
+    *   `right_product = right_product * nums[1] = 12 * 2 = 24`
+    *   `answer` 变为 `[1, 12, 8, 6]`
+
+*   `i = 0`: (`nums[0] = 1`, `answer[0]` 当前是 `1`)
+    *   `answer[0] = answer[0] * right_product = 1 * 24 = 24`
+    *   `right_product = right_product * nums[0] = 24 * 1 = 24`
+    *   `answer` 变为 `[24, 12, 8, 6]`
+
+最终 `answer` 数组为 `[24, 12, 8, 6]`。
+
+ 2. 复杂度分析
+
+*   **时间复杂度：** O(N)。两次遍历，每次遍历 O(N)。
+*   **空间复杂度：** O(1)。除了输出数组 `answer` 之外，只使用了 `right_product` 一个额外变量。
+
+ 3. 流程图 (Mermaid)
+
+
+ 4. Java 代码
+
+```java
+class Solution {
+    public int[] productExceptSelf(int[] nums) {
+        int n = nums.length;
+
+        // answer 数组用于存储最终结果。
+        // 根据题目说明，输出数组不计入额外空间，所以我们直接在这里进行操作。
+        int[] answer = new int[n];
+
+        // 第一次遍历：从左到右计算所有元素左边的乘积
+        // answer[i] 将存储 nums[0] * nums[1] * ... * nums[i-1] 的乘积
+        // 对于 answer[0]，它左边没有元素，所以乘积为 1
+        answer[0] = 1;
+        for (int i = 1; i < n; i++) {
+            answer[i] = answer[i - 1] * nums[i - 1];
+        }
+
+        // 第二次遍历：从右到左计算所有元素右边的乘积，并与之前计算的左边乘积相乘
+        // rightProduct 变量动态存储当前元素右边的所有元素的乘积
+        // 对于 answer[n-1]，它右边没有元素，所以初始 rightProduct 为 1
+        int rightProduct = 1;
+        for (int i = n - 1; i >= 0; i--) {
+            // answer[i] 已经存储了左边的乘积
+            // 现在将 answer[i] 乘以右边的乘积 rightProduct
+            answer[i] = answer[i] * rightProduct;
+            
+            // 更新 rightProduct，使其包含当前 nums[i] 的值，为下一个左侧元素的计算做准备
+            rightProduct = rightProduct * nums[i];
+        }
+
+        return answer;
+    }
+}
+```
+
+ 5. Python 代码
+
+```python
+from typing import List
+
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        n = len(nums)
+
+        # answer 列表用于存储最终结果。
+        # 根据题目说明，输出数组不计入额外空间，所以我们直接在这里进行操作。
+        answer = [0] * n
+
+        # 第一次遍历：从左到右计算所有元素左边的乘积
+        # answer[i] 将存储 nums[0] * nums[1] * ... * nums[i-1] 的乘积
+        # 对于 answer[0]，它左边没有元素，所以乘积为 1
+        answer[0] = 1
+        for i in range(1, n):
+            answer[i] = answer[i - 1] * nums[i - 1]
+
+        # 第二次遍历：从右到左计算所有元素右边的乘积，并与之前计算的左边乘积相乘
+        # right_product 变量动态存储当前元素右边的所有元素的乘积
+        # 对于 answer[n-1]，它右边没有元素，所以初始 right_product 为 1
+        right_product = 1
+        # range(n - 1, -1, -1) 表示从 n-1 倒数到 0 (包括0)
+        for i in range(n - 1, -1, -1):
+            # answer[i] 已经存储了左边的乘积
+            # 现在将 answer[i] 乘以右边的乘积 right_product
+            answer[i] = answer[i] * right_product
+            
+            # 更新 right_product，使其包含当前 nums[i] 的值，为下一个左侧元素的计算做准备
+            right_product = right_product * nums[i]
+        
+        return answer
+```
+
+ 6. 示例演示 (`nums = [1,2,3,4]`)
+
+见上述“详细讲解”部分，过程非常清晰。这个 O(1) 额外空间的方法是此题的推荐解法。
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 矩阵
 
 
