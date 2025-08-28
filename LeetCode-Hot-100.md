@@ -9698,6 +9698,1181 @@ class LRUCache:
 
 
 
+### 题目：148. 排序链表 (Sort List)
+
+
+
+
+
+**链接：** [LeetCode 148 - 排序链表](https://leetcode.cn/problems/sort-list/)
+
+**题目描述：**
+给你链表的头结点 `head` ，请将其按 升序 排列并返回 排序后的链表 。
+
+**示例 1：**
+输入：`head = [4,2,1,3]`
+输出：`[1,2,3,4]`
+
+**示例 2：**
+输入：`head = [-1,5,3,4,0]`
+输出：`[-1,0,3,4,5]`
+
+**示例 3：**
+输入：`head = []`
+输出：`[]`
+
+**提示：**
+*   链表中节点的数目在范围 `[0, 5 * 10^4]` 内
+*   `-10^5 <= Node.val <= 10^5`
+
+**进阶：** 你可以在 `O(n log n)` 时间复杂度和常数级空间复杂度下，对链表进行排序吗？
+
+---
+
+题目分析
+
+这道题目要求我们对一个给定的链表进行升序排序。
+核心挑战在于链表的特性：它不支持随机访问，只能顺序遍历。这意味着像数组那样通过索引直接交换元素的方法不适用，或者效率很低。同时，进阶要求 `O(n log n)` 时间复杂度和 `O(1)` 空间复杂度，这进一步限制了我们的选择。
+
+**时间复杂度 `O(n log n)` 的排序算法通常有：**
+1.  **归并排序 (Merge Sort)**
+2.  **快速排序 (Quick Sort)**
+3.  堆排序 (Heap Sort) - 堆排序需要数组结构才能高效实现。
+
+**空间复杂度 `O(1)` 的要求：**
+*   这排除了将链表转换为数组再排序的方法，因为数组本身需要 `O(n)` 空间。
+*   对于递归实现的归并排序，通常会因为递归栈而产生 `O(log n)` 的空间复杂度。要达到 `O(1)` 空间，需要使用**迭代（自底向上）的归并排序**。
+*   对于快速排序，如果实现得当（例如使用部分链表节点作为辅助空间），理论上可以做到 `O(1)` 空间，但链表上的快速排序实现起来较为复杂且不稳定，通常不是首选。
+
+综合来看，**归并排序**是解决链表排序问题的最优选择，尤其是自底向上的归并排序可以满足 `O(1)` 空间复杂度的要求。
+
+---
+
+常用解法
+
+我们将主要讲解两种基于归并排序的解法：
+
+1.  **自顶向下归并排序 (Top-down Merge Sort)**
+    *   **时间复杂度：** `O(n log n)`
+    *   **空间复杂度：** `O(log n)` (递归栈空间)
+    *   **优点：** 思路直观，实现相对简单。
+    *   **缺点：** 不满足 `O(1)` 空间要求。
+
+2.  **自底向上归并排序 (Bottom-up Merge Sort)**
+    *   **时间复杂度：** `O(n log n)`
+    *   **空间复杂度：** `O(1)`
+    *   **优点：** 满足进阶要求，是链表排序的最佳实践。
+    *   **缺点：** 实现比自顶向下略复杂。
+
+在讲解这两种归并排序之前，我们先定义链表节点结构和通用的合并两个有序链表的辅助函数。
+
+辅助函数：`mergeTwoLists(l1, l2)`
+
+无论是自顶向下还是自底向上的归并排序，都需要一个函数来合并两个已经排好序的链表。
+
+**核心思想：**
+创建一个虚拟头结点 `dummyHead`，然后比较 `l1` 和 `l2` 的当前节点值，将较小的节点连接到 `dummyHead` 的后面，并移动相应链表的指针。直到其中一个链表为空，再将另一个链表的剩余部分直接连接到结果链表的末尾。
+
+**步骤：**
+1.  创建一个虚拟头结点 `dummyHead` 和一个当前指针 `curr` 指向 `dummyHead`。
+2.  当 `l1` 和 `l2` 都不为空时，比较 `l1.val` 和 `l2.val`。
+    *   如果 `l1.val <= l2.val`，将 `l1` 连接到 `curr.next`，并移动 `l1 = l1.next`。
+    *   否则，将 `l2` 连接到 `curr.next`，并移动 `l2 = l2.next`。
+    *   无论哪种情况，都要移动 `curr = curr.next`。
+3.  循环结束后，如果 `l1` 不为空，将 `l1` 的剩余部分连接到 `curr.next`。
+4.  如果 `l2` 不为空，将 `l2` 的剩余部分连接到 `curr.next`。
+5.  返回 `dummyHead.next`。
+
+---
+
+
+代码实现与示例演示
+
+首先定义链表节点：
+
+```python
+# Python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+# Java
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+```
+
+辅助函数：`mergeTwoLists`
+
+**核心模式代码：**
+
+```python
+# Python
+def mergeTwoLists(l1: ListNode, l2: ListNode) -> ListNode:
+    # 创建一个虚拟头结点，方便处理
+    dummyHead = ListNode(0)
+    curr = dummyHead
+    
+    # 遍历两个链表，比较节点值，将较小的节点连接到结果链表
+    while l1 and l2:
+        if l1.val <= l2.val:
+            curr.next = l1
+            l1 = l1.next
+        else:
+            curr.next = l2
+            l2 = l2.next
+        curr = curr.next # 移动当前指针
+    
+    # 将未合并完的链表直接连接到结果链表末尾
+    if l1:
+        curr.next = l1
+    elif l2:
+        curr.next = l2
+        
+    return dummyHead.next # 返回排序后的链表头结点
+```
+
+```java
+// Java
+class Solution {
+    // 合并两个有序链表的辅助函数
+    public ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        // 创建一个虚拟头结点，方便处理
+        ListNode dummyHead = new ListNode(0);
+        ListNode curr = dummyHead;
+
+        // 遍历两个链表，比较节点值，将较小的节点连接到结果链表
+        while (l1 != null && l2 != null) {
+            if (l1.val <= l2.val) {
+                curr.next = l1;
+                l1 = l1.next;
+            } else {
+                curr.next = l2;
+                l2 = l2.next;
+            }
+            curr = curr.next; // 移动当前指针
+        }
+
+        // 将未合并完的链表直接连接到结果链表末尾
+        if (l1 != null) {
+            curr.next = l1;
+        } else if (l2 != null) {
+            curr.next = l2;
+        }
+
+        return dummyHead.next; // 返回排序后的链表头结点
+    }
+    // ... sortList 方法将在这里实现 ...
+}
+```
+
+---
+
+#### 解法一：自顶向下归并排序 (Top-down Merge Sort)
+
+
+
+
+
+**算法思想：**
+1.  **分割 (Divide)：** 将当前链表从中间一分为二，得到两个子链表。
+2.  **递归排序 (Conquer)：** 对这两个子链表分别进行递归排序。
+3.  **合并 (Combine)：** 将两个排序好的子链表合并成一个完整的有序链表。
+
+**详细步骤：**
+1.  **基本情况 (Base Case)：** 如果链表为空或者只有一个节点，它本身就是有序的，直接返回 `head`。
+2.  **寻找中点：** 使用快慢指针法找到链表的中间节点。
+    *   `slow` 指针每次移动一步，`fast` 指针每次移动两步。
+    *   当 `fast` 到达链表末尾时，`slow` 恰好在中间。
+    *   为了将链表分成两部分，我们需要在 `slow` 之前断开链接，所以需要一个 `prev` 指针来记录 `slow` 的前一个节点。
+3.  **断开链表：** 将 `prev.next` 设置为 `None` (Python) 或 `null` (Java)，从而将链表从中间断开成两部分。
+4.  **递归排序：**
+    *   `left = sortList(head)` (对左半部分递归排序)
+    *   `right = sortList(slow)` (对右半部分递归排序)
+5.  **合并：** 调用 `mergeTwoLists(left, right)` 函数将两个已排序的子链表合并。
+
+**复杂度分析：**
+*   **时间复杂度：** `O(n log n)`。
+    *   `log n` 层递归：每次递归将链表一分为二。
+    *   每层递归中，需要 `O(n)` 的时间来寻找中点和合并链表。
+    *   总时间 = `O(n log n)`。
+*   **空间复杂度：** `O(log n)`。
+    *   递归调用栈的深度为 `log n`。
+
+
+---
+
+
+
+
+**核心模式代码：**
+
+```python
+# Python
+class Solution:
+    def sortList(self, head: ListNode) -> ListNode:
+        # 辅助函数：合并两个有序链表
+        def mergeTwoLists(l1: ListNode, l2: ListNode) -> ListNode:
+            dummyHead = ListNode(0)
+            curr = dummyHead
+            while l1 and l2:
+                if l1.val <= l2.val:
+                    curr.next = l1
+                    l1 = l1.next
+                else:
+                    curr.next = l2
+                    l2 = l2.next
+                curr = curr.next
+            if l1:
+                curr.next = l1
+            elif l2:
+                curr.next = l2
+            return dummyHead.next
+
+        # 递归排序主函数
+        def _sort(node: ListNode) -> ListNode:
+            # 基本情况：链表为空或只有一个节点，已排序
+            if not node or not node.next:
+                return node
+
+            # 快慢指针寻找中点
+            slow = node
+            fast = node
+            prev = None # 用于断开链表
+
+            while fast and fast.next:
+                prev = slow
+                slow = slow.next
+                fast = fast.next.next
+            
+            # 断开链表成两部分
+            # prev.next 是左半部分的尾部，将其next设为None
+            if prev: # 确保prev不是None（至少有两个节点）
+                prev.next = None
+            
+            # 递归排序左右两部分
+            left = _sort(node) # node 是左半部分的头
+            right = _sort(slow) # slow 是右半部分的头
+
+            # 合并已排序的左右两部分
+            return mergeTwoLists(left, right)
+        
+        return _sort(head)
+
+```
+
+```java
+// Java
+class Solution {
+    // 辅助函数：合并两个有序链表
+    private ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        ListNode dummyHead = new ListNode(0);
+        ListNode curr = dummyHead;
+        while (l1 != null && l2 != null) {
+            if (l1.val <= l2.val) {
+                curr.next = l1;
+                l1 = l1.next;
+            } else {
+                curr.next = l2;
+                l2 = l2.next;
+            }
+            curr = curr.next;
+        }
+        if (l1 != null) {
+            curr.next = l1;
+        } else if (l2 != null) {
+            curr.next = l2;
+        }
+        return dummyHead.next;
+    }
+
+    public ListNode sortList(ListNode head) {
+        // 基本情况：链表为空或只有一个节点，已排序
+        if (head == null || head.next == null) {
+            return head;
+        }
+
+        // 快慢指针寻找中点
+        ListNode slow = head;
+        ListNode fast = head;
+        ListNode prev = null; // 用于断开链表
+
+        while (fast != null && fast.next != null) {
+            prev = slow;
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+
+        // 断开链表成两部分
+        if (prev != null) { // 确保prev不是null（至少有两个节点）
+            prev.next = null;
+        }
+        
+        // 递归排序左右两部分
+        ListNode left = sortList(head); // head 是左半部分的头
+        ListNode right = sortList(slow); // slow 是右半部分的头
+
+        // 合并已排序的左右两部分
+        return mergeTwoLists(left, right);
+    }
+}
+```
+
+**ACM 模式完整代码：**
+
+为了在ACM模式下运行，我们需要实现链表的输入和输出。
+
+```python
+# Python ACM 模式
+import sys
+
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def build_list(arr):
+    if not arr:
+        return None
+    head = ListNode(arr[0])
+    curr = head
+    for i in range(1, len(arr)):
+        curr.next = ListNode(arr[i])
+        curr = curr.next
+    return head
+
+def print_list(head):
+    res = []
+    curr = head
+    while curr:
+        res.append(str(curr.val))
+        curr = curr.next
+    print("->".join(res))
+
+class Solution:
+    def sortList(self, head: ListNode) -> ListNode:
+        # 辅助函数：合并两个有序链表
+        def mergeTwoLists(l1: ListNode, l2: ListNode) -> ListNode:
+            dummyHead = ListNode(0)
+            curr = dummyHead
+            while l1 and l2:
+                if l1.val <= l2.val:
+                    curr.next = l1
+                    l1 = l1.next
+                else:
+                    curr.next = l2
+                    l2 = l2.next
+                curr = curr.next
+            if l1:
+                curr.next = l1
+            elif l2:
+                curr.next = l2
+            return dummyHead.next
+
+        # 递归排序主函数
+        def _sort(node: ListNode) -> ListNode:
+            # 基本情况：链表为空或只有一个节点，已排序
+            if not node or not node.next:
+                return node
+
+            # 快慢指针寻找中点
+            slow = node
+            fast = node
+            prev = None # 用于断开链表
+
+            while fast and fast.next:
+                prev = slow
+                slow = slow.next
+                fast = fast.next.next
+            
+            # 断开链表成两部分
+            if prev: # 确保prev不是None（至少有两个节点）
+                prev.next = None
+            
+            # 递归排序左右两部分
+            left = _sort(node) # node 是左半部分的头
+            right = _sort(slow) # slow 是右半部分的头
+
+            # 合并已排序的左右两部分
+            return mergeTwoLists(left, right)
+        
+        return _sort(head)
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    # 读取一行输入，例如: [4,2,1,3]
+    line = sys.stdin.readline().strip()
+    # 清除方括号并按逗号分割
+    if line == "[]":
+        nums = []
+    else:
+        nums_str = line[1:-1].split(',')
+        nums = [int(x) for x in nums_str]
+    
+    head = build_list(nums)
+    
+    solver = Solution()
+    sorted_head = solver.sortList(head)
+    
+    print_list(sorted_head)
+
+```
+
+```java
+// Java ACM 模式
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+public class Main { // ACM模式下通常需要将所有代码放在Main类中
+    // 辅助函数：合并两个有序链表
+    private ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        ListNode dummyHead = new ListNode(0);
+        ListNode curr = dummyHead;
+        while (l1 != null && l2 != null) {
+            if (l1.val <= l2.val) {
+                curr.next = l1;
+                l1 = l1.next;
+            } else {
+                curr.next = l2;
+                l2 = l2.next;
+            }
+            curr = curr.next;
+        }
+        if (l1 != null) {
+            curr.next = l1;
+        } else if (l2 != null) {
+            curr.next = l2;
+        }
+        return dummyHead.next;
+    }
+
+    public ListNode sortList(ListNode head) {
+        if (head == null || head.next == null) {
+            return head;
+        }
+
+        ListNode slow = head;
+        ListNode fast = head;
+        ListNode prev = null; 
+
+        while (fast != null && fast.next != null) {
+            prev = slow;
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+
+        if (prev != null) {
+            prev.next = null;
+        }
+        
+        ListNode left = sortList(head);
+        ListNode right = sortList(slow);
+
+        return mergeTwoLists(left, right);
+    }
+
+    // 辅助函数：根据数组构建链表
+    public static ListNode buildList(int[] arr) {
+        if (arr == null || arr.length == 0) {
+            return null;
+        }
+        ListNode head = new ListNode(arr[0]);
+        ListNode curr = head;
+        for (int i = 1; i < arr.length; i++) {
+            curr.next = new ListNode(arr[i]);
+            curr = curr.next;
+        }
+        return head;
+    }
+
+    // 辅助函数：打印链表
+    public static void printList(ListNode head) {
+        List<String> res = new ArrayList<>();
+        ListNode curr = head;
+        while (curr != null) {
+            res.add(String.valueOf(curr.val));
+            curr = curr.next;
+        }
+        System.out.println(String.join("->", res));
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String line = scanner.nextLine(); // 读取一行输入，例如: [4,2,1,3]
+        scanner.close();
+
+        int[] nums;
+        if (line.equals("[]")) {
+            nums = new int[0];
+        } else {
+            String nums_str = line.substring(1, line.length() - 1); // 移除方括号
+            String[] str_arr = nums_str.split(",");
+            nums = new int[str_arr.length];
+            for (int i = 0; i < str_arr.length; i++) {
+                nums[i] = Integer.parseInt(str_arr[i].trim());
+            }
+        }
+        
+        ListNode head = buildList(nums);
+        
+        Main solver = new Main(); // 在ACM模式下，通常Main类就是Solution
+        ListNode sorted_head = solver.sortList(head);
+        
+        printList(sorted_head);
+    }
+}
+```
+
+**示例演示：`head = [4,2,1,3]`**
+
+1.  **初始调用：** `_sort([4,2,1,3])`
+    *   `node = [4,2,1,3]`
+    *   快慢指针：`slow` 走到 `1`，`fast` 走到 `None` (3的next)。`prev` 指向 `2`。
+    *   断开：`2.next = None`。链表变为 `[4,2]` 和 `[1,3]`。
+    *   `left = _sort([4,2])`
+        *   `node = [4,2]`
+        *   快慢指针：`slow` 走到 `2`，`fast` 走到 `None` (2的next)。`prev` 指向 `4`。
+        *   断开：`4.next = None`。链表变为 `[4]` 和 `[2]`。
+        *   `left_left = _sort([4])` -> 返回 `[4]` (基本情况)
+        *   `left_right = _sort([2])` -> 返回 `[2]` (基本情况)
+        *   合并：`mergeTwoLists([4], [2])` -> 返回 `[2,4]`
+    *   `right = _sort([1,3])`
+        *   `node = [1,3]`
+        *   快慢指针：`slow` 走到 `3`，`fast` 走到 `None` (3的next)。`prev` 指向 `1`。
+        *   断开：`1.next = None`。链表变为 `[1]` 和 `[3]`。
+        *   `right_left = _sort([1])` -> 返回 `[1]` (基本情况)
+        *   `right_right = _sort([3])` -> 返回 `[3]` (基本情况)
+        *   合并：`mergeTwoLists([1], [3])` -> 返回 `[1,3]`
+    *   合并：`mergeTwoLists([2,4], [1,3])` -> 返回 `[1,2,3,4]`
+
+最终输出：`1->2->3->4`
+
+---
+
+#### 解法二：自底向上归并排序 (Bottom-up Merge Sort)
+
+
+
+**算法思想：**
+自底向上归并排序避免了递归，通过迭代的方式，从小规模有序子链表逐步合并，直到整个链表有序。
+
+**详细步骤：**
+1.  **计算链表长度：** 首先遍历链表，得到其总长度 `n`。
+2.  **创建虚拟头结点：** `dummyHead` 用于方便地处理链表头部的连接。
+3.  **迭代合并：**
+    *   使用一个 `subLength` 变量，从 `1` 开始，每次翻倍 (`1, 2, 4, 8, ...`)，直到 `subLength >= n`。
+    *   在每次 `subLength` 迭代中，遍历整个链表：
+        *   `prev` 指针指向已合并部分的末尾。
+        *   `curr` 指针指向当前待处理的子链表段的起始。
+        *   **获取第一个子链表 `head1`：** 从 `curr` 开始，走 `subLength` 步，得到第一个子链表。同时记录 `head1` 的末尾节点，并断开连接。
+        *   **获取第二个子链表 `head2`：** 从 `head1` 的末尾断开后的 `curr` 位置开始，走 `subLength` 步，得到第二个子链表。同样记录 `head2` 的末尾节点，并断开连接。
+        *   **合并：** 调用 `mergeTwoLists(head1, head2)` 合并这两个子链表。
+        *   **连接：** 将合并后的链表连接到 `prev` 的后面，并更新 `prev` 指向合并后链表的末尾。
+        *   **更新 `curr`：** 将 `curr` 移动到下一个待处理的子链表段的起始位置。
+4.  **返回结果：** `dummyHead.next` 即为排序后的链表。
+
+**复杂度分析：**
+*   **时间复杂度：** `O(n log n)`。
+    *   外层 `while` 循环 `log n` 次（`subLength` 从 1 翻倍到 `n`）。
+    *   内层 `while` 循环遍历整个链表 `n` 次（每次合并操作的总时间）。
+    *   总时间 = `O(n log n)`。
+*   **空间复杂度：** `O(1)`。
+    *   只使用了常数个额外指针变量，没有递归栈。
+
+
+
+---
+
+
+
+
+**核心模式代码：**
+
+```python
+# Python
+class Solution:
+    def sortList(self, head: ListNode) -> ListNode:
+        # 辅助函数：合并两个有序链表
+        def mergeTwoLists(l1: ListNode, l2: ListNode) -> ListNode:
+            dummyHead = ListNode(0)
+            curr = dummyHead
+            while l1 and l2:
+                if l1.val <= l2.val:
+                    curr.next = l1
+                    l1 = l1.next
+                else:
+                    curr.next = l2
+                    l2 = l2.next
+                curr = curr.next
+            if l1:
+                curr.next = l1
+            elif l2:
+                curr.next = l2
+            return dummyHead.next
+
+        # 1. 计算链表总长度
+        if not head:
+            return head
+        
+        length = 0
+        curr = head
+        while curr:
+            length += 1
+            curr = curr.next
+        
+        # 2. 创建虚拟头结点，方便操作
+        dummyHead = ListNode(0, head)
+        
+        # 3. 迭代合并：subLength 从 1 开始，每次翻倍
+        subLength = 1
+        while subLength < length:
+            prev = dummyHead # prev 指向已合并部分的尾部
+            curr = dummyHead.next # curr 指向当前待处理的子链表段的起始
+            
+            while curr:
+                # 3.1 提取第一个子链表 head1
+                head1 = curr
+                for _ in range(subLength - 1):
+                    if curr.next: # 确保curr.next存在
+                        curr = curr.next
+                    else:
+                        break # 链表不够长
+                
+                # 记录head2的起点，并断开 head1 的连接
+                head2 = curr.next
+                curr.next = None # 断开 head1
+                curr = head2 # curr 移动到 head2 的起始位置
+                
+                # 3.2 提取第二个子链表 head2
+                for _ in range(subLength - 1):
+                    if curr and curr.next: # 确保curr和curr.next存在
+                        curr = curr.next
+                    else:
+                        break # 链表不够长
+                
+                # 记录下一个子链表段的起点，并断开 head2 的连接
+                next_segment = None
+                if curr: # 确保curr存在
+                    next_segment = curr.next
+                    curr.next = None # 断开 head2
+                
+                # 3.3 合并 head1 和 head2
+                merged_list = mergeTwoLists(head1, head2)
+                
+                # 3.4 将合并后的链表连接到 prev 后面
+                prev.next = merged_list
+                
+                # 3.5 更新 prev 指向合并后链表的尾部
+                # 遍历到 merged_list 的末尾
+                while prev.next:
+                    prev = prev.next
+                
+                # 3.6 更新 curr 到下一个待处理的子链表段的起始
+                curr = next_segment
+            
+            subLength *= 2 # 子链表长度翻倍
+            
+        return dummyHead.next
+
+```
+
+```java
+// Java
+class Solution {
+    // 辅助函数：合并两个有序链表
+    private ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        ListNode dummyHead = new ListNode(0);
+        ListNode curr = dummyHead;
+        while (l1 != null && l2 != null) {
+            if (l1.val <= l2.val) {
+                curr.next = l1;
+                l1 = l1.next;
+            } else {
+                curr.next = l2;
+                l2 = l2.next;
+            }
+            curr = curr.next;
+        }
+        if (l1 != null) {
+            curr.next = l1;
+        } else if (l2 != null) {
+            curr.next = l2;
+        }
+        return dummyHead.next;
+    }
+
+    public ListNode sortList(ListNode head) {
+        // 1. 计算链表总长度
+        if (head == null) {
+            return head;
+        }
+        
+        int length = 0;
+        ListNode curr = head;
+        while (curr != null) {
+            length++;
+            curr = curr.next;
+        }
+        
+        // 2. 创建虚拟头结点，方便操作
+        ListNode dummyHead = new ListNode(0, head);
+        
+        // 3. 迭代合并：subLength 从 1 开始，每次翻倍
+        for (int subLength = 1; subLength < length; subLength <<= 1) { // subLength *= 2
+            ListNode prev = dummyHead; // prev 指向已合并部分的尾部
+            curr = dummyHead.next; // curr 指向当前待处理的子链表段的起始
+            
+            while (curr != null) {
+                // 3.1 提取第一个子链表 head1
+                ListNode head1 = curr;
+                for (int i = 0; i < subLength - 1 && curr != null; i++) {
+                    curr = curr.next;
+                }
+                
+                // 记录head2的起点，并断开 head1 的连接
+                ListNode head2 = null;
+                if (curr != null) { // head1 可能不够 subLength 长度
+                    head2 = curr.next;
+                    curr.next = null; // 断开 head1
+                }
+                curr = head2; // curr 移动到 head2 的起始位置
+                
+                // 3.2 提取第二个子链表 head2
+                for (int i = 0; i < subLength - 1 && curr != null; i++) {
+                    curr = curr.next;
+                }
+                
+                // 记录下一个子链表段的起点，并断开 head2 的连接
+                ListNode nextSegment = null;
+                if (curr != null) { // head2 可能不够 subLength 长度
+                    nextSegment = curr.next;
+                    curr.next = null; // 断开 head2
+                }
+                
+                // 3.3 合并 head1 和 head2
+                ListNode mergedList = mergeTwoLists(head1, head2);
+                
+                // 3.4 将合并后的链表连接到 prev 后面
+                prev.next = mergedList;
+                
+                // 3.5 更新 prev 指向合并后链表的尾部
+                // 遍历到 merged_list 的末尾
+                while (prev.next != null) {
+                    prev = prev.next;
+                }
+                
+                // 3.6 更新 curr 到下一个待处理的子链表段的起始
+                curr = nextSegment;
+            }
+        }
+        return dummyHead.next;
+    }
+}
+```
+
+**ACM 模式完整代码：**
+
+```python
+# Python ACM 模式
+import sys
+
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def build_list(arr):
+    if not arr:
+        return None
+    head = ListNode(arr[0])
+    curr = head
+    for i in range(1, len(arr)):
+        curr.next = ListNode(arr[i])
+        curr = curr.next
+    return head
+
+def print_list(head):
+    res = []
+    curr = head
+    while curr:
+        res.append(str(curr.val))
+        curr = curr.next
+    print("->".join(res))
+
+class Solution:
+    def sortList(self, head: ListNode) -> ListNode:
+        # 辅助函数：合并两个有序链表
+        def mergeTwoLists(l1: ListNode, l2: ListNode) -> ListNode:
+            dummyHead = ListNode(0)
+            curr = dummyHead
+            while l1 and l2:
+                if l1.val <= l2.val:
+                    curr.next = l1
+                    l1 = l1.next
+                else:
+                    curr.next = l2
+                    l2 = l2.next
+                curr = curr.next
+            if l1:
+                curr.next = l1
+            elif l2:
+                curr.next = l2
+            return dummyHead.next
+
+        # 1. 计算链表总长度
+        if not head:
+            return head
+        
+        length = 0
+        curr = head
+        while curr:
+            length += 1
+            curr = curr.next
+        
+        # 2. 创建虚拟头结点，方便操作
+        dummyHead = ListNode(0, head)
+        
+        # 3. 迭代合并：subLength 从 1 开始，每次翻倍
+        subLength = 1
+        while subLength < length:
+            prev = dummyHead # prev 指向已合并部分的尾部
+            curr = dummyHead.next # curr 指向当前待处理的子链表段的起始
+            
+            while curr:
+                # 3.1 提取第一个子链表 head1
+                head1 = curr
+                for _ in range(subLength - 1):
+                    if curr and curr.next: # 确保curr和curr.next存在
+                        curr = curr.next
+                    else:
+                        break # 链表不够长
+                
+                # 记录head2的起点，并断开 head1 的连接
+                head2 = None
+                if curr: # head1 可能不够 subLength 长度
+                    head2 = curr.next
+                    curr.next = None # 断开 head1
+                curr = head2 # curr 移动到 head2 的起始位置
+                
+                # 3.2 提取第二个子链表 head2
+                for _ in range(subLength - 1):
+                    if curr and curr.next: # 确保curr和curr.next存在
+                        curr = curr.next
+                    else:
+                        break # 链表不够长
+                
+                # 记录下一个子链表段的起点，并断开 head2 的连接
+                next_segment = None
+                if curr: # head2 可能不够 subLength 长度
+                    next_segment = curr.next
+                    curr.next = None # 断开 head2
+                
+                # 3.3 合并 head1 和 head2
+                merged_list = mergeTwoLists(head1, head2)
+                
+                # 3.4 将合并后的链表连接到 prev 后面
+                prev.next = merged_list
+                
+                # 3.5 更新 prev 指向合并后链表的尾部
+                # 遍历到 merged_list 的末尾
+                while prev.next:
+                    prev = prev.next
+                
+                # 3.6 更新 curr 到下一个待处理的子链表段的起始
+                curr = next_segment
+            
+            subLength *= 2 # 子链表长度翻倍
+            
+        return dummyHead.next
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    line = sys.stdin.readline().strip()
+    if line == "[]":
+        nums = []
+    else:
+        nums_str = line[1:-1].split(',')
+        nums = [int(x) for x in nums_str]
+    
+    head = build_list(nums)
+    
+    solver = Solution()
+    sorted_head = solver.sortList(head)
+    
+    print_list(sorted_head)
+```
+
+```java
+// Java ACM 模式
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+public class Main {
+    // 辅助函数：合并两个有序链表
+    private ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        ListNode dummyHead = new ListNode(0);
+        ListNode curr = dummyHead;
+        while (l1 != null && l2 != null) {
+            if (l1.val <= l2.val) {
+                curr.next = l1;
+                l1 = l1.next;
+            } else {
+                curr.next = l2;
+                l2 = l2.next;
+            }
+            curr = curr.next;
+        }
+        if (l1 != null) {
+            curr.next = l1;
+        } else if (l2 != null) {
+            curr.next = l2;
+        }
+        return dummyHead.next;
+    }
+
+    public ListNode sortList(ListNode head) {
+        if (head == null) {
+            return head;
+        }
+        
+        int length = 0;
+        ListNode curr = head;
+        while (curr != null) {
+            length++;
+            curr = curr.next;
+        }
+        
+        ListNode dummyHead = new ListNode(0, head);
+        
+        for (int subLength = 1; subLength < length; subLength <<= 1) { // subLength *= 2
+            ListNode prev = dummyHead;
+            curr = dummyHead.next;
+            
+            while (curr != null) {
+                // 3.1 提取第一个子链表 head1
+                ListNode head1 = curr;
+                for (int i = 0; i < subLength - 1 && curr != null; i++) {
+                    curr = curr.next;
+                }
+                
+                // 记录head2的起点，并断开 head1 的连接
+                ListNode head2 = null;
+                if (curr != null) {
+                    head2 = curr.next;
+                    curr.next = null;
+                }
+                curr = head2;
+                
+                // 3.2 提取第二个子链表 head2
+                for (int i = 0; i < subLength - 1 && curr != null; i++) {
+                    curr = curr.next;
+                }
+                
+                // 记录下一个子链表段的起点，并断开 head2 的连接
+                ListNode nextSegment = null;
+                if (curr != null) {
+                    nextSegment = curr.next;
+                    curr.next = null;
+                }
+                
+                // 3.3 合并 head1 和 head2
+                ListNode mergedList = mergeTwoLists(head1, head2);
+                
+                // 3.4 将合并后的链表连接到 prev 后面
+                prev.next = mergedList;
+                
+                // 3.5 更新 prev 指向合并后链表的尾部
+                while (prev.next != null) {
+                    prev = prev.next;
+                }
+                
+                // 3.6 更新 curr 到下一个待处理的子链表段的起始
+                curr = nextSegment;
+            }
+        }
+        return dummyHead.next;
+    }
+
+    public static ListNode buildList(int[] arr) {
+        if (arr == null || arr.length == 0) {
+            return null;
+        }
+        ListNode head = new ListNode(arr[0]);
+        ListNode curr = head;
+        for (int i = 1; i < arr.length; i++) {
+            curr.next = new ListNode(arr[i]);
+            curr = curr.next;
+        }
+        return head;
+    }
+
+    public static void printList(ListNode head) {
+        List<String> res = new ArrayList<>();
+        ListNode curr = head;
+        while (curr != null) {
+            res.add(String.valueOf(curr.val));
+            curr = curr.next;
+        }
+        System.out.println(String.join("->", res));
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String line = scanner.nextLine();
+        scanner.close();
+
+        int[] nums;
+        if (line.equals("[]")) {
+            nums = new int[0];
+        } else {
+            String nums_str = line.substring(1, line.length() - 1);
+            String[] str_arr = nums_str.split(",");
+            nums = new int[str_arr.length];
+            for (int i = 0; i < str_arr.length; i++) {
+                nums[i] = Integer.parseInt(str_arr[i].trim());
+            }
+        }
+        
+        ListNode head = buildList(nums);
+        
+        Main solver = new Main();
+        ListNode sorted_head = solver.sortList(head);
+        
+        printList(sorted_head);
+    }
+}
+```
+
+**示例演示：`head = [4,2,1,3]`**
+
+*   **初始：** `head = [4,2,1,3]`，`length = 4`。`dummyHead = [0]->[4,2,1,3]`。
+
+*   **`subLength = 1`：** (将每个节点视为一个有序子链表，两两合并)
+    *   `prev = dummyHead`，`curr = [4,2,1,3]`
+    *   **第一次合并：**
+        *   `head1 = [4]`
+        *   `head2 = [2]` (`curr` 此时在 `2` 的位置，断开 `4->2`，`2->next` 仍然指向 `1`)
+        *   `next_segment = [1,3]`
+        *   `merged = mergeTwoLists([4], [2])` -> `[2,4]`
+        *   `dummyHead->next = [2,4]`
+        *   `prev` 移动到 `4`
+        *   `curr` 移动到 `[1,3]` (`next_segment`)
+        *   链表状态：`[0]->[2,4]->[1,3]`
+    *   **第二次合并：**
+        *   `head1 = [1]`
+        *   `head2 = [3]` (`curr` 此时在 `3` 的位置，断开 `1->3`，`3->next` 仍然是 `None`)
+        *   `next_segment = None`
+        *   `merged = mergeTwoLists([1], [3])` -> `[1,3]`
+        *   `prev.next = [1,3]` (`4->next = [1,3]`)
+        *   `prev` 移动到 `3`
+        *   `curr` 移动到 `None` (`next_segment`)
+        *   链表状态：`[0]->[2,4]->[1,3]`
+    *   `curr` 变为 `None`，内层 `while` 结束。
+    *   `subLength` 变为 `2`。
+
+*   **`subLength = 2`：** (将长度为2的有序子链表两两合并)
+    *   `prev = dummyHead`，`curr = [2,4,1,3]` (注意：此时链表已经变成 `[2,4]->[1,3]`，这是上一步合并的结果)
+    *   **第一次合并：**
+        *   `head1 = [2,4]` (curr 走两步到 `4`，`4.next` 指向 `1`，断开 `4->1`)
+        *   `head2 = [1,3]` (curr 走两步到 `3`，`3.next` 指向 `None`，断开 `3->None`)
+        *   `next_segment = None`
+        *   `merged = mergeTwoLists([2,4], [1,3])` -> `[1,2,3,4]`
+        *   `dummyHead->next = [1,2,3,4]`
+        *   `prev` 移动到 `4`
+        *   `curr` 移动到 `None` (`next_segment`)
+        *   链表状态：`[0]->[1,2,3,4]`
+    *   `curr` 变为 `None`，内层 `while` 结束。
+    *   `subLength` 变为 `4`。
+
+*   **`subLength = 4`：**
+    *   `subLength (4)` 不再小于 `length (4)`，外层 `while` 循环结束。
+
+*   **返回：** `dummyHead.next` -> `[1,2,3,4]`
+
+最终输出：`1->2->3->4`
+
+---
+
+总结
+
+*   **自顶向下归并排序** 易于理解，但由于递归调用栈，空间复杂度为 `O(log n)`。
+*   **自底向上归并排序** 稍复杂，但通过迭代的方式，将空间复杂度优化到 `O(1)`，完全满足了题目进阶的要求。它是处理链表排序的最佳实践。
+
+在实际面试或项目中，如果明确要求 `O(1)` 空间复杂度，那么自底向上归并排序是必须掌握的。如果对空间没有严格限制，自顶向下归并排序通常是更快的实现方式。
+
+希望这个详细的讲解对您有所帮助！
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 二叉树
 
 
