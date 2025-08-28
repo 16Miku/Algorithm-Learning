@@ -10264,7 +10264,7 @@ public class Main { // ACM模式下通常需要将所有代码放在Main类中
 
 ---
 
-#### 解法二：自底向上归并排序 (Bottom-up Merge Sort)
+#### （难，看不懂）解法二：自底向上归并排序 (Bottom-up Merge Sort)
 
 
 
@@ -10874,6 +10874,658 @@ public class Main {
 
 
 ## 二叉树
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 题目：105. 从前序与中序遍历序列构造二叉树 (Construct Binary Tree from Preorder and Inorder Traversal)
+
+**链接：** [LeetCode 105 - 从前序与中序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)
+
+**题目描述：**
+给定两个整数数组 `preorder` 和 `inorder` ，其中 `preorder` 是二叉树的先序遍历， `inorder` 是同一棵树的中序遍历，请构造二叉树并返回其根节点。
+
+**示例 1:**
+输入: `preorder = [3,9,20,15,7]`, `inorder = [9,3,15,20,7]`
+输出: `[3,9,20,null,null,15,7]`
+
+**示例 2:**
+输入: `preorder = [-1]`, `inorder = [-1]`
+输出: `[-1]`
+
+**提示:**
+*   `1 <= preorder.length <= 3000`
+*   `inorder.length == preorder.length`
+*   `-3000 <= preorder[i], inorder[i] <= 3000`
+*   `preorder` 和 `inorder` 均 **无重复** 元素
+*   `inorder` 均出现在 `preorder`
+*   `preorder` 保证 为二叉树的前序遍历序列
+*   `inorder` 保证 为二叉树的中序遍历序列
+
+---
+
+题目分析
+
+这道题目要求我们根据一棵二叉树的前序遍历和中序遍历序列来重建这棵二叉树。这是二叉树相关问题中的经典问题，也是理解二叉树遍历特性和递归思想的绝佳案例。
+
+**核心知识点：**
+
+1.  **前序遍历 (Preorder Traversal)：** 访问顺序是 **根节点 -> 左子树 -> 右子树**。
+    *   **关键特性：** 前序遍历的第一个元素永远是当前子树的根节点。
+2.  **中序遍历 (Inorder Traversal)：** 访问顺序是 **左子树 -> 根节点 -> 右子树**。
+    *   **关键特性：** 在中序遍历序列中，根节点将序列分成两部分：根节点左边的所有元素属于左子树，根节点右边的所有元素属于右子树。
+
+**如何利用这两个特性重建二叉树？**
+
+*   **确定根节点：** 前序遍历的第一个元素就是整个树的根节点。
+*   **划分左右子树：**
+    *   找到这个根节点在中序遍历序列中的位置。
+    *   中序遍历中根节点左边的部分就是左子树的所有节点。
+    *   中序遍历中根节点右边的部分就是右子树的所有节点。
+*   **递归构建：**
+    *   知道了左子树和右子树的节点集合后，我们就可以根据这些节点在原前序遍历和中序遍历中的相对位置，确定它们各自的前序和中序遍历序列。
+    *   然后，对左子树和右子树重复上述过程，递归地构建它们。
+
+**示例 1 演示：**
+`preorder = [3,9,20,15,7]`
+`inorder = [9,3,15,20,7]`
+
+1.  **根节点：** 根据 `preorder`，根节点是 `3`。
+2.  **在中序遍历中找 `3`：** `inorder = [9, **3**, 15, 20, 7]`。`3` 的索引是 `1`。
+3.  **划分左右子树：**
+    *   左子树的中序遍历：`[9]` (在 `3` 的左边)
+    *   右子树的中序遍历：`[15,20,7]` (在 `3` 的右边)
+4.  **确定左右子树的前序遍历：**
+    *   左子树中序遍历 `[9]` 只有一个节点，那么它的前序遍历也必然是 `[9]`。
+    *   右子树中序遍历 `[15,20,7]` 有三个节点。在 `preorder` 中，除了根节点 `3` 和左子树 `9` 之外的元素，就是右子树的前序遍历：`[20,15,7]`。
+    *   **为什么 `20` 是右子树的根？** 因为 `[20,15,7]` 是右子树的前序遍历，第一个元素就是右子树的根。
+
+    现在我们有了：
+    *   **左子树：** `preorder = [9]`, `inorder = [9]`
+    *   **右子树：** `preorder = [20,15,7]`, `inorder = [15,20,7]`
+
+5.  **递归构建左子树：**
+    *   根节点：`9`
+    *   在中序遍历 `[9]` 中找 `9`：索引 `0`。
+    *   左子树中序为空，右子树中序为空。
+    *   所以 `9` 没有左右子节点。
+    *   返回节点 `9`。
+
+6.  **递归构建右子树：**
+    *   根节点：`20` (右子树前序遍历的第一个元素)
+    *   在中序遍历 `[15, **20**, 7]` 中找 `20`：索引 `1`。
+    *   划分左右子树：
+        *   右子树的左子树中序：`[15]`
+        *   右子树的右子树中序：`[7]`
+    *   确定左右子树的前序遍历：
+        *   `[15]` 在 `preorder` 的 `20` 之后，且对应中序的左侧，所以其前序是 `[15]`。
+        *   `[7]` 在 `preorder` 的 `20,15` 之后，且对应中序的右侧，所以其前序是 `[7]`。
+    *   **右子树的左子树：** `preorder = [15]`, `inorder = [15]` -> 返回节点 `15`。
+    *   **右子树的右子树：** `preorder = [7]`, `inorder = [7]` -> 返回节点 `7`。
+    *   将 `15` 作为 `20` 的左子节点，`7` 作为 `20` 的右子节点。
+    *   返回节点 `20`。
+
+7.  **最终组合：** 将节点 `9` 作为 `3` 的左子节点，将节点 `20` 作为 `3` 的右子节点。
+
+至此，树重建完成。
+
+---
+
+#### 常用解法：递归构建 + 哈希表优化
+
+**核心思想：**
+使用递归函数 `build(preorder_start, preorder_end, inorder_start, inorder_end)` 来构建子树。为了快速在中序遍历中定位根节点，我们预先将 `inorder` 数组中的值及其索引存储在一个哈希表（字典）中。
+
+**算法步骤：**
+
+1.  **预处理：** 创建一个哈希表 `inorder_map`，存储 `inorder` 数组中每个元素的值及其对应的索引。这样，查找根节点在中序遍历中的位置就变成了 `O(1)` 操作。
+2.  **定义递归函数 `build(pre_start, pre_end, in_start, in_end)`：**
+    *   **参数解释：**
+        *   `pre_start`, `pre_end`: 当前子树在前序遍历数组 `preorder` 中的起始和结束索引。
+        *   `in_start`, `in_end`: 当前子树在中序遍历数组 `inorder` 中的起始和结束索引。
+    *   **基本情况 (Base Case)：**
+        *   如果 `pre_start > pre_end` (前序遍历子数组为空) 或者 `in_start > in_end` (中序遍历子数组为空)，说明当前子树不存在，返回 `None` (Python) 或 `null` (Java)。
+    *   **构建根节点：**
+        *   当前子树的根节点值是 `preorder[pre_start]`。
+        *   创建一个 `TreeNode` 对象 `root`，值为 `preorder[pre_start]`。
+    *   **在中序遍历中查找根节点：**
+        *   使用 `inorder_map` 查找 `root.val` 在 `inorder` 数组中的索引，记为 `in_root_idx`。
+    *   **计算左子树的节点数量：**
+        *   左子树的节点数量 `left_subtree_size = in_root_idx - in_start`。
+    *   **递归构建左子树：**
+        *   左子树在前序遍历中的范围是 `[pre_start + 1, pre_start + left_subtree_size]`。
+        *   左子树在中序遍历中的范围是 `[in_start, in_root_idx - 1]`。
+        *   调用 `root.left = build(pre_start + 1, pre_start + left_subtree_size, in_start, in_root_idx - 1)`。
+    *   **递归构建右子树：**
+        *   右子树在前序遍历中的范围是 `[pre_start + left_subtree_size + 1, pre_end]`。
+        *   右子树在中序遍历中的范围是 `[in_root_idx + 1, in_end]`。
+        *   调用 `root.right = build(pre_start + left_subtree_size + 1, pre_end, in_root_idx + 1, in_end)`。
+    *   **返回根节点：** 返回 `root`。
+3.  **主函数调用：** 调用 `build(0, len(preorder) - 1, 0, len(inorder) - 1)` 开始构建整个树。
+
+**复杂度分析：**
+
+*   **时间复杂度：** `O(N)`，其中 `N` 是树的节点数量。
+    *   预处理哈希表需要 `O(N)` 时间。
+    *   递归函数中，每个节点都会被访问一次，哈希表查找是 `O(1)`。因此，构建每个节点及其子树的连接是常数时间。
+    *   总时间复杂度为 `O(N)`。
+*   **空间复杂度：** `O(N)`。
+    *   哈希表存储 `N` 个键值对，需要 `O(N)` 空间。
+    *   递归调用栈的深度在最坏情况下（树为一条链）是 `O(N)`，在最好情况下（平衡树）是 `O(log N)`。
+    *   总空间复杂度为 `O(N)`。
+
+
+
+---
+
+代码实现与示例演示
+
+首先定义二叉树节点：
+
+```python
+# Python
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+# Java
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+```
+
+核心模式代码
+
+```python
+# Python
+class Solution:
+    def buildTree(self, preorder: list[int], inorder: list[int]) -> TreeNode:
+        # 如果前序遍历数组为空，则表示没有节点，返回None
+        if not preorder:
+            return None
+
+        # 1. 创建中序遍历值到索引的映射，以便O(1)查找根节点在中序遍历中的位置
+        # 例如: inorder = [9,3,15,20,7] -> inorder_map = {9:0, 3:1, 15:2, 20:3, 7:4}
+        inorder_map = {val: idx for idx, val in enumerate(inorder)}
+
+        # 2. 定义递归函数来构建二叉树
+        # pre_start, pre_end: 当前子树在前序遍历数组中的起始和结束索引
+        # in_start, in_end: 当前子树在中序遍历数组中的起始和结束索引
+        def recursive_build(pre_start: int, pre_end: int, in_start: int, in_end: int) -> TreeNode:
+            # 基本情况：如果前序遍历的起始索引大于结束索引，或者中序遍历的起始索引大于结束索引
+            # 说明当前子树为空，返回None
+            if pre_start > pre_end or in_start > in_end:
+                return None
+
+            # 3. 前序遍历的第一个元素就是当前子树的根节点
+            root_val = preorder[pre_start]
+            root = TreeNode(root_val)
+
+            # 4. 在中序遍历中找到根节点的位置，以此划分左右子树
+            in_root_idx = inorder_map[root_val]
+
+            # 5. 计算左子树的节点数量
+            # 左子树的节点数量 = 根节点在中序遍历中的索引 - 中序遍历子数组的起始索引
+            left_subtree_size = in_root_idx - in_start
+
+            # 6. 递归构建左子树
+            # 左子树在前序遍历中的范围：pre_start + 1 到 pre_start + left_subtree_size
+            # 左子树在中序遍历中的范围：in_start 到 in_root_idx - 1
+            root.left = recursive_build(
+                pre_start + 1,
+                pre_start + left_subtree_size,
+                in_start,
+                in_root_idx - 1
+            )
+
+            # 7. 递归构建右子树
+            # 右子树在前序遍历中的范围：pre_start + left_subtree_size + 1 到 pre_end
+            # 右子树在中序遍历中的范围：in_root_idx + 1 到 in_end
+            root.right = recursive_build(
+                pre_start + left_subtree_size + 1,
+                pre_end,
+                in_root_idx + 1,
+                in_end
+            )
+
+            # 8. 返回构建好的当前子树的根节点
+            return root
+
+        # 从整个数组范围开始构建树
+        return recursive_build(0, len(preorder) - 1, 0, len(inorder) - 1)
+
+```
+
+```java
+// Java
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+class Solution {
+    // 存储中序遍历值到索引的映射，以便O(1)查找
+    private Map<Integer, Integer> inorderMap;
+    // 存储前序遍历数组
+    private int[] preorder;
+    // 存储中序遍历数组
+    private int[] inorder;
+
+    public TreeNode buildTree(int[] preorder, int[] inorder) {
+        this.preorder = preorder;
+        this.inorder = inorder;
+        this.inorderMap = new HashMap<>();
+
+        // 1. 预处理：将中序遍历的值及其索引存入哈希表
+        // 例如: inorder = [9,3,15,20,7] -> inorderMap = {9:0, 3:1, 15:2, 20:3, 7:4}
+        for (int i = 0; i < inorder.length; i++) {
+            inorderMap.put(inorder[i], i);
+        }
+
+        // 2. 调用递归函数开始构建二叉树
+        // 参数分别为：前序遍历子数组的起始/结束索引，中序遍历子数组的起始/结束索引
+        return recursiveBuild(0, preorder.length - 1, 0, inorder.length - 1);
+    }
+
+    // 递归函数来构建二叉树
+    // preStart, preEnd: 当前子树在前序遍历数组中的起始和结束索引
+    // inStart, inEnd: 当前子树在中序遍历数组中的起始和结束索引
+    private TreeNode recursiveBuild(int preStart, int preEnd, int inStart, int inEnd) {
+        // 基本情况：如果前序遍历的起始索引大于结束索引，或者中序遍历的起始索引大于结束索引
+        // 说明当前子树为空，返回 null
+        if (preStart > preEnd || inStart > inEnd) {
+            return null;
+        }
+
+        // 3. 前序遍历的第一个元素就是当前子树的根节点
+        int rootVal = preorder[preStart];
+        TreeNode root = new TreeNode(rootVal);
+
+        // 4. 在中序遍历中找到根节点的位置，以此划分左右子树
+        int inRootIdx = inorderMap.get(rootVal);
+
+        // 5. 计算左子树的节点数量
+        // 左子树的节点数量 = 根节点在中序遍历中的索引 - 中序遍历子数组的起始索引
+        int leftSubtreeSize = inRootIdx - inStart;
+
+        // 6. 递归构建左子树
+        // 左子树在前序遍历中的范围：preStart + 1 到 preStart + leftSubtreeSize
+        // 左子树在中序遍历中的范围：inStart 到 inRootIdx - 1
+        root.left = recursiveBuild(
+            preStart + 1,
+            preStart + leftSubtreeSize,
+            inStart,
+            inRootIdx - 1
+        );
+
+        // 7. 递归构建右子树
+        // 右子树在前序遍历中的范围：preStart + leftSubtreeSize + 1 到 preEnd
+        // 右子树在中序遍历中的范围：inRootIdx + 1 到 inEnd
+        root.right = recursiveBuild(
+            preStart + leftSubtreeSize + 1,
+            preEnd,
+            inRootIdx + 1,
+            inEnd
+        );
+
+        // 8. 返回构建好的当前子树的根节点
+        return root;
+    }
+}
+```
+
+ACM 模式完整代码
+
+为了在ACM模式下运行，我们需要实现二叉树的输入和输出。通常，输入是两行整数数组，输出是二叉树的层序遍历表示（用 `null` 表示空节点）。
+
+```python
+# Python ACM 模式
+import sys
+from collections import deque
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def buildTree(self, preorder: list[int], inorder: list[int]) -> TreeNode:
+        if not preorder:
+            return None
+
+        inorder_map = {val: idx for idx, val in enumerate(inorder)}
+
+        def recursive_build(pre_start: int, pre_end: int, in_start: int, in_end: int) -> TreeNode:
+            if pre_start > pre_end or in_start > in_end:
+                return None
+
+            root_val = preorder[pre_start]
+            root = TreeNode(root_val)
+
+            in_root_idx = inorder_map[root_val]
+            left_subtree_size = in_root_idx - in_start
+
+            root.left = recursive_build(
+                pre_start + 1,
+                pre_start + left_subtree_size,
+                in_start,
+                in_root_idx - 1
+            )
+
+            root.right = recursive_build(
+                pre_start + left_subtree_size + 1,
+                pre_end,
+                in_root_idx + 1,
+                in_end
+            )
+            return root
+
+        return recursive_build(0, len(preorder) - 1, 0, len(inorder) - 1)
+
+# 辅助函数：将树转换为层序遍历列表，用于输出
+def tree_to_level_order(root: TreeNode) -> list[int | None]:
+    if not root:
+        return []
+
+    result = []
+    q = deque([root])
+    
+    while q:
+        node = q.popleft()
+        if node:
+            result.append(node.val)
+            q.append(node.left)
+            q.append(node.right)
+        else:
+            result.append(None)
+    
+    # 移除末尾多余的None
+    while result and result[-1] is None:
+        result.pop()
+        
+    return result
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    # 读取前序遍历序列
+    preorder_line = sys.stdin.readline().strip()
+    # 读取中序遍历序列
+    inorder_line = sys.stdin.readline().strip()
+
+    # 解析输入字符串为整数列表
+    # 示例输入格式: "3 9 20 15 7" 或 "[3,9,20,15,7]"
+    # 兼容两种常见的输入格式，这里假设是空格分隔的数字
+    def parse_input_array(line_str):
+        if not line_str:
+            return []
+        # 尝试去除可能的方括号和逗号
+        line_str = line_str.replace('[', '').replace(']', '').replace(',', ' ').strip()
+        if not line_str:
+            return []
+        return [int(x) for x in line_str.split()]
+
+    preorder_arr = parse_input_array(preorder_line)
+    inorder_arr = parse_input_array(inorder_line)
+
+    solver = Solution()
+    root = solver.buildTree(preorder_arr, inorder_arr)
+
+    # 将构建好的树转换为层序遍历列表并打印
+    output_list = tree_to_level_order(root)
+    
+    # 格式化输出，例如: [3, 9, 20, null, null, 15, 7]
+    # Python的None在打印时会是'None'，题目要求'null'
+    formatted_output = []
+    for item in output_list:
+        if item is None:
+            formatted_output.append("null")
+        else:
+            formatted_output.append(str(item))
+    
+    print(f"[{', '.join(formatted_output)}]")
+
+```
+
+```java
+// Java ACM 模式
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+public class Main { // ACM模式下通常将所有代码放在Main类中
+    private Map<Integer, Integer> inorderMap;
+    private int[] preorder;
+    private int[] inorder;
+
+    public TreeNode buildTree(int[] preorder, int[] inorder) {
+        this.preorder = preorder;
+        this.inorder = inorder;
+        this.inorderMap = new HashMap<>();
+
+        for (int i = 0; i < inorder.length; i++) {
+            inorderMap.put(inorder[i], i);
+        }
+
+        return recursiveBuild(0, preorder.length - 1, 0, inorder.length - 1);
+    }
+
+    private TreeNode recursiveBuild(int preStart, int preEnd, int inStart, int inEnd) {
+        if (preStart > preEnd || inStart > inEnd) {
+            return null;
+        }
+
+        int rootVal = preorder[preStart];
+        TreeNode root = new TreeNode(rootVal);
+
+        int inRootIdx = inorderMap.get(rootVal);
+        int leftSubtreeSize = inRootIdx - inStart;
+
+        root.left = recursiveBuild(
+            preStart + 1,
+            preStart + leftSubtreeSize,
+            inStart,
+            inRootIdx - 1
+        );
+
+        root.right = recursiveBuild(
+            preStart + leftSubtreeSize + 1,
+            preEnd,
+            inRootIdx + 1,
+            inEnd
+        );
+        return root;
+    }
+
+    // 辅助函数：将树转换为层序遍历列表，用于输出
+    public static List<String> treeToLevelOrder(TreeNode root) {
+        List<String> result = new ArrayList<>();
+        if (root == null) {
+            return result;
+        }
+
+        Queue<TreeNode> q = new LinkedList<>();
+        q.offer(root);
+
+        while (!q.isEmpty()) {
+            TreeNode node = q.poll();
+            if (node != null) {
+                result.add(String.valueOf(node.val));
+                q.offer(node.left);
+                q.offer(node.right);
+            } else {
+                result.add("null");
+            }
+        }
+
+        // 移除末尾多余的"null"
+        while (result.size() > 0 && result.get(result.size() - 1).equals("null")) {
+            result.remove(result.size() - 1);
+        }
+        
+        return result;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String preorderLine = scanner.nextLine().trim();
+        String inorderLine = scanner.nextLine().trim();
+        scanner.close();
+
+        // 解析输入字符串为整数数组
+        // 兼容两种常见的输入格式，这里假设是空格分隔的数字
+        int[] preorderArr = parseInputArray(preorderLine);
+        int[] inorderArr = parseInputArray(inorderLine);
+        
+        Main solver = new Main(); // 在ACM模式下，通常Main类就是Solution
+        TreeNode root = solver.buildTree(preorderArr, inorderArr);
+
+        // 将构建好的树转换为层序遍历列表并打印
+        List<String> outputList = treeToLevelOrder(root);
+        System.out.println("[" + String.join(", ", outputList) + "]");
+    }
+
+    // 辅助函数：解析输入字符串为整数数组
+    private static int[] parseInputArray(String lineStr) {
+        if (lineStr == null || lineStr.isEmpty()) {
+            return new int[0];
+        }
+        // 尝试去除可能的方括号和逗号
+        lineStr = lineStr.replace("[", "").replace("]", "").replace(",", " ").trim();
+        if (lineStr.isEmpty()) {
+            return new int[0];
+        }
+        String[] strArr = lineStr.split("\\s+"); // 按一个或多个空格分割
+        int[] arr = new int[strArr.length];
+        for (int i = 0; i < strArr.length; i++) {
+            arr[i] = Integer.parseInt(strArr[i]);
+        }
+        return arr;
+    }
+}
+```
+
+ 示例演示：`preorder = [3,9,20,15,7]`, `inorder = [9,3,15,20,7]`
+
+我们将逐步跟踪 `recursive_build` 函数的调用过程。
+
+**初始调用：** `recursive_build(0, 4, 0, 4)` (对应 `preorder` 和 `inorder` 的完整范围)
+
+1.  `root_val = preorder[0] = 3`。创建 `root = TreeNode(3)`。
+2.  `in_root_idx = inorder_map[3] = 1` (因为 `inorder[1] = 3`)。
+3.  `left_subtree_size = in_root_idx - in_start = 1 - 0 = 1`。
+
+4.  **构建左子树：** `root.left = recursive_build(1, 1, 0, 0)`
+    *   `pre_start=1, pre_end=1, in_start=0, in_end=0`
+    *   `root_val = preorder[1] = 9`。创建 `left_node = TreeNode(9)`。
+    *   `in_root_idx = inorder_map[9] = 0` (因为 `inorder[0] = 9`)。
+    *   `left_subtree_size = in_root_idx - in_start = 0 - 0 = 0`。
+    *   **构建 `left_node` 的左子树：** `recursive_build(1, 0, 0, -1)` -> `pre_start > pre_end`，返回 `None`。
+    *   **构建 `left_node` 的右子树：** `recursive_build(2, 1, 1, 0)` -> `pre_start > pre_end`，返回 `None`。
+    *   返回 `left_node (9)`。
+    *   此时 `root.left` 指向 `TreeNode(9)`。
+
+5.  **构建右子树：** `root.right = recursive_build(2, 4, 2, 4)`
+    *   `pre_start=2, pre_end=4, in_start=2, in_end=4`
+    *   `root_val = preorder[2] = 20`。创建 `right_node = TreeNode(20)`。
+    *   `in_root_idx = inorder_map[20] = 3` (因为 `inorder[3] = 20`)。
+    *   `left_subtree_size = in_root_idx - in_start = 3 - 2 = 1`。
+
+    *   **构建 `right_node` 的左子树：** `right_node.left = recursive_build(3, 3, 2, 2)`
+        *   `pre_start=3, pre_end=3, in_start=2, in_end=2`
+        *   `root_val = preorder[3] = 15`。创建 `left_left_node = TreeNode(15)`。
+        *   `in_root_idx = inorder_map[15] = 2` (因为 `inorder[2] = 15`)。
+        *   `left_subtree_size = in_root_idx - in_start = 2 - 2 = 0`。
+        *   **构建 `left_left_node` 的左子树：** `recursive_build(4, 3, 2, 1)` -> `pre_start > pre_end`，返回 `None`。
+        *   **构建 `left_left_node` 的右子树：** `recursive_build(4, 3, 3, 2)` -> `pre_start > pre_end`，返回 `None`。
+        *   返回 `left_left_node (15)`。
+        *   此时 `right_node.left` 指向 `TreeNode(15)`。
+
+    *   **构建 `right_node` 的右子树：** `right_node.right = recursive_build(4, 4, 4, 4)`
+        *   `pre_start=4, pre_end=4, in_start=4, in_end=4`
+        *   `root_val = preorder[4] = 7`。创建 `right_right_node = TreeNode(7)`。
+        *   `in_root_idx = inorder_map[7] = 4` (因为 `inorder[4] = 7`)。
+        *   `left_subtree_size = in_root_idx - in_start = 4 - 4 = 0`。
+        *   **构建 `right_right_node` 的左子树：** `recursive_build(5, 4, 4, 3)` -> `pre_start > pre_end`，返回 `None`。
+        *   **构建 `right_right_node` 的右子树：** `recursive_build(5, 4, 5, 4)` -> `pre_start > pre_end`，返回 `None`。
+        *   返回 `right_right_node (7)`。
+        *   此时 `right_node.right` 指向 `TreeNode(7)`。
+
+    *   返回 `right_node (20)`。
+    *   此时 `root.right` 指向 `TreeNode(20)`。
+
+6.  最终，初始调用返回 `root (3)`，其结构为：
+    ```
+        3
+       / \
+      9  20
+        /  \
+       15   7
+    ```
+    转换成层序遍历输出：`[3, 9, 20, null, null, 15, 7]`。
+
+---
+
+希望这个详细的讲解对您有所帮助！
+
+
+
+
+
+
+
+
 
 
 
