@@ -11537,6 +11537,557 @@ public class Main { // ACM模式下通常将所有代码放在Main类中
 
 
 
+### 题目：236. 二叉树的最近公共祖先 (Lowest Common Ancestor of a Binary Tree)
+
+
+
+**链接：** [LeetCode 236 - 二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/)
+
+**题目描述：**
+给定一个二叉树, 找到该树中两个指定节点的最近公共祖先。
+
+百度百科中最近公共祖先的定义为：“对于有根树 T 的两个节点 p、q，最近公共祖先表示为一个节点 x，满足 x 是 p、q 的祖先且 x 的深度尽可能大（一个节点也可以是它自己的祖先）。”
+
+**示例 1：**
+输入：`root = [3,5,1,6,2,0,8,null,null,7,4]`, `p = 5`, `q = 1`
+输出：`3`
+解释：节点 5 和节点 1 的最近公共祖先是节点 3 。
+
+**示例 2：**
+输入：`root = [3,5,1,6,2,0,8,null,null,7,4]`, `p = 5`, `q = 4`
+输出：`5`
+解释：节点 5 和节点 4 的最近公共祖先是节点 5 。因为根据定义最近公共祖先节点可以为节点本身。
+
+**示例 3：**
+输入：`root = [1,2]`, `p = 1`, `q = 2`
+输出：`1`
+
+**提示：**
+*   树中节点数目在范围 `[2, 10^5]` 内。
+*   `-10^9 <= Node.val <= 10^9`
+*   所有 `Node.val` 互不相同 。
+*   `p != q`
+*   `p` 和 `q` 均存在于给定的二叉树中。
+
+---
+
+题目分析
+
+这道题目要求我们找出二叉树中两个给定节点 `p` 和 `q` 的最近公共祖先（LCA）。LCA 的定义是：一个节点 `x`，它既是 `p` 的祖先，也是 `q` 的祖先，并且 `x` 的深度尽可能大。值得注意的是，一个节点也可以是它自己的祖先。
+
+**关键点：**
+
+1.  **祖先定义：** 节点 `A` 是节点 `B` 的祖先，意味着 `A` 在 `B` 到根节点的路径上。一个节点是它自己的祖先。
+2.  **最近公共祖先：** 两个节点 `p` 和 `q` 的所有公共祖先中，深度最大的那个。
+3.  **节点存在性：** 题目保证 `p` 和 `q` 都在树中，且 `p != q`。
+
+**如何寻找LCA？**
+
+我们可以从根节点开始，尝试去“寻找” `p` 和 `q`。在寻找的过程中，我们会遇到几种情况：
+
+*   **当前节点就是 `p` 或 `q`：** 如果 `root` 等于 `p` 或 `q`，那么 `root` 可能是 LCA。
+    *   如果另一个节点（比如 `q`）在 `root` 的子树中，那么 `root` 就是 LCA。
+    *   如果另一个节点不在 `root` 的子树中，但 `root` 本身就是 `p` 或 `q`，那么根据定义，`root` 也是 LCA。
+*   **`p` 和 `q` 分别位于当前节点的左右子树中：** 如果 `p` 在 `root` 的左子树中，`q` 在 `root` 的右子树中（或反之），那么 `root` 毫无疑问就是 `p` 和 `q` 的 LCA。
+*   **`p` 和 `q` 都位于当前节点的同一个子树中：** 如果 `p` 和 `q` 都位于 `root` 的左子树中，那么 LCA 必然在左子树中。我们需要进一步到左子树中寻找。右子树同理。
+
+这种分析方式非常适合使用**递归（深度优先搜索 DFS）**来解决。
+
+---
+
+#### 常用解法：递归（深度优先搜索）
+
+这是解决二叉树LCA问题的最常用且最优雅的方法。
+
+**算法思想：**
+我们定义一个递归函数 `lowestCommonAncestor(root, p, q)`，它返回以 `root` 为根的子树中，`p` 和 `q` 的LCA。
+
+**详细步骤：**
+
+1.  **基本情况 (Base Case)：**
+    *   如果 `root` 为空 (`null` 或 `None`)，说明当前子树没有节点，肯定找不到 `p` 或 `q`，返回 `null`。
+    *   如果 `root` 等于 `p` 或 `root` 等于 `q`，这意味着我们找到了 `p` 或 `q` 中的一个。根据 LCA 的定义，如果另一个节点在 `root` 的子树中，那么 `root` 就是 LCA。如果另一个节点不在 `root` 的子树中，`root` 仍然是 `p` 或 `q` 的一个祖先（并且是它自己），所以此时返回 `root` 作为当前找到的节点。
+
+2.  **递归调用：**
+    *   递归地在 `root` 的左子树中查找 `p` 和 `q` 的LCA：`left_lca = lowestCommonAncestor(root.left, p, q)`。
+    *   递归地在 `root` 的右子树中查找 `p` 和 `q` 的LCA：`right_lca = lowestCommonAncestor(root.right, p, q)`。
+
+3.  **处理递归结果：**
+    *   **情况一：`left_lca` 和 `right_lca` 都非空。**
+        这说明 `p` 和 `q` 分别位于 `root` 的左右子树中。因此，`root` 就是它们的最近公共祖先。返回 `root`。
+    *   **情况二：`left_lca` 非空，`right_lca` 为空。**
+        这说明 `p` 和 `q` 都位于 `root` 的左子树中（或者 `p` 是 `root`，`q` 在左子树中，这种情况在基本情况中已经被 `left_lca` 捕获）。因此，LCA 就在左子树中，由 `left_lca` 给出。返回 `left_lca`。
+    *   **情况三：`left_lca` 为空，`right_lca` 非空。**
+        这说明 `p` 和 `q` 都位于 `root` 的右子树中（或者 `p` 是 `root`，`q` 在右子树中）。因此，LCA 就在右子树中，由 `right_lca` 给出。返回 `right_lca`。
+    *   **情况四：`left_lca` 和 `right_lca` 都为空。**
+        这说明在以 `root` 为根的子树中，没有找到 `p` 或 `q`。返回 `null`。
+
+**复杂度分析：**
+
+*   **时间复杂度：** `O(N)`，其中 `N` 是二叉树的节点数。
+    *   我们最多会遍历每个节点一次。在每个节点，我们进行常数次操作（比较、递归调用）。
+*   **空间复杂度：** `O(H)`，其中 `H` 是二叉树的高度。
+    *   这主要是递归调用栈的开销。在最坏情况下（树为一条链），`H` 可以达到 `N`，所以空间复杂度为 `O(N)`。在最好情况下（平衡树），`H` 为 `log N`，空间复杂度为 `O(log N)`。
+
+
+
+---
+
+代码实现与示例演示
+
+首先定义二叉树节点：
+
+```python
+# Python
+class TreeNode:
+    def __init__(self, x):
+        self.val = x
+        self.left = None
+        self.right = None
+
+# Java
+class TreeNode {
+    public int val;
+    public TreeNode left;
+    public TreeNode right;
+    public TreeNode(int x) { val = x; }
+}
+```
+
+核心模式代码
+
+```python
+# Python
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        # 1. 基本情况：
+        # 如果当前节点为空，或者当前节点就是p或q，直接返回当前节点。
+        # 如果当前节点是p或q，那么它本身可能就是LCA（如果另一个节点在它的子树中），
+        # 或者它就是p或q本身，我们需要向上返回这个节点。
+        if root is None or root == p or root == q:
+            return root
+
+        # 2. 递归查找左右子树：
+        # 在左子树中查找p和q的LCA
+        left_lca = self.lowestCommonAncestor(root.left, p, q)
+        # 在右子树中查找p和q的LCA
+        right_lca = self.lowestCommonAncestor(root.right, p, q)
+
+        # 3. 处理递归结果：
+        # 如果左右子树都找到了非空的LCA（即p和q分别在root的左右子树中），
+        # 那么root就是它们的LCA。
+        if left_lca is not None and right_lca is not None:
+            return root
+        # 如果只有左子树找到了非空的LCA（即p和q都在root的左子树中，
+        # 或者p或q本身就是root，另一个在左子树中），
+        # 那么LCA就是左子树返回的结果。
+        elif left_lca is not None:
+            return left_lca
+        # 如果只有右子树找到了非空的LCA（即p和q都在root的右子树中，
+        # 或者p或q本身就是root，另一个在右子树中），
+        # 那么LCA就是右子树返回的结果。
+        elif right_lca is not None:
+            return right_lca
+        # 如果左右子树都没找到LCA（即当前子树中不包含p或q），
+        # 返回None。
+        else:
+            return None
+
+```
+
+```java
+// Java
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     public int val;
+ *     public TreeNode left;
+ *     public TreeNode right;
+ *     public TreeNode(int x) { val = x; }
+ * }
+ */
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        // 1. 基本情况：
+        // 如果当前节点为空，或者当前节点就是p或q，直接返回当前节点。
+        // 如果当前节点是p或q，那么它本身可能就是LCA（如果另一个节点在它的子树中），
+        // 或者它就是p或q本身，我们需要向上返回这个节点。
+        if (root == null || root == p || root == q) {
+            return root;
+        }
+
+        // 2. 递归查找左右子树：
+        // 在左子树中查找p和q的LCA
+        TreeNode leftLCA = lowestCommonAncestor(root.left, p, q);
+        // 在右子树中查找p和q的LCA
+        TreeNode rightLCA = lowestCommonAncestor(root.right, p, q);
+
+        // 3. 处理递归结果：
+        // 如果左右子树都找到了非空的LCA（即p和q分别在root的左右子树中），
+        // 那么root就是它们的LCA。
+        if (leftLCA != null && rightLCA != null) {
+            return root;
+        } 
+        // 如果只有左子树找到了非空的LCA（即p和q都在root的左子树中，
+        // 或者p或q本身就是root，另一个在左子树中），
+        // 那么LCA就是左子树返回的结果。
+        else if (leftLCA != null) {
+            return leftLCA;
+        } 
+        // 如果只有右子树找到了非空的LCA（即p和q都在root的右子树中，
+        // 或者p或q本身就是root，另一个在右子树中），
+        // 那么LCA就是右子树返回的结果。
+        else if (rightLCA != null) {
+            return rightLCA;
+        } 
+        // 如果左右子树都没找到LCA（即当前子树中不包含p或q），
+        // 返回null。
+        else {
+            return null;
+        }
+    }
+}
+```
+
+ACM 模式完整代码
+
+在ACM模式下，我们需要处理输入（构建树和找到 `p`, `q` 节点）和输出（打印LCA节点的值）。
+
+```python
+# Python ACM 模式
+import sys
+from collections import deque
+
+class TreeNode:
+    def __init__(self, x):
+        self.val = x
+        self.left = None
+        self.right = None
+
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        if root is None or root == p or root == q:
+            return root
+
+        left_lca = self.lowestCommonAncestor(root.left, p, q)
+        right_lca = self.lowestCommonAncestor(root.right, p, q)
+
+        if left_lca is not None and right_lca is not None:
+            return root
+        elif left_lca is not None:
+            return left_lca
+        elif right_lca is not None:
+            return right_lca
+        else:
+            return None
+
+# 辅助函数：根据层序遍历数组构建二叉树
+def build_tree_from_level_order(nums: list[int | None]) -> TreeNode | None:
+    if not nums or nums[0] is None:
+        return None
+
+    root = TreeNode(nums[0])
+    q = deque([root])
+    i = 1
+    while q and i < len(nums):
+        node = q.popleft()
+        
+        # 构建左子节点
+        if i < len(nums) and nums[i] is not None:
+            node.left = TreeNode(nums[i])
+            q.append(node.left)
+        i += 1
+
+        # 构建右子节点
+        if i < len(nums) and nums[i] is not None:
+            node.right = TreeNode(nums[i])
+            q.append(node.right)
+        i += 1
+    return root
+
+# 辅助函数：在树中根据值查找节点
+def find_node_by_val(root: TreeNode, val: int) -> TreeNode | None:
+    if not root:
+        return None
+    if root.val == val:
+        return root
+    
+    left_found = find_node_by_val(root.left, val)
+    if left_found:
+        return left_found
+    
+    right_found = find_node_by_val(root.right, val)
+    if right_found:
+        return right_found
+    
+    return None
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    # 读取树的层序遍历数组
+    # 示例输入: [3,5,1,6,2,0,8,null,null,7,4]
+    tree_line = sys.stdin.readline().strip()
+    
+    # 解析数组，处理null
+    if tree_line == "[]":
+        nums_str_list = []
+    else:
+        nums_str_list = tree_line[1:-1].split(',') # 去除方括号并按逗号分割
+    
+    nums = []
+    for s in nums_str_list:
+        s_trimmed = s.strip()
+        if s_trimmed == "null":
+            nums.append(None)
+        elif s_trimmed: # 避免空字符串
+            nums.append(int(s_trimmed))
+    
+    # 构建二叉树
+    root_node = build_tree_from_level_order(nums)
+
+    # 读取p和q的值
+    p_val = int(sys.stdin.readline().strip())
+    q_val = int(sys.stdin.readline().strip())
+
+    # 在树中找到p和q节点
+    p_node = find_node_by_val(root_node, p_val)
+    q_node = find_node_by_val(root_node, q_val)
+
+    solver = Solution()
+    lca_node = solver.lowestCommonAncestor(root_node, p_node, q_node)
+
+    # 打印LCA节点的值
+    if lca_node:
+        print(lca_node.val)
+    else:
+        print("LCA not found (should not happen based on constraints)")
+
+```
+
+```java
+// Java ACM 模式
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+class TreeNode {
+    public int val;
+    public TreeNode left;
+    public TreeNode right;
+    public TreeNode(int x) { val = x; }
+}
+
+public class Main { // ACM模式下通常将所有代码放在Main类中
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null || root == p || root == q) {
+            return root;
+        }
+
+        TreeNode leftLCA = lowestCommonAncestor(root.left, p, q);
+        TreeNode rightLCA = lowestCommonAncestor(root.right, p, q);
+
+        if (leftLCA != null && rightLCA != null) {
+            return root;
+        } else if (leftLCA != null) {
+            return leftLCA;
+        } else if (rightLCA != null) {
+            return rightLCA;
+        } else {
+            return null;
+        }
+    }
+
+    // 辅助函数：根据层序遍历数组构建二叉树
+    public static TreeNode buildTreeFromLevelOrder(String[] numsStr) {
+        if (numsStr == null || numsStr.length == 0 || numsStr[0].equals("null")) {
+            return null;
+        }
+
+        TreeNode root = new TreeNode(Integer.parseInt(numsStr[0]));
+        Queue<TreeNode> q = new LinkedList<>();
+        q.offer(root);
+        int i = 1;
+
+        while (!q.isEmpty() && i < numsStr.length) {
+            TreeNode node = q.poll();
+
+            // 构建左子节点
+            if (i < numsStr.length && !numsStr[i].equals("null")) {
+                node.left = new TreeNode(Integer.parseInt(numsStr[i]));
+                q.offer(node.left);
+            }
+            i++;
+
+            // 构建右子节点
+            if (i < numsStr.length && !numsStr[i].equals("null")) {
+                node.right = new TreeNode(Integer.parseInt(numsStr[i]));
+                q.offer(node.right);
+            }
+            i++;
+        }
+        return root;
+    }
+
+    // 辅助函数：在树中根据值查找节点
+    public static TreeNode findNodeByVal(TreeNode root, int val) {
+        if (root == null) {
+            return null;
+        }
+        if (root.val == val) {
+            return root;
+        }
+        
+        TreeNode leftFound = findNodeByVal(root.left, val);
+        if (leftFound != null) {
+            return leftFound;
+        }
+        
+        TreeNode rightFound = findNodeByVal(root.right, val);
+        if (rightFound != null) {
+            return rightFound;
+        }
+        
+        return null;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // 读取树的层序遍历数组字符串
+        // 示例输入: [3,5,1,6,2,0,8,null,null,7,4]
+        String treeLine = scanner.nextLine().trim();
+        
+        // 解析字符串为数组，处理null
+        String[] numsStr;
+        if (treeLine.equals("[]")) {
+            numsStr = new String[0];
+        } else {
+            String content = treeLine.substring(1, treeLine.length() - 1); // 去除方括号
+            numsStr = content.split(","); // 按逗号分割
+            for (int i = 0; i < numsStr.length; i++) {
+                numsStr[i] = numsStr[i].trim(); // 去除空格
+            }
+        }
+        
+        // 构建二叉树
+        TreeNode rootNode = buildTreeFromLevelOrder(numsStr);
+
+        // 读取p和q的值
+        int pVal = Integer.parseInt(scanner.nextLine().trim());
+        int qVal = Integer.parseInt(scanner.nextLine().trim());
+        scanner.close();
+
+        // 在树中找到p和q节点
+        TreeNode pNode = findNodeByVal(rootNode, pVal);
+        TreeNode qNode = findNodeByVal(rootNode, qVal);
+
+        Main solver = new Main(); // 在ACM模式下，通常Main类就是Solution
+        TreeNode lcaNode = solver.lowestCommonAncestor(rootNode, pNode, qNode);
+
+        // 打印LCA节点的值
+        if (lcaNode != null) {
+            System.out.println(lcaNode.val);
+        } else {
+            System.out.println("LCA not found (should not happen based on constraints)");
+        }
+    }
+}
+```
+
+示例演示：`root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 1`
+
+假设我们已经构建了这棵树，并且 `p` 和 `q` 引用的是树中值为 `5` 和 `1` 的 `TreeNode` 对象。
+
+树结构如下：
+```
+      3 (root)
+     / \
+    5   1
+   / \ / \
+  6  2 0  8
+    / \
+   7   4
+```
+
+调用 `lowestCommonAncestor(root=3, p=5, q=1)`：
+
+1.  `root` 是 `3`，不等于 `p` (`5`) 也不等于 `q` (`1`)。
+2.  **递归调用 `left_lca = lowestCommonAncestor(root.left=5, p=5, q=1)`：**
+    *   `root` 是 `5`。`root == p` 为 `True`。**返回 `5`**。
+3.  **递归调用 `right_lca = lowestCommonAncestor(root.right=1, p=5, q=1)`：**
+    *   `root` 是 `1`。`root == q` 为 `True`。**返回 `1`**。
+
+4.  **回到 `root=3` 的调用：**
+    *   `left_lca` 得到 `5` (非空)。
+    *   `right_lca` 得到 `1` (非空)。
+    *   满足 `left_lca is not None and right_lca is not None` 条件。
+    *   **返回 `root` (`3`)。**
+
+最终结果是 `3`，符合示例输出。
+
+---
+
+**示例演示 2：`root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 4`**
+
+调用 `lowestCommonAncestor(root=3, p=5, q=4)`：
+
+1.  `root` 是 `3`，不等于 `p` (`5`) 也不等于 `q` (`4`)。
+2.  **递归调用 `left_lca = lowestCommonAncestor(root.left=5, p=5, q=4)`：**
+    *   `root` 是 `5`。`root == p` 为 `True`。**返回 `5`**。
+3.  **递归调用 `right_lca = lowestCommonAncestor(root.right=1, p=5, q=4)`：**
+    *   `root` 是 `1`，不等于 `p` (`5`) 也不等于 `q` (`4`)。
+    *   **递归调用 `lowestCommonAncestor(root.left=0, p=5, q=4)`：** (1的左子树是0)
+        *   `root` 是 `0`，不等于 `p` (`5`) 也不等于 `q` (`4`)。
+        *   `lowestCommonAncestor(root.left=null, p=5, q=4)` -> 返回 `null`。
+        *   `lowestCommonAncestor(root.right=null, p=5, q=4)` -> 返回 `null`。
+        *   左右都为 `null`，**返回 `null`**。
+    *   **递归调用 `lowestCommonAncestor(root.right=8, p=5, q=4)`：** (1的右子树是8)
+        *   `root` 是 `8`，不等于 `p` (`5`) 也不等于 `q` (`4`)。
+        *   `lowestCommonAncestor(root.left=null, p=5, q=4)` -> 返回 `null`。
+        *   `lowestCommonAncestor(root.right=null, p=5, q=4)` -> 返回 `null`。
+        *   左右都为 `null`，**返回 `null`**。
+    *   回到 `root=1` 的调用：`left_lca` 是 `null`，`right_lca` 是 `null`。**返回 `null`**。
+
+4.  **回到 `root=3` 的调用：**
+    *   `left_lca` 得到 `5` (非空)。
+    *   `right_lca` 得到 `null`。
+    *   不满足 `left_lca is not None and right_lca is not None`。
+    *   满足 `left_lca is not None`。
+    *   **返回 `left_lca` (`5`)。**
+
+最终结果是 `5`，符合示例输出。
+
+---
+
+希望这个详细的讲解对您有所帮助！
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 图论
 
 
