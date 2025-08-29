@@ -12080,6 +12080,1127 @@ public class Main { // ACM模式下通常将所有代码放在Main类中
 
 
 
+### 114. 二叉树展开为链表 (Flatten Binary Tree to Linked List)
+
+**链接：** [LeetCode 114 - 二叉树展开为链表](https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/)
+
+**题目描述：**
+给你二叉树的根结点 `root` ，请你将它展开为一个单链表：
+1.  展开后的单链表应该同样使用 `TreeNode` ，其中 `right` 子指针指向链表中下一个结点，而 `left` 子指针始终为 `null` 。
+2.  展开后的单链表应该与二叉树 **先序遍历** 顺序相同。
+
+**示例 1：**
+输入：`root = [1,2,5,3,4,null,6]`
+输出：`[1,null,2,null,3,null,4,null,5,null,6]`
+
+**示例 2：**
+输入：`root = []`
+输出：`[]`
+
+**示例 3：**
+输入：`root = [0]`
+输出：`[0]`
+
+**提示：**
+*   树中结点数在范围 `[0, 2000]` 内
+*   `-100 <= Node.val <= 100`
+
+**进阶：** 你可以使用原地算法（`O(1)` 额外空间）展开这棵树吗？
+
+---
+
+题目分析
+
+这道题目要求我们将一个给定的二叉树“原地”转换为一个单链表。转换后的链表需要满足两个条件：
+1.  **结构：** 链表的节点仍然使用 `TreeNode`，但所有 `left` 指针必须为 `null`，而 `right` 指针用于连接链表中的下一个节点。
+2.  **顺序：** 链表的节点顺序必须与原二叉树的 **先序遍历** 顺序一致。
+
+**先序遍历的顺序是：** 根节点 -> 左子树 -> 右子树。
+
+**以示例 1 为例：`root = [1,2,5,3,4,null,6]`**
+
+原始二叉树的结构：
+```
+       1
+      / \
+     2   5
+    / \   \
+   3   4   6
+```
+
+其先序遍历的节点顺序是：`1 -> 2 -> 3 -> 4 -> 5 -> 6`。
+
+题目要求转换后的链表应为：
+```
+1
+ \
+  2
+   \
+    3
+     \
+      4
+       \
+        5
+         \
+          6
+```
+所有节点的 `left` 指针都指向 `null`。
+
+**核心挑战：**
+*   **如何保持先序遍历顺序？** 当我们处理完当前根节点 `curr` 后，下一个节点应该是 `curr` 的左子节点。左子树全部展开为链表后，其末尾应该连接 `curr` 的右子节点（右子树的根）。
+*   **原地（`O(1)` 额外空间）要求：** 这是进阶要求。这意味着我们不能简单地将所有节点存入一个列表或栈，然后重新构建。递归解法会使用递归调用栈，其空间复杂度为 `O(H)`（树高），在最坏情况下（链式树）可能达到 `O(N)`，严格意义上不符合 `O(1)` 的要求。因此，我们需要寻找一种迭代且不使用额外数据结构（除了几个指针变量）的方法。
+
+---
+
+常用解法
+
+我们将介绍两种常用解法：一种是递归方法，另一种是满足 `O(1)` 额外空间复杂度的迭代原地算法。
+
+
+
+---
+
+代码实现与示例演示
+
+首先定义二叉树节点：
+
+```python
+# Python
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+# Java
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+```
+
+
+
+
+#### 解法一：递归（逆先序遍历思想）
+
+
+1.  **方法一：递归（逆先序遍历思想）**
+    *   **时间复杂度：** `O(N)`，其中 `N` 是二叉树的节点数。每个节点被访问常数次。
+    *   **空间复杂度：** `O(H)`，其中 `H` 是二叉树的高度。这是递归调用栈的开销。在最坏情况下（退化为链表），`H` 可以是 `N`，因此空间复杂度为 `O(N)`。
+    *   **优点：** 思路相对直观，代码简洁。
+    *   **缺点：** 不满足 `O(1)` 空间要求。
+
+    
+
+**算法思想：**
+我们希望最终的链表顺序是 `根 -> 左子树 -> 右子树`。如果我们从右子树开始处理，然后是左子树，最后是根节点，那么在处理根节点时，我们已经知道其右侧应该连接什么。
+
+具体来说，我们维护一个全局（或类成员）的 `prev` 节点，它指向当前已经处理好的链表的尾部（或者说，在先序遍历顺序中，当前节点 `root` 后面应该连接的那个节点）。
+
+**详细步骤：**
+
+1.  **定义一个全局变量或类成员变量 `prev`，初始化为 `null` (Python: `None`)。** 这个 `prev` 节点将始终指向“上一个被处理的节点”，也就是在最终链表中当前节点 `root` 后面应该连接的那个节点。
+2.  **递归函数 `flatten(root)`：**
+    *   **基本情况：** 如果 `root` 为 `null`，则直接返回。
+    *   **递归处理右子树：** 首先递归调用 `flatten(root.right)`。当这一步完成后，`self.prev` (或 `prev`) 会更新为右子树展开后链表的尾部。
+    *   **递归处理左子树：** 接着递归调用 `flatten(root.left)`。当这一步完成后，`self.prev` (或 `prev`) 会更新为左子树展开后链表的尾部（如果左子树存在），或者保持为右子树展开后的尾部（如果左子树不存在）。
+    *   **连接当前根节点：**
+        *   将 `root.right` 指向 `self.prev`。此时 `self.prev` 存储的是在先序遍历顺序中紧跟在 `root` 之后的那个节点。
+        *   将 `root.left` 设置为 `null`。
+        *   更新 `self.prev = root`。现在 `root` 已经被处理并连接到链表中，它成为了新的 `self.prev`，以便其父节点在处理时能正确地连接它。
+
+
+
+---
+
+
+
+
+**核心模式代码：**
+
+```python
+# Python
+class Solution:
+    def __init__(self):
+        # prev 用于记录上一个被处理的节点，初始化为 None
+        self.prev = None
+
+    def flatten(self, root: TreeNode) -> None:
+        """
+        不返回任何值，直接原地修改 root 节点。
+        """
+        # 基本情况：如果当前节点为空，直接返回
+        if not root:
+            return
+
+        # 1. 递归处理右子树：
+        # 按照“右-左-根”的顺序处理，首先处理最右侧的子树。
+        # 当这一步完成后，self.prev 会指向展开后的右子树的尾部（如果右子树存在）。
+        self.flatten(root.right)
+
+        # 2. 递归处理左子树：
+        # 接着处理左子树。当这一步完成后，self.prev 会指向展开后的左子树的尾部
+        # （如果左子树存在），或者指向右子树展开后的尾部（如果左子树不存在）。
+        self.flatten(root.left)
+
+        # 3. 连接当前根节点：
+        # 将当前根节点的右指针指向 self.prev。
+        # 此时 self.prev 存储的是在先序遍历顺序中紧跟在 root 之后的节点。
+        # 例如，如果 root 是父节点，prev 可能是其左子节点（如果存在）或右子节点（如果左子节点不存在）。
+        root.right = self.prev
+        # 将当前根节点的左指针设为 None，因为展开后左侧不再有子节点
+        root.left = None
+        # 更新 self.prev 为当前根节点，以便其父节点在处理时能正确地连接它
+        self.prev = root
+
+```
+
+```java
+// Java
+class Solution {
+    // prev 用于记录上一个被处理的节点，初始化为 null
+    private TreeNode prev = null;
+
+    public void flatten(TreeNode root) {
+        // 基本情况：如果当前节点为空，直接返回
+        if (root == null) {
+            return;
+        }
+
+        // 1. 递归处理右子树
+        // 按照“右-左-根”的顺序处理，首先处理最右侧的子树。
+        // 当这一步完成后，prev 会指向展开后的右子树的尾部（如果右子树存在）。
+        flatten(root.right);
+
+        // 2. 递归处理左子树
+        // 接着处理左子树。当这一步完成后，prev 会指向展开后的左子树的尾部
+        // （如果左子树存在），或者指向右子树展开后的尾部（如果左子树不存在）。
+        flatten(root.left);
+
+        // 3. 连接当前根节点：
+        // 将当前根节点的右指针指向 prev。
+        // 此时 prev 存储的是在先序遍历顺序中紧跟在 root 之后的节点。
+        root.right = prev;
+        // 将当前根节点的左指针设为 null
+        root.left = null;
+        // 更新 prev 为当前根节点，以便其父节点在处理时能正确地连接它
+        prev = root;
+    }
+}
+```
+
+**ACM 模式完整代码 (解法一)：**
+
+```python
+# Python ACM 模式
+import sys
+from collections import deque
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def __init__(self):
+        self.prev = None
+
+    def flatten(self, root: TreeNode) -> None:
+        if not root:
+            return
+
+        self.flatten(root.right)
+        self.flatten(root.left)
+
+        root.right = self.prev
+        root.left = None
+        self.prev = root
+
+# 辅助函数：根据层序遍历数组构建二叉树
+def build_tree_from_level_order(nums: list) -> TreeNode | None:
+    if not nums or nums[0] is None:
+        return None
+
+    root = TreeNode(nums[0])
+    q = deque([root])
+    i = 1
+    while q and i < len(nums):
+        node = q.popleft()
+        
+        if i < len(nums) and nums[i] is not None:
+            node.left = TreeNode(nums[i])
+            q.append(node.left)
+        i += 1
+
+        if i < len(nums) and nums[i] is not None:
+            node.right = TreeNode(nums[i])
+            q.append(node.right)
+        i += 1
+    return root
+
+# 辅助函数：将扁平化后的链表转换为列表表示
+def flatten_tree_to_list(root: TreeNode) -> list[int | None]:
+    result = []
+    curr = root
+    while curr:
+        result.append(curr.val)
+        result.append(None) # 题目输出格式要求每个节点后跟一个null
+        curr = curr.right
+    
+    # 移除末尾多余的null，只保留一个（如果链表非空）
+    if result and result[-1] is None:
+        result.pop()
+    
+    return result
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    # 读取树的层序遍历数组
+    # 示例输入: [1,2,5,3,4,null,6]
+    tree_line = sys.stdin.readline().strip()
+    
+    # 解析数组，处理null
+    if tree_line == "[]":
+        nums_str_list = []
+    else:
+        nums_str_list = tree_line[1:-1].split(',') # 去除方括号并按逗号分割
+    
+    nums = []
+    for s in nums_str_list:
+        s_trimmed = s.strip()
+        if s_trimmed == "null":
+            nums.append(None)
+        elif s_trimmed:
+            nums.append(int(s_trimmed))
+    
+    # 构建二叉树
+    root_node = build_tree_from_level_order(nums)
+
+    solver = Solution()
+    solver.flatten(root_node) # 原地修改
+
+    # 将扁平化后的树转换为列表并打印
+    output_list = flatten_tree_to_list(root_node)
+    
+    formatted_output = []
+    for item in output_list:
+        if item is None:
+            formatted_output.append("null")
+        else:
+            formatted_output.append(str(item))
+    
+    print(f"[{', '.join(formatted_output)}]")
+
+```
+
+```java
+// Java ACM 模式
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+public class Main { // ACM模式下通常将所有代码放在Main类中
+    private TreeNode prev = null;
+
+    public void flatten(TreeNode root) {
+        if (root == null) {
+            return;
+        }
+
+        flatten(root.right);
+        flatten(root.left);
+
+        root.right = prev;
+        root.left = null;
+        prev = root;
+    }
+
+    // 辅助函数：根据层序遍历数组构建二叉树
+    public static TreeNode buildTreeFromLevelOrder(String[] numsStr) {
+        if (numsStr == null || numsStr.length == 0 || numsStr[0].equals("null")) {
+            return null;
+        }
+
+        TreeNode root = new TreeNode(Integer.parseInt(numsStr[0]));
+        Queue<TreeNode> q = new LinkedList<>();
+        q.offer(root);
+        int i = 1;
+
+        while (!q.isEmpty() && i < numsStr.length) {
+            TreeNode node = q.poll();
+
+            if (i < numsStr.length && !numsStr[i].equals("null")) {
+                node.left = new TreeNode(Integer.parseInt(numsStr[i]));
+                q.offer(node.left);
+            }
+            i++;
+
+            if (i < numsStr.length && !numsStr[i].equals("null")) {
+                node.right = new TreeNode(Integer.parseInt(numsStr[i]));
+                q.offer(node.right);
+            }
+            i++;
+        }
+        return root;
+    }
+
+    // 辅助函数：将扁平化后的链表转换为列表表示
+    public static List<String> flattenTreeToList(TreeNode root) {
+        List<String> result = new ArrayList<>();
+        TreeNode curr = root;
+        while (curr != null) {
+            result.add(String.valueOf(curr.val));
+            result.add("null"); // 题目输出格式要求每个节点后跟一个null
+            curr = curr.right;
+        }
+        
+        // 移除末尾多余的null，只保留一个（如果链表非空）
+        if (!result.isEmpty() && result.get(result.size() - 1).equals("null")) {
+            result.remove(result.size() - 1);
+        }
+        
+        return result;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        String treeLine = scanner.nextLine().trim();
+        
+        String[] numsStr;
+        if (treeLine.equals("[]")) {
+            numsStr = new String[0];
+        } else {
+            String content = treeLine.substring(1, treeLine.length() - 1);
+            numsStr = content.split(",");
+            for (int i = 0; i < numsStr.length; i++) {
+                numsStr[i] = numsStr[i].trim();
+            }
+        }
+        
+        TreeNode rootNode = buildTreeFromLevelOrder(numsStr);
+
+        Main solver = new Main();
+        solver.flatten(rootNode);
+
+        List<String> outputList = flattenTreeToList(rootNode);
+        System.out.println("[" + String.join(", ", outputList) + "]");
+        
+        scanner.close();
+    }
+}
+```
+
+
+
+解法一：递归（逆先序遍历思想）看不懂，请结合示例演示Java代码执行过程
+
+
+好的，我将结合您提供的示例 `root = [1,2,5,3,4,null,6]`，详细演示 Java 代码中递归（逆先序遍历思想）解法的执行过程。
+
+---
+
+题目：114. 二叉树展开为链表
+
+**Java 核心模式代码：**
+
+```java
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    // prev 用于记录上一个被处理的节点，初始化为 null
+    // 这个变量是关键，它在递归调用之间传递“链表尾部”的信息
+    private TreeNode prev = null; 
+
+    public void flatten(TreeNode root) {
+        // 基本情况：如果当前节点为空，直接返回
+        if (root == null) {
+            return;
+        }
+
+        // 1. 递归处理右子树：
+        // 按照“右-左-根”的顺序处理。首先处理最右侧的子树。
+        // 当这一步完成后，prev 会指向展开后的右子树的尾部（如果右子树存在）。
+        flatten(root.right);
+
+        // 2. 递归处理左子树：
+        // 接着处理左子树。当这一步完成后，prev 会指向展开后的左子树的尾部
+        // （如果左子树存在），或者保持为右子树展开后的尾部（如果左子树不存在）。
+        flatten(root.left);
+
+        // 3. 连接当前根节点：
+        // 将当前根节点的右指针指向 prev。
+        // 此时 prev 存储的是在先序遍历顺序中紧跟在 root 之后的节点。
+        // 例如，如果 root 是父节点，prev 可能是其左子节点（如果存在）或右子节点（如果左子节点不存在）。
+        root.right = prev;
+        // 将当前根节点的左指针设为 null，因为展开后左侧不再有子节点
+        root.left = null;
+        // 更新 prev 为当前根节点。现在 root 已经被处理并连接到链表中，
+        // 它成为了新的 prev，以便其父节点在处理时能正确地连接它。
+        prev = root;
+    }
+}
+```
+
+---
+
+示例演示：`root = [1,2,5,3,4,null,6]`
+
+**初始二叉树结构：**
+（为了方便理解，我将节点表示为 `Node(值)`）
+
+```
+       Node(1) (root)
+      /       \
+   Node(2)     Node(5)
+  /     \       \
+Node(3) Node(4) Node(6)
+```
+
+**全局变量 `prev` 的初始值：** `prev = null`
+
+---
+
+**1. 第一次调用：`flatten(Node(1))`**
+
+*   `root = Node(1)`
+*   `root` 不为 `null`。
+
+    *   **1.1. 递归调用 `flatten(Node(1).right)` -> `flatten(Node(5))`**
+        *   `root = Node(5)`
+        *   `root` 不为 `null`。
+
+            *   **1.1.1. 递归调用 `flatten(Node(5).right)` -> `flatten(Node(6))`**
+                *   `root = Node(6)`
+                *   `root` 不为 `null`。
+
+                    *   **1.1.1.1. 递归调用 `flatten(Node(6).right)` -> `flatten(null)`**
+                        *   `root = null`。函数返回。
+                    *   **1.1.1.2. 递归调用 `flatten(Node(6).left)` -> `flatten(null)`**
+                        *   `root = null`。函数返回。
+
+                *   回到 `flatten(Node(6))`：
+                    *   `root.right = prev`。此时 `prev` 是 `null`。所以 `Node(6).right = null`。
+                    *   `root.left = null`。 `Node(6).left` 已经是 `null`。
+                    *   `prev = root`。 `prev` 现在指向 `Node(6)`。
+                *   `flatten(Node(6))` 返回。
+                *   **当前 `prev = Node(6)`**。
+
+            *   回到 `flatten(Node(5))`：
+                *   `prev` 是 `Node(6)`。
+                *   **1.1.2. 递归调用 `flatten(Node(5).left)` -> `flatten(null)`**
+                    *   `root = null`。函数返回。
+
+            *   回到 `flatten(Node(5))`：
+                *   `prev` 仍然是 `Node(6)`。
+                *   `root.right = prev`。 `Node(5).right` (原本指向 `Node(6)`) 现在指向 `Node(6)` (没变，但逻辑上是连接了 `prev`)。
+                *   `root.left = null`。 `Node(5).left` (原本是 `null`) 保持 `null`。
+                *   `prev = root`。 `prev` 现在指向 `Node(5)`。
+                *   `flatten(Node(5))` 返回。
+                *   **当前 `prev = Node(5)`**。
+
+    *   回到 `flatten(Node(1))`：
+        *   `prev` 是 `Node(5)`。
+        *   **1.2. 递归调用 `flatten(Node(1).left)` -> `flatten(Node(2))`**
+            *   `root = Node(2)`
+            *   `root` 不为 `null`。
+
+                *   **1.2.1. 递归调用 `flatten(Node(2).right)` -> `flatten(Node(4))`**
+                    *   `root = Node(4)`
+                    *   `root` 不为 `null`。
+
+                        *   **1.2.1.1. 递归调用 `flatten(Node(4).right)` -> `flatten(null)`**
+                            *   `root = null`。函数返回。
+                        *   **1.2.1.2. 递归调用 `flatten(Node(4).left)` -> `flatten(null)`**
+                            *   `root = null`。函数返回。
+
+                    *   回到 `flatten(Node(4))`：
+                        *   `prev` 是 `Node(5)`。
+                        *   `root.right = prev`。 `Node(4).right` (原本是 `null`) 现在指向 `Node(5)`。
+                        *   `root.left = null`。 `Node(4).left` (原本是 `null`) 保持 `null`。
+                        *   `prev = root`。 `prev` 现在指向 `Node(4)`。
+                    *   `flatten(Node(4))` 返回。
+                    *   **当前 `prev = Node(4)`**。
+
+                *   回到 `flatten(Node(2))`：
+                    *   `prev` 是 `Node(4)`。
+                    *   **1.2.2. 递归调用 `flatten(Node(2).left)` -> `flatten(Node(3))`**
+                        *   `root = Node(3)`
+                        *   `root` 不为 `null`。
+
+                            *   **1.2.2.1. 递归调用 `flatten(Node(3).right)` -> `flatten(null)`**
+                                *   `root = null`。函数返回。
+                            *   **1.2.2.2. 递归调用 `flatten(Node(3).left)` -> `flatten(null)`**
+                                *   `root = null`。函数返回。
+
+                        *   回到 `flatten(Node(3))`：
+                            *   `prev` 是 `Node(4)`。
+                            *   `root.right = prev`。 `Node(3).right` (原本是 `null`) 现在指向 `Node(4)`。
+                            *   `root.left = null`。 `Node(3).left` (原本是 `null`) 保持 `null`。
+                            *   `prev = root`。 `prev` 现在指向 `Node(3)`。
+                        *   `flatten(Node(3))` 返回。
+                        *   **当前 `prev = Node(3)`**。
+
+                *   回到 `flatten(Node(2))`：
+                    *   `prev` 是 `Node(3)`。
+                    *   `root.right = prev`。 `Node(2).right` (原本指向 `Node(4)`) 现在指向 `Node(3)`。
+                    *   `root.left = null`。 `Node(2).left` (原本指向 `Node(3)`) 现在指向 `null`。
+                    *   `prev = root`。 `prev` 现在指向 `Node(2)`。
+                *   `flatten(Node(2))` 返回。
+                *   **当前 `prev = Node(2)`**。
+
+    *   回到 `flatten(Node(1))`：
+        *   `prev` 是 `Node(2)`。
+        *   `root.right = prev`。 `Node(1).right` (原本指向 `Node(5)`) 现在指向 `Node(2)`。
+        *   `root.left = null`。 `Node(1).left` (原本指向 `Node(2)`) 现在指向 `null`。
+        *   `prev = root`。 `prev` 现在指向 `Node(1)`。
+    *   `flatten(Node(1))` 返回。
+    *   **当前 `prev = Node(1)`**。
+
+---
+
+**最终结果：**
+
+`flatten` 方法执行完毕。现在，我们从原始的 `root` 节点（`Node(1)`）开始遍历其 `right` 指针：
+
+*   `Node(1).right` 指向 `Node(2)`
+*   `Node(1).left` 指向 `null`
+
+*   `Node(2).right` 指向 `Node(3)`
+*   `Node(2).left` 指向 `null`
+
+*   `Node(3).right` 指向 `Node(4)`
+*   `Node(3).left` 指向 `null`
+
+*   `Node(4).right` 指向 `Node(5)`
+*   `Node(4).left` 指向 `null`
+
+*   `Node(5).right` 指向 `Node(6)`
+*   `Node(5).left` 指向 `null`
+
+*   `Node(6).right` 指向 `null`
+*   `Node(6).left` 指向 `null`
+
+形成的单链表结构为：
+```
+Node(1) -> Node(2) -> Node(3) -> Node(4) -> Node(5) -> Node(6) -> null
+```
+这与原二叉树的先序遍历顺序 `1, 2, 3, 4, 5, 6` 完全一致，且所有 `left` 指针都为 `null`。
+
+**理解关键：**
+
+这个解法的巧妙之处在于“逆先序遍历”：
+
+1.  **先处理右子树：** `flatten(root.right)`。当这个调用返回时，`prev` 会指向右子树展开后的链表的头部（即右子树的根节点，因为它是右子树中第一个被处理的）。
+2.  **再处理左子树：** `flatten(root.left)`。当这个调用返回时，`prev` 会指向左子树展开后的链表的头部（即左子树的根节点）。此时，`prev` 实际上是**在先序遍历顺序中，紧跟在当前 `root` 之后的那个节点**（如果 `root` 有左子树，就是左子树的根；如果无左子树但有右子树，就是右子树的根）。
+3.  **最后处理根节点：**
+    *   `root.right = prev`：将当前 `root` 的 `right` 指针指向 `prev`，这样 `root` 就连接到了它在先序遍历中的下一个节点。
+    *   `root.left = null`：清空 `root` 的 `left` 指针。
+    *   `prev = root`：更新 `prev` 为当前 `root`，以便其父节点在处理时，能将父节点的 `right` 指针正确地连接到 `root`。
+
+通过这种从最右下角的叶子节点开始，逐步向上，并利用 `prev` 传递“下一个节点”信息的策略，最终实现了原地扁平化。
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+#### 解法二：迭代（寻找前驱节点，原地修改） - `O(1)` 额外空间
+
+
+
+
+
+
+
+
+2.  **方法二：迭代（寻找前驱节点，原地修改）**
+    *   **时间复杂度：** `O(N)`，其中 `N` 是二叉树的节点数。每个节点被访问常数次，寻找前驱节点虽然是内层循环，但每个节点的左子树只会被遍历一次。
+    *   **空间复杂度：** `O(1)`。只使用了几个额外的指针变量。
+    *   **优点：** 满足进阶要求，是最高效的解法。
+    *   **缺点：** 理解和实现起来相对复杂。
+
+---
+
+
+这是满足进阶要求的解法，它通过修改树的结构来实现扁平化，而不需要额外的存储空间（除了几个指针变量）。
+
+**算法思想：**
+先序遍历的顺序是 `根 -> 左子树 -> 右子树`。
+对于当前节点 `curr`：
+1.  如果 `curr` 有左子树，那么左子树应该被插入到 `curr` 和 `curr.right` 之间。
+2.  为了实现这一点，我们需要找到左子树的最右边的节点（即左子树的“前驱”节点，在先序遍历中它将连接 `curr` 的右子树）。
+3.  找到这个前驱节点后，将 `curr` 的原始右子树连接到这个前驱节点的 `right` 指针。
+4.  然后，将 `curr` 的左子树移动到 `curr` 的 `right` 指针。
+5.  最后，将 `curr` 的 `left` 指针置为 `null`。
+6.  `curr` 移动到新的 `curr.right`（也就是原来的左子树的根节点），继续这个过程。
+
+**详细步骤：**
+
+1.  初始化 `curr = root`。
+2.  **主循环：** 当 `curr` 不为 `null` 时，重复以下步骤：
+    *   **判断是否有左子树：** 如果 `curr.left` 不为 `null`：
+        *   **找到左子树的最右节点（前驱节点）：**
+            *   创建一个辅助指针 `predecessor = curr.left`。
+            *   循环 `while predecessor.right != null`：
+                *   将 `predecessor` 移动到 `predecessor.right`。
+            *   当循环结束时，`predecessor` 就是 `curr.left` 子树的最右节点。
+        *   **连接操作：**
+            *   将 `predecessor.right = curr.right`。 (将 `curr` 的原始右子树连接到左子树的末尾)
+            *   将 `curr.right = curr.left`。 (将 `curr` 的左子树移动到 `curr` 的右侧)
+            *   将 `curr.left = null`。 (清空 `curr` 的左指针)
+    *   **移动到下一个节点：** `curr = curr.right`。 (继续处理新连接的右子树，它实际上是原左子树的根)
+
+
+
+
+
+
+**核心模式代码：**
+
+```python
+# Python
+class Solution:
+    def flatten(self, root: TreeNode) -> None:
+        """
+        不返回任何值，直接原地修改 root 节点。
+        """
+        curr = root
+        # 遍历当前节点
+        while curr:
+            # 如果当前节点有左子树
+            if curr.left:
+                # 找到左子树的最右节点（前驱节点）
+                # 这个前驱节点将是当前节点左子树扁平化后链表的最后一个节点
+                predecessor = curr.left
+                while predecessor.right:
+                    predecessor = predecessor.right
+                
+                # 将当前节点的原始右子树连接到前驱节点的右侧
+                # 这样，左子树展开后，其末尾就能正确地连接到原始的右子树
+                predecessor.right = curr.right
+                
+                # 将当前节点的左子树移动到当前节点的右侧
+                # 完成了根节点 -> 左子树 的连接
+                curr.right = curr.left
+                # 清空当前节点的左指针
+                curr.left = None
+            
+            # 移动到下一个节点（即当前节点新连接的右子节点），继续处理
+            # 这个“下一个节点”实际上是原先的左子树的根节点（如果存在），
+            # 或者是原先的右子树的根节点（如果左子树不存在）。
+            curr = curr.right
+
+```
+
+```java
+// Java
+class Solution {
+    public void flatten(TreeNode root) {
+        TreeNode curr = root;
+        // 遍历当前节点
+        while (curr != null) {
+            // 如果当前节点有左子树
+            if (curr.left != null) {
+                // 找到左子树的最右节点（前驱节点）
+                // 这个前驱节点将是当前节点左子树扁平化后链表的最后一个节点
+                TreeNode predecessor = curr.left;
+                while (predecessor.right != null) {
+                    predecessor = predecessor.right;
+                }
+                
+                // 将当前节点的原始右子树连接到前驱节点的右侧
+                // 这样，左子树展开后，其末尾就能正确地连接到原始的右子树
+                predecessor.right = curr.right;
+                
+                // 将当前节点的左子树移动到当前节点的右侧
+                // 完成了根节点 -> 左子树 的连接
+                curr.right = curr.left;
+                // 清空当前节点的左指针
+                curr.left = null;
+            }
+            
+            // 移动到下一个节点（即当前节点新连接的右子节点），继续处理
+            curr = curr.right;
+        }
+    }
+}
+```
+
+**ACM 模式完整代码 (解法二)：**
+
+```python
+# Python ACM 模式
+import sys
+from collections import deque
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def flatten(self, root: TreeNode) -> None:
+        curr = root
+        while curr:
+            if curr.left:
+                predecessor = curr.left
+                while predecessor.right:
+                    predecessor = predecessor.right
+                
+                predecessor.right = curr.right
+                curr.right = curr.left
+                curr.left = None
+            
+            curr = curr.right
+
+# 辅助函数：根据层序遍历数组构建二叉树
+def build_tree_from_level_order(nums: list) -> TreeNode | None:
+    if not nums or nums[0] is None:
+        return None
+
+    root = TreeNode(nums[0])
+    q = deque([root])
+    i = 1
+    while q and i < len(nums):
+        node = q.popleft()
+        
+        if i < len(nums) and nums[i] is not None:
+            node.left = TreeNode(nums[i])
+            q.append(node.left)
+        i += 1
+
+        if i < len(nums) and nums[i] is not None:
+            node.right = TreeNode(nums[i])
+            q.append(node.right)
+        i += 1
+    return root
+
+# 辅助函数：将扁平化后的链表转换为列表表示
+def flatten_tree_to_list(root: TreeNode) -> list[int | None]:
+    result = []
+    curr = root
+    while curr:
+        result.append(curr.val)
+        result.append(None) # 题目输出格式要求每个节点后跟一个null
+        curr = curr.right
+    
+    if result and result[-1] is None:
+        result.pop()
+    
+    return result
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    tree_line = sys.stdin.readline().strip()
+    
+    if tree_line == "[]":
+        nums_str_list = []
+    else:
+        nums_str_list = tree_line[1:-1].split(',')
+    
+    nums = []
+    for s in nums_str_list:
+        s_trimmed = s.strip()
+        if s_trimmed == "null":
+            nums.append(None)
+        elif s_trimmed:
+            nums.append(int(s_trimmed))
+    
+    root_node = build_tree_from_level_order(nums)
+
+    solver = Solution()
+    solver.flatten(root_node)
+
+    output_list = flatten_tree_to_list(root_node)
+    
+    formatted_output = []
+    for item in output_list:
+        if item is None:
+            formatted_output.append("null")
+        else:
+            formatted_output.append(str(item))
+    
+    print(f"[{', '.join(formatted_output)}]")
+
+```
+
+```java
+// Java ACM 模式
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+public class Main {
+    public void flatten(TreeNode root) {
+        TreeNode curr = root;
+        while (curr != null) {
+            if (curr.left != null) {
+                TreeNode predecessor = curr.left;
+                while (predecessor.right != null) {
+                    predecessor = predecessor.right;
+                }
+                
+                predecessor.right = curr.right;
+                curr.right = curr.left;
+                curr.left = null;
+            }
+            curr = curr.right;
+        }
+    }
+
+    public static TreeNode buildTreeFromLevelOrder(String[] numsStr) {
+        if (numsStr == null || numsStr.length == 0 || numsStr[0].equals("null")) {
+            return null;
+        }
+
+        TreeNode root = new TreeNode(Integer.parseInt(numsStr[0]));
+        Queue<TreeNode> q = new LinkedList<>();
+        q.offer(root);
+        int i = 1;
+
+        while (!q.isEmpty() && i < numsStr.length) {
+            TreeNode node = q.poll();
+
+            if (i < numsStr.length && !numsStr[i].equals("null")) {
+                node.left = new TreeNode(Integer.parseInt(numsStr[i]));
+                q.offer(node.left);
+            }
+            i++;
+
+            if (i < numsStr.length && !numsStr[i].equals("null")) {
+                node.right = new TreeNode(Integer.parseInt(numsStr[i]));
+                q.offer(node.right);
+            }
+            i++;
+        }
+        return root;
+    }
+
+    public static List<String> flattenTreeToList(TreeNode root) {
+        List<String> result = new ArrayList<>();
+        TreeNode curr = root;
+        while (curr != null) {
+            result.add(String.valueOf(curr.val));
+            result.add("null");
+            curr = curr.right;
+        }
+        
+        if (!result.isEmpty() && result.get(result.size() - 1).equals("null")) {
+            result.remove(result.size() - 1);
+        }
+        
+        return result;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        String treeLine = scanner.nextLine().trim();
+        
+        String[] numsStr;
+        if (treeLine.equals("[]")) {
+            numsStr = new String[0];
+        } else {
+            String content = treeLine.substring(1, treeLine.length() - 1);
+            numsStr = content.split(",");
+            for (int i = 0; i < numsStr.length; i++) {
+                numsStr[i] = numsStr[i].trim();
+            }
+        }
+        
+        TreeNode rootNode = buildTreeFromLevelOrder(numsStr);
+
+        Main solver = new Main();
+        solver.flatten(rootNode);
+
+        List<String> outputList = flattenTreeToList(rootNode);
+        System.out.println("[" + String.join(", ", outputList) + "]");
+        
+        scanner.close();
+    }
+}
+```
+
+示例演示：`root = [1,2,5,3,4,null,6]` (使用 `O(1)` 空间解法)
+
+初始二叉树结构：
+```
+       1
+      / \
+     2   5
+    / \   \
+   3   4   6
+```
+
+1.  **`curr` 指向节点 `1`。**
+    *   `curr.left` (`2`) 不为 `null`。
+    *   **寻找前驱节点 `predecessor`：**
+        *   `predecessor` 从 `curr.left` (节点 `2`) 开始。
+        *   `predecessor.right` (节点 `4`) 不为 `null`，所以 `predecessor` 移动到 `4`。
+        *   `predecessor.right` (此时为 `null`) 为 `null`。循环结束。`predecessor` 是节点 `4`。
+    *   **执行连接操作：**
+        *   `predecessor.right = curr.right` (即 `4.right = 5`)。
+        *   `curr.right = curr.left` (即 `1.right = 2`)。
+        *   `curr.left = null` (即 `1.left = null`)。
+    *   此时，节点 `1` 的右侧连接了 `2`，`2` 的右侧（通过 `4`）连接了 `5`。
+    *   树结构（逻辑上）变为：
+        ```
+           1
+            \
+             2
+            / \
+           3   4
+                \
+                 5
+                  \
+                   6
+        ```
+    *   **移动 `curr = curr.right`** (即 `curr` 移动到节点 `2`)。
+
+2.  **`curr` 指向节点 `2`。**
+    *   `curr.left` (`3`) 不为 `null`。
+    *   **寻找前驱节点 `predecessor`：**
+        *   `predecessor` 从 `curr.left` (节点 `3`) 开始。
+        *   `predecessor.right` (此时为 `null`) 为 `null`。循环结束。`predecessor` 是节点 `3`。
+    *   **执行连接操作：**
+        *   `predecessor.right = curr.right` (即 `3.right = 4`)。
+        *   `curr.right = curr.left` (即 `2.right = 3`)。
+        *   `curr.left = null` (即 `2.left = null`)。
+    *   此时，节点 `2` 的右侧连接了 `3`，`3` 的右侧连接了 `4`。
+    *   树结构变为：
+        ```
+           1
+            \
+             2
+              \
+               3
+                \
+                 4
+                  \
+                   5
+                    \
+                     6
+        ```
+    *   **移动 `curr = curr.right`** (即 `curr` 移动到节点 `3`)。
+
+3.  **`curr` 指向节点 `3`。**
+    *   `curr.left` (`null`) 为 `null`。
+    *   **移动 `curr = curr.right`** (即 `curr` 移动到节点 `4`)。
+
+4.  **`curr` 指向节点 `4`。**
+    *   `curr.left` (`null`) 为 `null`。
+    *   **移动 `curr = curr.right`** (即 `curr` 移动到节点 `5`)。
+
+5.  **`curr` 指向节点 `5`。**
+    *   `curr.left` (`null`) 为 `null`。
+    *   **移动 `curr = curr.right`** (即 `curr` 移动到节点 `6`)。
+
+6.  **`curr` 指向节点 `6`。**
+    *   `curr.left` (`null`) 为 `null`。
+    *   **移动 `curr = curr.right`** (即 `curr` 移动到 `null`)。
+
+7.  **`curr` 为 `null`**，主循环结束。
+
+最终 `root` 指向的链表为 `1 -> 2 -> 3 -> 4 -> 5 -> 6`，所有 `left` 指针均为 `null`。这与先序遍历顺序一致，且是原地完成的。
+
+---
+
+
+总结
+
+*   **递归解法 (O(H) 空间)：** 利用逆先序遍历的思想，通过一个 `prev` 指针从树的末端开始构建链表。代码简洁，易于理解，但空间复杂度取决于树高。
+*   **迭代解法 (O(1) 空间)：** 这是满足进阶要求的原地算法。它通过在遍历过程中，将每个节点的左子树剪切并插入到其右子树的位置，同时调整指针。这种方法避免了递归栈或额外数据结构，实现了常数空间复杂度。
+
+在面试中，如果能给出 `O(1)` 额外空间复杂度的解法，无疑会是加分项。但如果时间有限，递归解法也是一个可接受的方案。
+
+希望这份详细的讲解能帮助您彻底理解这道题目！
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
