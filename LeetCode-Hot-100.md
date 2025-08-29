@@ -13189,6 +13189,516 @@ public class Main {
 
 
 
+### 108. 将有序数组转换为二叉搜索树 (Convert Sorted Array to Binary Search Tree)
+
+**链接：** [LeetCode 108 - 将有序数组转换为二叉搜索树](https://leetcode.cn/problems/convert-sorted-array-to-binary-search-tree/)
+
+**题目描述：**
+给你一个整数数组 `nums` ，其中元素已经按 **升序** 排列，请你将其转换为一棵 **平衡二叉搜索树**。
+
+**示例 1：**
+输入：`nums = [-10,-3,0,5,9]`
+输出：`[0,-3,9,-10,null,5]`
+解释：`[0,-10,5,null,-3,null,9]` 也将被视为正确答案：
+```
+      0
+     / \
+   -3   9
+   /   /
+ -10  5
+```
+
+**示例 2：**
+输入：`nums = [1,3]`
+输出：`[3,1]`
+解释：`[1,null,3]` 和 `[3,1]` 都是高度平衡二叉搜索树。
+```
+  3       1
+ /         \
+1           3
+```
+
+**提示：**
+*   `1 <= nums.length <= 10^4`
+*   `-10^4 <= nums[i] <= 10^4`
+*   `nums` 按 **严格递增** 顺序排列
+
+---
+
+题目分析
+
+这道题目要求我们将一个已排序的数组转换为一棵 **平衡二叉搜索树 (Balanced Binary Search Tree, BBST)**。
+
+**核心概念回顾：**
+
+1.  **二叉搜索树 (BST) 的性质：**
+    *   对于任意节点 `N`：
+        *   `N` 的左子树中所有节点的值都小于 `N` 的值。
+        *   `N` 的右子树中所有节点的值都大于 `N` 的值。
+        *   `N` 的左右子树本身也必须是二叉搜索树。
+2.  **平衡二叉树 的性质：**
+    *   对于任意节点 `N`：
+        *   其左子树的高度与右子树的高度差的绝对值不超过 1。
+        *   其左右子树本身也必须是平衡二叉树。
+
+**如何利用已排序数组的特性来构建 BST 并保证平衡？**
+
+*   **BST 的构建：** 由于数组是升序排列的，我们可以利用中序遍历的特性。中序遍历一个 BST 得到的结果就是升序排列的节点值。反过来，如果我们想构建一个 BST，那么数组中的中间元素最适合作为根节点，因为它能将数组自然地分成左右两部分，左边的元素都小于它，右边的元素都大于它，这完美符合 BST 的定义。
+*   **平衡的保证：** 如果我们总是选择当前子数组的中间元素作为子树的根节点，那么左右子树的节点数量将大致相等（最多相差一个），这将自然地保证树的高度平衡。因为每次都将问题规模减半，所以树的高度会是 `log N` 级别，从而满足平衡条件。
+
+---
+
+#### 常用解法：递归（分治法）
+
+这是解决此问题的标准且最有效的方法。它是一个典型的分治算法。
+
+**算法思想：**
+1.  选择数组的中间元素作为当前子树的根节点。
+2.  递归地用根节点左边的元素构建左子树。
+3.  递归地用根节点右边的元素构建右子树。
+
+**详细步骤：**
+
+1.  **定义递归函数 `buildBST(nums, left, right)`：**
+    *   **参数解释：**
+        *   `nums`: 原始的升序整数数组。
+        *   `left`: 当前子数组的起始索引。
+        *   `right`: 当前子数组的结束索引。
+    *   **基本情况 (Base Case)：**
+        *   如果 `left > right`，说明当前子数组为空，无法构建节点，返回 `null` (Python: `None`)。
+    *   **构建根节点：**
+        *   计算中间索引 `mid = left + (right - left) // 2` (或 `(left + right) // 2`)。这种计算方式可以避免 `left + right` 溢出，并且在长度为偶数时，会倾向于选择左边的中间元素。
+        *   创建一个 `TreeNode` 对象 `root`，值为 `nums[mid]`。
+    *   **递归构建左子树：**
+        *   `root.left = buildBST(nums, left, mid - 1)`。左子树的元素范围是从 `left` 到 `mid - 1`。
+    *   **递归构建右子树：**
+        *   `root.right = buildBST(nums, mid + 1, right)`。右子树的元素范围是从 `mid + 1` 到 `right`。
+    *   **返回根节点：** 返回 `root`。
+
+2.  **主函数调用：**
+    *   在 `sortedArrayToBST` 函数中，首先检查 `nums` 是否为空。如果为空，返回 `null` (Python: `None`)。
+    *   然后调用 `buildBST(nums, 0, len(nums) - 1)` 开始构建整个树。
+
+**复杂度分析：**
+
+*   **时间复杂度：** `O(N)`，其中 `N` 是数组的长度。
+    *   每个数组元素都会被访问一次，并创建一个对应的 `TreeNode`。
+    *   递归调用的总次数是 `N` (因为每个节点只作为根节点被创建一次)。
+*   **空间复杂度：** `O(log N)`。
+    *   这主要是递归调用栈的开销。由于我们构建的是平衡二叉树，递归深度为 `log N`。
+    *   如果考虑输出树本身占用的空间，那也是 `O(N)`，但通常我们分析的是算法的额外空间开销。
+
+
+
+---
+
+代码实现与示例演示
+
+首先定义二叉树节点：
+
+```python
+# Python
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+# Java
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+```
+
+核心模式代码
+
+```python
+# Python
+class Solution:
+    def sortedArrayToBST(self, nums: list[int]) -> TreeNode | None:
+        # 如果数组为空，则返回None
+        if not nums:
+            return None
+
+        # 定义一个辅助的递归函数来构建BST
+        # left: 当前子数组的起始索引
+        # right: 当前子数组的结束索引
+        def buildBST(left: int, right: int) -> TreeNode | None:
+            # 基本情况：如果起始索引大于结束索引，表示子数组为空，返回None
+            if left > right:
+                return None
+            
+            # 计算中间元素的索引
+            # 使用 (left + right) // 2 可以避免溢出，并倾向于选择左边的中间元素
+            mid = left + (right - left) // 2
+            
+            # 创建当前子树的根节点，其值为中间元素
+            root = TreeNode(nums[mid])
+            
+            # 递归构建左子树：使用中间元素左侧的子数组
+            root.left = buildBST(left, mid - 1)
+            
+            # 递归构建右子树：使用中间元素右侧的子数组
+            root.right = buildBST(mid + 1, right)
+            
+            # 返回当前子树的根节点
+            return root
+        
+        # 从整个数组范围开始构建树
+        return buildBST(0, len(nums) - 1)
+
+```
+
+```java
+// Java
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+class Solution {
+    public TreeNode sortedArrayToBST(int[] nums) {
+        // 如果数组为空，则返回null
+        if (nums == null || nums.length == 0) {
+            return null;
+        }
+
+        // 调用辅助的递归函数来构建BST
+        // 参数为原始数组，以及整个数组的起始和结束索引
+        return buildBST(nums, 0, nums.length - 1);
+    }
+
+    // 辅助的递归函数来构建BST
+    // nums: 原始数组
+    // left: 当前子数组的起始索引
+    // right: 当前子数组的结束索引
+    private TreeNode buildBST(int[] nums, int left, int right) {
+        // 基本情况：如果起始索引大于结束索引，表示子数组为空，无法构建节点，返回null
+        if (left > right) {
+            return null;
+        }
+
+        // 计算中间元素的索引
+        // 使用 left + (right - left) / 2 可以避免 left + right 溢出，并倾向于选择左边的中间元素
+        int mid = left + (right - left) / 2;
+
+        // 创建当前子树的根节点，其值为中间元素
+        TreeNode root = new TreeNode(nums[mid]);
+
+        // 递归构建左子树：使用中间元素左侧的子数组
+        root.left = buildBST(nums, left, mid - 1);
+
+        // 递归构建右子树：使用中间元素右侧的子数组
+        root.right = buildBST(nums, mid + 1, right);
+
+        // 返回当前子树的根节点
+        return root;
+    }
+}
+```
+
+ACM 模式完整代码
+
+为了在ACM模式下运行，我们需要实现数组的输入和二叉树的层序遍历输出。
+
+```python
+# Python ACM 模式
+import sys
+from collections import deque
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def sortedArrayToBST(self, nums: list[int]) -> TreeNode | None:
+        if not nums:
+            return None
+
+        def buildBST(left: int, right: int) -> TreeNode | None:
+            if left > right:
+                return None
+            
+            mid = left + (right - left) // 2
+            
+            root = TreeNode(nums[mid])
+            
+            root.left = buildBST(left, mid - 1)
+            root.right = buildBST(mid + 1, right)
+            
+            return root
+        
+        return buildBST(0, len(nums) - 1)
+
+# 辅助函数：将树转换为层序遍历列表，用于输出
+def tree_to_level_order(root: TreeNode) -> list[int | None]:
+    if not root:
+        return []
+
+    result = []
+    q = deque([root])
+    
+    while q:
+        node = q.popleft()
+        if node:
+            result.append(node.val)
+            q.append(node.left)
+            q.append(node.right)
+        else:
+            result.append(None)
+    
+    # 移除末尾多余的None
+    while result and result[-1] is None:
+        result.pop()
+        
+    return result
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    # 读取一行输入，例如: [-10,-3,0,5,9]
+    line = sys.stdin.readline().strip()
+    
+    # 解析输入字符串为整数列表
+    nums = []
+    if line != "[]":
+        nums_str = line[1:-1].split(',')
+        nums = [int(x.strip()) for x in nums_str]
+    
+    solver = Solution()
+    root = solver.sortedArrayToBST(nums)
+
+    # 将构建好的树转换为层序遍历列表并打印
+    output_list = tree_to_level_order(root)
+    
+    # 格式化输出，例如: [0,-3,9,-10,null,5]
+    formatted_output = []
+    for item in output_list:
+        if item is None:
+            formatted_output.append("null")
+        else:
+            formatted_output.append(str(item))
+    
+    print(f"[{', '.join(formatted_output)}]")
+
+```
+
+```java
+// Java ACM 模式
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+public class Main { // ACM模式下通常将所有代码放在Main类中
+    public TreeNode sortedArrayToBST(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            return null;
+        }
+        return buildBST(nums, 0, nums.length - 1);
+    }
+
+    private TreeNode buildBST(int[] nums, int left, int right) {
+        if (left > right) {
+            return null;
+        }
+
+        int mid = left + (right - left) / 2;
+
+        TreeNode root = new TreeNode(nums[mid]);
+
+        root.left = buildBST(nums, left, mid - 1);
+        root.right = buildBST(nums, mid + 1, right);
+
+        return root;
+    }
+
+    // 辅助函数：将树转换为层序遍历列表，用于输出
+    public static List<String> treeToLevelOrder(TreeNode root) {
+        List<String> result = new ArrayList<>();
+        if (root == null) {
+            return result;
+        }
+
+        Queue<TreeNode> q = new LinkedList<>();
+        q.offer(root);
+
+        while (!q.isEmpty()) {
+            TreeNode node = q.poll();
+            if (node != null) {
+                result.add(String.valueOf(node.val));
+                q.offer(node.left);
+                q.offer(node.right);
+            } else {
+                result.add("null");
+            }
+        }
+
+        // 移除末尾多余的"null"
+        while (result.size() > 0 && result.get(result.size() - 1).equals("null")) {
+            result.remove(result.size() - 1);
+        }
+        
+        return result;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String line = scanner.nextLine().trim(); // 读取一行输入，例如: [-10,-3,0,5,9]
+        scanner.close();
+
+        int[] nums;
+        if (line.equals("[]")) {
+            nums = new int[0];
+        } else {
+            String nums_str = line.substring(1, line.length() - 1); // 移除方括号
+            String[] str_arr = nums_str.split(",");
+            nums = new int[str_arr.length];
+            for (int i = 0; i < str_arr.length; i++) {
+                nums[i] = Integer.parseInt(str_arr[i].trim());
+            }
+        }
+        
+        Main solver = new Main(); // 在ACM模式下，通常Main类就是Solution
+        TreeNode root = solver.sortedArrayToBST(nums);
+        
+        // 将构建好的树转换为层序遍历列表并打印
+        List<String> outputList = treeToLevelOrder(root);
+        System.out.println("[" + String.join(", ", outputList) + "]");
+    }
+}
+```
+
+示例演示：`nums = [-10,-3,0,5,9]`
+
+**初始调用：** `buildBST(nums, 0, 4)`
+
+1.  **`buildBST(nums, 0, 4)`** (`left=0, right=4`)
+    *   `mid = (0 + 4) // 2 = 2`。`nums[2]` 是 `0`。
+    *   `root = TreeNode(0)`。
+    *   **`root.left = buildBST(nums, 0, 1)`** (左子数组 `[-10,-3]`)
+        *   **`buildBST(nums, 0, 1)`** (`left=0, right=1`)
+            *   `mid = (0 + 1) // 2 = 0`。`nums[0]` 是 `-10`。
+            *   `root_left = TreeNode(-10)`。
+            *   **`root_left.left = buildBST(nums, 0, -1)`** (`left=0, right=-1`)
+                *   `left > right` (0 > -1)，返回 `null`。
+            *   **`root_left.right = buildBST(nums, 1, 1)`** (`left=1, right=1`)
+                *   `mid = (1 + 1) // 2 = 1`。`nums[1]` 是 `-3`。
+                *   `root_left_right = TreeNode(-3)`。
+                *   **`root_left_right.left = buildBST(nums, 1, 0)`** (`left=1, right=0`)
+                    *   `left > right` (1 > 0)，返回 `null`。
+                *   **`root_left_right.right = buildBST(nums, 2, 1)`** (`left=2, right=1`)
+                    *   `left > right` (2 > 1)，返回 `null`。
+                *   返回 `root_left_right (TreeNode(-3))`。
+            *   `root_left` 的左子节点是 `null`，右子节点是 `TreeNode(-3)`。
+            *   返回 `root_left (TreeNode(-10))`。
+        *   `root.left` 指向 `TreeNode(-10)`。
+    *   **`root.right = buildBST(nums, 3, 4)`** (右子数组 `[5,9]`)
+        *   **`buildBST(nums, 3, 4)`** (`left=3, right=4`)
+            *   `mid = (3 + 4) // 2 = 3`。`nums[3]` 是 `5`。
+            *   `root_right = TreeNode(5)`。
+            *   **`root_right.left = buildBST(nums, 3, 2)`** (`left=3, right=2`)
+                *   `left > right` (3 > 2)，返回 `null`。
+            *   **`root_right.right = buildBST(nums, 4, 4)`** (`left=4, right=4`)
+                *   `mid = (4 + 4) // 2 = 4`。`nums[4]` 是 `9`。
+                *   `root_right_right = TreeNode(9)`。
+                *   **`root_right_right.left = buildBST(nums, 4, 3)`** (`left=4, right=3`)
+                    *   `left > right` (4 > 3)，返回 `null`。
+                *   **`root_right_right.right = buildBST(nums, 5, 4)`** (`left=5, right=4`)
+                    *   `left > right` (5 > 4)，返回 `null`。
+                *   返回 `root_right_right (TreeNode(9))`。
+            *   `root_right` 的左子节点是 `null`，右子节点是 `TreeNode(9)`。
+            *   返回 `root_right (TreeNode(5))`。
+        *   `root.right` 指向 `TreeNode(5)`。
+    *   返回 `root (TreeNode(0))`。
+
+**最终构建的树结构：**
+```
+      0
+     / \
+   -10  5
+     \   \
+      -3  9
+```
+层序遍历输出：`[0, -10, 5, null, -3, null, 9]`。
+
+**注意：**
+在 Python 中，`mid = (left + right) // 2` 对于 `(0, 1)` 得到 `0`，对于 `(3, 4)` 得到 `3`。
+所以 `[-10, -3]` 的根是 `-10`，`[5, 9]` 的根是 `5`。
+这与示例中给出的 `[0,-3,9,-10,null,5]` 的结构略有不同，但同样是平衡二叉搜索树。示例中的 `[0,-3,9,-10,null,5]` 是因为 `[-10,-3]` 的根是 `-3`，`[5,9]` 的根是 `9`，这可能是选择 `mid = (left + right + 1) // 2` 的结果，或者仅仅是另一种合法的平衡 BST。两种方式都是正确的。
+
+*   我的代码构建的树（层序遍历）：`[0, -10, 5, null, -3, null, 9]`
+    ```
+          0
+         / \
+       -10  5
+         \   \
+          -3  9
+    ```
+
+*   示例给出的第一种树（层序遍历）：`[0,-3,9,-10,null,5]`
+    ```
+          0
+         / \
+       -3   9
+       /   /
+     -10  5
+    ```
+
+两者都符合平衡二叉搜索树的定义。
+
+---
+
+希望这份详细的讲解能帮助您彻底理解这道题目！
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
