@@ -13783,6 +13783,357 @@ public class Main { // ACM模式下通常将所有代码放在Main类中
 
 
 
+
+
+
+
+### 118. 杨辉三角 (Pascal's Triangle)
+
+**链接：** [LeetCode 118 - 杨辉三角](https://leetcode.cn/problems/pascals-triangle/)
+
+**题目描述：**
+给定一个非负整数 `numRows`，生成「杨辉三角」的前 `numRows` 行。
+在「杨辉三角」中，每个数是它左上方和右上方的数的和。
+
+**示例 1:**
+输入: `numRows = 5`
+输出: `[[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1]]`
+
+**示例 2:**
+输入: `numRows = 1`
+输出: `[[1]]`
+
+**提示:**
+*   `1 <= numRows <= 30`
+
+---
+
+题目分析
+
+杨辉三角是一个经典的数学结构，其生成规则非常简单：
+1.  **每行的第一个和最后一个数字都是 `1`。**
+2.  **从第三行开始，每个中间数字是它正上方和左上方两个数字的和。**
+
+让我们来看一下杨辉三角的前几行：
+
+```
+行 0:      [1]
+行 1:     [1, 1]
+行 2:    [1, 2, 1]
+行 3:   [1, 3, 3, 1]
+行 4:  [1, 4, 6, 4, 1]
+...
+```
+
+**观察与规律：**
+
+*   第 `i` 行（从0开始计数）有 `i+1` 个数字。
+*   要生成第 `i` 行，我们只需要知道第 `i-1` 行的数字。
+*   具体来说，第 `i` 行的第 `j` 个数字（从0开始计数）等于第 `i-1` 行的第 `j-1` 个数字与第 `i-1` 行的第 `j` 个数字之和。
+    *   例如，第2行中间的 `2` = 第1行 `[1, 1]` 中的 `1` (索引0) + `1` (索引1)。
+    *   第3行中间的 `3` (索引1) = 第2行 `[1, 2, 1]` 中的 `1` (索引0) + `2` (索引1)。
+    *   第3行中间的 `3` (索引2) = 第2行 `[1, 2, 1]` 中的 `2` (索引1) + `1` (索引2)。
+
+这个规律表明，我们可以使用**动态规划**的思想来解决这个问题，即通过计算前一行来生成当前行。
+
+---
+
+#### 常用解法：逐行生成（动态规划）
+
+这是解决杨辉三角问题的最直接和最常用的方法。
+
+**算法思想：**
+创建一个列表来存储所有行。从第一行开始，逐行生成。每一行都是基于前一行计算得出的。
+
+**详细步骤：**
+
+1.  **初始化：** 创建一个空的列表 `triangle`，用于存储最终的杨辉三角的所有行。
+2.  **遍历行数：** 从 `i = 0` 到 `numRows - 1` 循环，表示当前要生成的行数（0-indexed）。
+3.  **生成当前行：** 在每次循环中，创建一个新的列表 `currentRow` 来存储当前行的数字。
+    *   **第一个元素：** `currentRow` 的第一个元素总是 `1`。将其添加到 `currentRow`。
+    *   **中间元素（如果 `i > 0`）：** 如果当前不是第一行（即 `i > 0`），那么可以获取 `previousRow = triangle.get(i - 1)` (Java) 或 `previousRow = triangle[i - 1]` (Python)。
+        *   从 `j = 1` 遍历到 `i - 1`（不包括 `i`），计算 `currentRow` 的中间元素。
+        *   `currentRow` 的第 `j` 个元素 = `previousRow` 的第 `j-1` 个元素 + `previousRow` 的第 `j` 个元素。将这个和添加到 `currentRow`。
+    *   **最后一个元素（如果 `i > 0`）：** 如果当前不是第一行（即 `i > 0`），`currentRow` 的最后一个元素也总是 `1`。将其添加到 `currentRow`。
+        *   **特殊处理 `i=0` 的情况：** 当 `i=0` 时，`currentRow` 只有 `[1]`，这个 `1` 既是第一个也是最后一个。上面的逻辑可以自然处理：只添加第一个 `1`，中间循环和最后一个 `1` 的添加条件 (`i > 0`) 不满足，所以不会执行。
+4.  **添加当前行：** 将 `currentRow` 添加到 `triangle` 中。
+5.  **返回结果：** 循环结束后，返回 `triangle`。
+
+**复杂度分析：**
+
+*   **时间复杂度：** `O(numRows^2)`。
+    *   外层循环执行 `numRows` 次。
+    *   内层循环（计算中间元素）在第 `i` 行执行 `i-1` 次。
+    *   总操作次数约为 `0 + 1 + 2 + ... + (numRows - 1)`，即 `numRows * (numRows - 1) / 2`，近似为 `O(numRows^2)`。
+*   **空间复杂度：** `O(numRows^2)`。
+    *   我们存储了杨辉三角的所有行，总共有 `numRows * (numRows + 1) / 2` 个数字。
+    *   因此，所需的空间与 `numRows^2` 成正比。
+
+---
+
+代码实现与示例演示
+
+核心模式代码
+
+```python
+# Python
+class Solution:
+    def generate(self, numRows: int) -> list[list[int]]:
+        # 初始化一个空列表，用于存储杨辉三角的所有行
+        triangle = []
+
+        # 遍历每一行，从第0行到第 numRows-1 行
+        for i in range(numRows):
+            # 创建一个新列表来存储当前行的数字
+            current_row = []
+            
+            # 当前行的第一个数字总是 1
+            current_row.append(1)
+            
+            # 如果当前行不是第一行 (i > 0)，则计算中间的数字
+            if i > 0:
+                # 获取前一行，用于计算当前行的中间数字
+                previous_row = triangle[i - 1]
+                
+                # 遍历前一行，计算当前行的中间数字
+                # j 从 1 开始，到 i-1 结束 (不包括 i)
+                # 例如，对于第2行 (i=2)，previous_row=[1,1]，j=1，计算 previous_row[0]+previous_row[1]
+                for j in range(1, i):
+                    current_row.append(previous_row[j - 1] + previous_row[j])
+                
+                # 当前行的最后一个数字总是 1
+                current_row.append(1)
+            
+            # 将当前行添加到杨辉三角的总列表中
+            triangle.append(current_row)
+            
+        # 返回完整的杨辉三角
+        return triangle
+
+```
+
+```java
+// Java
+import java.util.ArrayList;
+import java.util.List;
+
+class Solution {
+    public List<List<Integer>> generate(int numRows) {
+        // 初始化一个空列表，用于存储杨辉三角的所有行
+        List<List<Integer>> triangle = new ArrayList<>();
+
+        // 遍历每一行，从第0行到第 numRows-1 行
+        for (int i = 0; i < numRows; i++) {
+            // 创建一个新列表来存储当前行的数字
+            List<Integer> currentRow = new ArrayList<>();
+            
+            // 当前行的第一个数字总是 1
+            currentRow.add(1);
+            
+            // 如果当前行不是第一行 (i > 0)，则计算中间的数字
+            if (i > 0) {
+                // 获取前一行，用于计算当前行的中间数字
+                List<Integer> previousRow = triangle.get(i - 1);
+                
+                // 遍历前一行，计算当前行的中间数字
+                // j 从 1 开始，到 i-1 结束 (不包括 i)
+                // 例如，对于第2行 (i=2)，previousRow=[1,1]，j=1，计算 previousRow.get(0)+previousRow.get(1)
+                for (int j = 1; j < i; j++) {
+                    currentRow.add(previousRow.get(j - 1) + previousRow.get(j));
+                }
+                
+                // 当前行的最后一个数字总是 1
+                currentRow.add(1);
+            }
+            
+            // 将当前行添加到杨辉三角的总列表中
+            triangle.add(currentRow);
+        }
+        
+        // 返回完整的杨辉三角
+        return triangle;
+    }
+}
+```
+
+ACM 模式完整代码
+
+在ACM模式下，我们需要处理输入（读取 `numRows`）和输出（打印 `List<List<Integer>>`）。
+
+```python
+# Python ACM 模式
+import sys
+
+class Solution:
+    def generate(self, numRows: int) -> list[list[int]]:
+        triangle = []
+        for i in range(numRows):
+            current_row = []
+            current_row.append(1)
+            if i > 0:
+                previous_row = triangle[i - 1]
+                for j in range(1, i):
+                    current_row.append(previous_row[j - 1] + previous_row[j])
+                current_row.append(1)
+            triangle.append(current_row)
+        return triangle
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    # 读取一行输入，例如: 5
+    numRows_str = sys.stdin.readline().strip()
+    numRows = int(numRows_str)
+    
+    solver = Solution()
+    result = solver.generate(numRows)
+    
+    # 打印结果，格式为 [[1],[1,1],...]
+    # Python的list可以直接打印为字符串，但为了严格匹配题目示例，需要手动格式化
+    output_rows = []
+    for row in result:
+        output_rows.append(f"[{','.join(map(str, row))}]")
+    print(f"[{','.join(output_rows)}]")
+
+```
+
+```java
+// Java ACM 模式
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner; // 导入Scanner类用于读取输入
+
+public class Main { // ACM模式下通常将所有代码放在Main类中
+    public List<List<Integer>> generate(int numRows) {
+        List<List<Integer>> triangle = new ArrayList<>();
+
+        for (int i = 0; i < numRows; i++) {
+            List<Integer> currentRow = new ArrayList<>();
+            currentRow.add(1);
+            
+            if (i > 0) {
+                List<Integer> previousRow = triangle.get(i - 1);
+                for (int j = 1; j < i; j++) {
+                    currentRow.add(previousRow.get(j - 1) + previousRow.get(j));
+                }
+                currentRow.add(1);
+            }
+            triangle.add(currentRow);
+        }
+        return triangle;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        int numRows = scanner.nextInt(); // 读取一个整数作为 numRows
+        scanner.close(); // 关闭Scanner
+
+        Main solver = new Main(); // 在ACM模式下，通常Main类就是Solution
+        List<List<Integer>> result = solver.generate(numRows);
+        
+        // 打印结果，格式为 [[1],[1,1],...]
+        // Java的List<List<Integer>>可以直接打印，但为了严格匹配题目示例，需要手动格式化
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (int i = 0; i < result.size(); i++) {
+            sb.append("[");
+            for (int j = 0; j < result.get(i).size(); j++) {
+                sb.append(result.get(i).get(j));
+                if (j < result.get(i).size() - 1) {
+                    sb.append(",");
+                }
+            }
+            sb.append("]");
+            if (i < result.size() - 1) {
+                sb.append(",");
+            }
+        }
+        sb.append("]");
+        System.out.println(sb.toString());
+    }
+}
+```
+
+示例演示：`numRows = 5`
+
+我们将逐步跟踪 `generate` 方法的执行过程。
+
+**初始状态：** `triangle = []`
+
+1.  **`i = 0` (生成第 0 行)**
+    *   `currentRow = []`
+    *   `currentRow.add(1)` -> `currentRow = [1]`
+    *   `i > 0` 为 `false`，跳过中间和最后一个 `1` 的逻辑。
+    *   `triangle.add(currentRow)` -> `triangle = [[1]]`
+
+2.  **`i = 1` (生成第 1 行)**
+    *   `currentRow = []`
+    *   `currentRow.add(1)` -> `currentRow = [1]`
+    *   `i > 0` 为 `true`。
+        *   `previousRow = triangle.get(0)` -> `previousRow = [1]`
+        *   `for j in range(1, 1)`：循环不执行（`range(1,1)` 为空）。
+        *   `currentRow.add(1)` -> `currentRow = [1, 1]`
+    *   `triangle.add(currentRow)` -> `triangle = [[1], [1, 1]]`
+
+3.  **`i = 2` (生成第 2 行)**
+    *   `currentRow = []`
+    *   `currentRow.add(1)` -> `currentRow = [1]`
+    *   `i > 0` 为 `true`。
+        *   `previousRow = triangle.get(1)` -> `previousRow = [1, 1]`
+        *   `for j in range(1, 2)`：
+            *   `j = 1`: `previousRow.get(0) + previousRow.get(1)` = `1 + 1 = 2`。
+            *   `currentRow.add(2)` -> `currentRow = [1, 2]`
+        *   `currentRow.add(1)` -> `currentRow = [1, 2, 1]`
+    *   `triangle.add(currentRow)` -> `triangle = [[1], [1, 1], [1, 2, 1]]`
+
+4.  **`i = 3` (生成第 3 行)**
+    *   `currentRow = []`
+    *   `currentRow.add(1)` -> `currentRow = [1]`
+    *   `i > 0` 为 `true`。
+        *   `previousRow = triangle.get(2)` -> `previousRow = [1, 2, 1]`
+        *   `for j in range(1, 3)`：
+            *   `j = 1`: `previousRow.get(0) + previousRow.get(1)` = `1 + 2 = 3`。
+            *   `currentRow.add(3)` -> `currentRow = [1, 3]`
+            *   `j = 2`: `previousRow.get(1) + previousRow.get(2)` = `2 + 1 = 3`。
+            *   `currentRow.add(3)` -> `currentRow = [1, 3, 3]`
+        *   `currentRow.add(1)` -> `currentRow = [1, 3, 3, 1]`
+    *   `triangle.add(currentRow)` -> `triangle = [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1]]`
+
+5.  **`i = 4` (生成第 4 行)**
+    *   `currentRow = []`
+    *   `currentRow.add(1)` -> `currentRow = [1]`
+    *   `i > 0` 为 `true`。
+        *   `previousRow = triangle.get(3)` -> `previousRow = [1, 3, 3, 1]`
+        *   `for j in range(1, 4)`：
+            *   `j = 1`: `previousRow.get(0) + previousRow.get(1)` = `1 + 3 = 4`。
+            *   `currentRow.add(4)` -> `currentRow = [1, 4]`
+            *   `j = 2`: `previousRow.get(1) + previousRow.get(2)` = `3 + 3 = 6`。
+            *   `currentRow.add(6)` -> `currentRow = [1, 4, 6]`
+            *   `j = 3`: `previousRow.get(2) + previousRow.get(3)` = `3 + 1 = 4`。
+            *   `currentRow.add(4)` -> `currentRow = [1, 4, 6, 4]`
+        *   `currentRow.add(1)` -> `currentRow = [1, 4, 6, 4, 1]`
+    *   `triangle.add(currentRow)` -> `triangle = [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1]]`
+
+循环结束。
+
+**最终返回结果：**
+`[[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1]]`
+
+这与示例输出完全一致。
+
+---
+
+希望这份详细的讲解能帮助您彻底理解这道题目！
+
+
+
+
+
+
+
+
+
+
+
 ## 多维动态规划
 
 
