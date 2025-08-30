@@ -14738,6 +14738,689 @@ public class Main {
 
 
 
+### 题目：322. 零钱兑换 (Coin Change)
+
+**链接：** [LeetCode 322 - 零钱兑换](https://leetcode.cn/problems/coin-change/)
+
+**题目描述：**
+给你一个整数数组 `coins` ，表示不同面额的硬币；以及一个整数 `amount` ，表示总金额。
+计算并返回可以凑成总金额所需的 **最少的硬币个数** 。如果没有任何一种硬币组合能组成总金额，返回 `-1` 。
+你可以认为每种硬币的数量是无限的。
+
+**示例 1：**
+输入：`coins = [1, 2, 5], amount = 11`
+输出：`3`
+解释：`11 = 5 + 5 + 1`
+
+**示例 2：**
+输入：`coins = [2], amount = 3`
+输出：`-1`
+
+**示例 3：**
+输入：`coins = [1], amount = 0`
+输出：`0`
+
+**提示：**
+*   `1 <= coins.length <= 12`
+*   `1 <= coins[i] <= 2^31 - 1`
+*   `0 <= amount <= 10^4`
+
+---
+
+**题目分析：**
+
+这道题目是一个经典的**完全背包问题**的变种，或者更具体地说，是一个“凑硬币”问题，目标是找到凑成给定金额所需的最少硬币数量。每种硬币的数量是无限的，这符合完全背包的特点。
+
+**问题的核心：**
+*   **“最少数量”：** 这个关键词通常提示我们使用动态规划 (Dynamic Programming) 或广度优先搜索 (BFS) 来解决最短路径或最优化问题。
+*   **“凑成总金额”：** 目标是达到一个特定的金额 `amount`。
+*   **“无限数量的硬币”：** 硬币可以重复使用。
+
+**思考方向：**
+
+1.  **动态规划 (DP)：** 我们可以定义 `dp[i]` 为凑成金额 `i` 所需的最少硬币数量。要计算 `dp[i]`，我们可以考虑使用每一种硬币 `c`。如果使用了硬币 `c`，那么剩下的金额就是 `i - c`，所需硬币数量就是 `dp[i - c] + 1`。我们遍历所有硬币 `c`，取 `dp[i - c] + 1` 的最小值来更新 `dp[i]`。
+2.  **广度优先搜索 (BFS)：** 这个问题也可以看作是一个图的最短路径问题。图的节点是金额 `0` 到 `amount`。从 `amount` 开始，每次减去一个硬币面额，就相当于从一个节点走到另一个节点。我们的目标是找到从 `amount` 到 `0` 的最短路径（即最少步数），每一步代表使用一个硬币。BFS 天然适合解决这种最短路径问题。
+
+---
+
+#### 解法一：动态规划 (Dynamic Programming)
+
+**算法思想：**
+定义 `dp[i]` 为凑成金额 `i` 所需的最少硬币数量。我们从 `dp[0]` 开始，逐步计算到 `dp[amount]`。
+
+**详细步骤：**
+
+1.  **初始化 `dp` 数组：**
+    *   创建一个大小为 `amount + 1` 的数组 `dp`。
+    *   `dp[0] = 0`，因为凑成金额 `0` 不需要任何硬币。
+    *   对于所有 `i > 0`，将 `dp[i]` 初始化为一个足够大的值（例如 `amount + 1`，因为最多 `amount` 个面额为 `1` 的硬币就能凑成 `amount`，所以 `amount + 1` 肯定比任何有效解都大，可以表示“无法凑成”或“无穷大”）。
+2.  **遍历金额 `i`：**
+    *   从 `i = 1` 到 `amount` 循环，计算每个金额 `i` 所需的最少硬币数量。
+3.  **遍历硬币 `c`：**
+    *   对于每个金额 `i`，遍历 `coins` 数组中的每一种硬币 `c`。
+    *   **状态转移方程：**
+        *   如果 `i - c >= 0` (即当前金额 `i` 可以减去硬币 `c` 的面额)：
+            *   `dp[i] = min(dp[i], dp[i - c] + 1)`。
+            *   这里的逻辑是：如果我们要凑成金额 `i`，并且我们选择使用硬币 `c`，那么剩下的金额 `i - c` 就需要 `dp[i - c]` 个硬币来凑成。所以总共需要 `dp[i - c] + 1` 个硬币。我们取所有可能硬币 `c` 产生的最小值。
+4.  **返回结果：**
+    *   `dp[amount]` 就是凑成总金额 `amount` 所需的最少硬币数量。
+    *   如果 `dp[amount]` 仍然是初始化的那个大值 (`amount + 1`)，说明 `amount` 无法被凑成，此时返回 `-1`。否则，返回 `dp[amount]`。
+
+**复杂度分析：**
+
+*   **时间复杂度：** `O(amount * num_coins)`。
+    *   外层循环 `i` 运行 `amount` 次。
+    *   内层循环 `c` 运行 `num_coins` 次。
+*   **空间复杂度：** `O(amount)`。
+    *   `dp` 数组的大小为 `amount + 1`。
+
+**Mermaid 流程图：**
+
+```mermaid
+graph TD
+    A[Start coinChange(coins, amount)] --> B{amount == 0?}
+    B -- Yes --> C[Return 0]
+    B -- No --> D[Initialize dp array of size amount+1]
+    D --> E[dp[0] = 0, others = amount + 1 (infinity)]
+    E --> F{i from 1 to amount}
+    F -- Yes --> G{for each coin 'c' in coins}
+    G -- Yes --> H{i - c >= 0?}
+    H -- Yes --> I[dp[i] = min(dp[i], dp[i - c] + 1)]
+    I --> G
+    H -- No --> G
+    G -- No --> F
+    F -- No --> J{dp[amount] > amount?}
+    J -- Yes --> K[Return -1]
+    J -- No --> L[Return dp[amount]]
+    L --> M[End]
+```
+
+---
+
+解法一：DP 核心模式代码
+
+```python
+# Python
+import math
+
+class Solution:
+    def coinChange(self, coins: list[int], amount: int) -> int:
+        # dp[i] 表示凑成金额 i 所需的最少硬币数量
+        # 初始化 dp 数组，dp[0] = 0，其他为 amount + 1 (表示无穷大)
+        # 为什么是 amount + 1？因为最多 amount 个面额为 1 的硬币就能凑成 amount，
+        # 所以 amount + 1 肯定比任何有效解都大，可以作为“无法凑成”的标记。
+        dp = [amount + 1] * (amount + 1)
+        dp[0] = 0
+
+        # 遍历所有金额 i 从 1 到 amount
+        for i in range(1, amount + 1):
+            # 遍历所有硬币面额 c
+            for coin in coins:
+                # 如果当前金额 i 大于等于硬币面额 coin
+                if i - coin >= 0:
+                    # 状态转移方程：
+                    # dp[i] 可以通过 (凑成 i - coin 的最少硬币数量) + 1 (加上当前 coin) 得到
+                    # 我们需要取所有可能情况中的最小值
+                    dp[i] = min(dp[i], dp[i - coin] + 1)
+        
+        # 最终 dp[amount] 就是凑成总金额 amount 所需的最少硬币数量
+        # 如果 dp[amount] 仍然是初始化的 amount + 1，说明无法凑成，返回 -1
+        # 否则，返回 dp[amount]
+        return dp[amount] if dp[amount] <= amount else -1
+
+```
+
+```java
+// Java
+import java.util.Arrays;
+
+class Solution {
+    public int coinChange(int[] coins, int amount) {
+        // dp[i] 表示凑成金额 i 所需的最少硬币数量
+        // 初始化 dp 数组，dp[0] = 0，其他为 amount + 1 (表示无穷大)
+        // 为什么是 amount + 1？因为最多 amount 个面额为 1 的硬币就能凑成 amount，
+        // 所以 amount + 1 肯定比任何有效解都大，可以作为“无法凑成”的标记。
+        int[] dp = new int[amount + 1];
+        Arrays.fill(dp, amount + 1); // 将所有元素初始化为 amount + 1
+        dp[0] = 0; // 金额 0 需要 0 个硬币
+
+        // 遍历所有金额 i 从 1 到 amount
+        for (int i = 1; i <= amount; i++) {
+            // 遍历所有硬币面额 coin
+            for (int coin : coins) {
+                // 如果当前金额 i 大于等于硬币面额 coin
+                if (i - coin >= 0) {
+                    // 状态转移方程：
+                    // dp[i] 可以通过 (凑成 i - coin 的最少硬币数量) + 1 (加上当前 coin) 得到
+                    // 我们需要取所有可能情况中的最小值
+                    dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+                }
+            }
+        }
+        
+        // 最终 dp[amount] 就是凑成总金额 amount 所需的最少硬币数量
+        // 如果 dp[amount] 仍然是初始化的 amount + 1，说明无法凑成，返回 -1
+        // 否则，返回 dp[amount]
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+}
+```
+
+---
+
+解法一：DP ACM 模式完整代码
+
+```python
+# Python ACM 模式
+import sys
+import math
+
+class Solution:
+    def coinChange(self, coins: list[int], amount: int) -> int:
+        dp = [amount + 1] * (amount + 1)
+        dp[0] = 0
+
+        for i in range(1, amount + 1):
+            for coin in coins:
+                if i - coin >= 0:
+                    dp[i] = min(dp[i], dp[i - coin] + 1)
+        
+        return dp[amount] if dp[amount] <= amount else -1
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    # 读取硬币面额数组，例如: [1,2,5]
+    coins_line = sys.stdin.readline().strip()
+    # 读取总金额，例如: 11
+    amount_line = sys.stdin.readline().strip()
+
+    # 解析 coins 数组
+    coins = []
+    if coins_line != "[]":
+        coins_str = coins_line[1:-1].split(',')
+        coins = [int(x.strip()) for x in coins_str]
+    
+    # 解析 amount
+    amount = int(amount_line)
+    
+    solver = Solution()
+    result = solver.coinChange(coins, amount)
+    
+    # 打印结果
+    print(result)
+
+```
+
+```java
+// Java ACM 模式
+import java.util.Arrays;
+import java.util.Scanner; // 导入Scanner类用于读取输入
+import java.util.ArrayList;
+import java.util.List;
+
+public class Main { // ACM模式下通常将所有代码放在Main类中
+    public int coinChange(int[] coins, int amount) {
+        int[] dp = new int[amount + 1];
+        Arrays.fill(dp, amount + 1);
+        dp[0] = 0;
+
+        for (int i = 1; i <= amount; i++) {
+            for (int coin : coins) {
+                if (i - coin >= 0) {
+                    dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+                }
+            }
+        }
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // 读取硬币面额数组，例如: [1,2,5]
+        String coinsLine = scanner.nextLine().trim();
+        // 读取总金额，例如: 11
+        int amount = Integer.parseInt(scanner.nextLine().trim());
+        scanner.close();
+
+        // 解析 coins 数组
+        int[] coins;
+        if (coinsLine.equals("[]")) {
+            coins = new int[0];
+        } else {
+            String content = coinsLine.substring(1, coinsLine.length() - 1); // 去除方括号
+            String[] strArr = content.split(","); // 按逗号分割
+            coins = new int[strArr.length];
+            for (int i = 0; i < strArr.length; i++) {
+                coins[i] = Integer.parseInt(strArr[i].trim()); // 去除空格并转换为整数
+            }
+        }
+        
+        Main solver = new Main(); // 在ACM模式下，通常Main类就是Solution
+        int result = solver.coinChange(coins, amount);
+        
+        // 打印结果
+        System.out.println(result);
+    }
+}
+```
+
+---
+
+解法一：DP 示例演示：`coins = [1, 2, 5], amount = 11`
+
+**初始化：** `dp` 数组大小为 `12` (索引 `0` 到 `11`)，所有元素初始化为 `12` (代表 `amount + 1`)，`dp[0] = 0`。
+`dp = [0, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]`
+
+**外层循环 `i` 从 `1` 到 `11`：**
+
+1.  **`i = 1`**
+    *   `coin = 1`: `i - coin = 0 >= 0`. `dp[1] = min(dp[1], dp[0] + 1) = min(12, 0 + 1) = 1`.
+    *   `coin = 2`: `i - coin = -1 < 0`. 跳过。
+    *   `coin = 5`: `i - coin = -4 < 0`. 跳过。
+    *   `dp = [0, 1, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]`
+
+2.  **`i = 2`**
+    *   `coin = 1`: `i - coin = 1 >= 0`. `dp[2] = min(dp[2], dp[1] + 1) = min(12, 1 + 1) = 2`.
+    *   `coin = 2`: `i - coin = 0 >= 0`. `dp[2] = min(2, dp[0] + 1) = min(2, 0 + 1) = 1`.
+    *   `coin = 5`: `i - coin = -3 < 0`. 跳过。
+    *   `dp = [0, 1, 1, 12, 12, 12, 12, 12, 12, 12, 12, 12]`
+
+3.  **`i = 3`**
+    *   `coin = 1`: `i - coin = 2 >= 0`. `dp[3] = min(dp[3], dp[2] + 1) = min(12, 1 + 1) = 2`.
+    *   `coin = 2`: `i - coin = 1 >= 0`. `dp[3] = min(2, dp[1] + 1) = min(2, 1 + 1) = 2`.
+    *   `coin = 5`: `i - coin = -2 < 0`. 跳过。
+    *   `dp = [0, 1, 1, 2, 12, 12, 12, 12, 12, 12, 12, 12]`
+
+4.  **`i = 4`**
+    *   `coin = 1`: `i - coin = 3 >= 0`. `dp[4] = min(dp[4], dp[3] + 1) = min(12, 2 + 1) = 3`.
+    *   `coin = 2`: `i - coin = 2 >= 0`. `dp[4] = min(3, dp[2] + 1) = min(3, 1 + 1) = 2`.
+    *   `coin = 5`: `i - coin = -1 < 0`. 跳过。
+    *   `dp = [0, 1, 1, 2, 2, 12, 12, 12, 12, 12, 12, 12]`
+
+5.  **`i = 5`**
+    *   `coin = 1`: `i - coin = 4 >= 0`. `dp[5] = min(dp[5], dp[4] + 1) = min(12, 2 + 1) = 3`.
+    *   `coin = 2`: `i - coin = 3 >= 0`. `dp[5] = min(3, dp[3] + 1) = min(3, 2 + 1) = 3`.
+    *   `coin = 5`: `i - coin = 0 >= 0`. `dp[5] = min(3, dp[0] + 1) = min(3, 0 + 1) = 1`.
+    *   `dp = [0, 1, 1, 2, 2, 1, 12, 12, 12, 12, 12, 12]`
+
+... (继续计算，过程类似)
+
+11. **`i = 11`**
+    *   `coin = 1`: `i - coin = 10 >= 0`. `dp[11] = min(dp[11], dp[10] + 1)`. 假设 `dp[10]` 之前算得为 `2` (`5+5`)。`dp[11] = min(12, 2 + 1) = 3`.
+    *   `coin = 2`: `i - coin = 9 >= 0`. `dp[11] = min(3, dp[9] + 1)`. 假设 `dp[9]` 之前算得为 `2` (`5+2+2` 或 `5+4`)。`dp[11] = min(3, 2 + 1) = 3`.
+    *   `coin = 5`: `i - coin = 6 >= 0`. `dp[11] = min(3, dp[6] + 1)`. 假设 `dp[6]` 之前算得为 `2` (`5+1` 或 `2+2+2`). `dp[11] = min(3, 2 + 1) = 3`.
+    *   `dp[11]` 最终为 `3`.
+
+循环结束后，`dp[11]` 的值为 `3`。
+判断 `dp[11] <= amount` (`3 <= 11`) 为 `true`。
+返回 `3`。
+
+---
+
+#### 解法二：广度优先搜索 (BFS)
+
+**算法思想：**
+将问题建模为从 `amount` 到 `0` 的最短路径问题。每个节点代表一个金额，每条边代表减去一个硬币面额。BFS 从 `amount` 开始，逐层向外探索，直到找到 `0`。找到 `0` 的层数就是最少硬币数量。
+
+**详细步骤：**
+
+1.  **处理特殊情况：** 如果 `amount` 为 `0`，直接返回 `0`。
+2.  **初始化队列和访问集合：**
+    *   创建一个队列 `queue`，用于存储待访问的金额。
+    *   将起始金额 `amount` 加入队列。
+    *   创建一个 `visited` 集合（或布尔数组）来记录已经访问过的金额，避免重复计算和陷入循环。将 `amount` 标记为已访问。
+    *   初始化 `level = 0`，表示当前搜索的层数（即使用的硬币数量）。
+3.  **BFS 搜索：**
+    *   当队列不为空时，执行以下循环：
+        *   `level += 1` (每进入新的一层，表示又使用了一个硬币)。
+        *   获取当前层的大小 `size = queue.size()`。
+        *   遍历当前层的所有节点（`k` 从 `0` 到 `size - 1`）：
+            *   从队列中取出一个金额 `curr = queue.poll()`。
+            *   对于 `coins` 数组中的每一个硬币面额 `c`：
+                *   计算 `next_amount = curr - c`。
+                *   **如果 `next_amount == 0`，** 说明我们通过 `level` 步（使用了 `level` 个硬币）到达了目标金额 `0`。此时 `level` 就是最短路径的长度，直接返回 `level`。
+                *   **如果 `next_amount > 0` 且 `next_amount` 未被访问过：**
+                    *   将 `next_amount` 加入队列。
+                    *   将 `next_amount` 标记为已访问。
+4.  **未找到路径：** 如果队列为空，但没有找到 `0`，说明无法凑成总金额，返回 `-1`。
+
+**复杂度分析：**
+
+*   **时间复杂度：** `O(amount * num_coins)`。
+    *   在最坏情况下，队列中的每个金额（从 `amount` 到 `0`）都会被访问一次。
+    *   对于每个访问的金额，我们都需要遍历 `num_coins` 个硬币面额。
+*   **空间复杂度：** `O(amount)`。
+    *   `queue` 和 `visited` 集合/数组在最坏情况下会存储 `amount` 个金额。
+
+**Mermaid 流程图：**
+
+```mermaid
+graph TD
+    A[Start coinChange(coins, amount)] --> B{amount == 0?}
+    B -- Yes --> C[Return 0]
+    B -- No --> D[Initialize queue, add amount]
+    D --> E[Initialize visited set, add amount]
+    E --> F[level = 0]
+    F --> G{queue is not empty?}
+    G -- Yes --> H[level++]
+    H --> I[current_level_size = queue.size()]
+    I --> J{k from 0 to current_level_size - 1}
+    J -- Yes --> K[curr = queue.poll()]
+    K --> L{for each coin 'c' in coins}
+    L -- Yes --> M[next_amount = curr - c]
+    M --> N{next_amount == 0?}
+    N -- Yes --> O[Return level]
+    N -- No --> P{next_amount > 0 AND next_amount not visited?}
+    P -- Yes --> Q[Add next_amount to queue]
+    Q --> R[Mark next_amount as visited]
+    R --> L
+    P -- No --> L
+    L -- No --> J
+    J -- No --> G
+    G -- No --> S[Return -1]
+    S --> T[End]
+```
+
+---
+
+解法二：BFS 核心模式代码
+
+```python
+# Python
+import collections
+
+class Solution:
+    def coinChange(self, coins: list[int], amount: int) -> int:
+        # 如果目标金额为 0，不需要任何硬币
+        if amount == 0:
+            return 0
+
+        # 初始化队列，存储待处理的金额
+        # 从目标金额 amount 开始，反向寻找
+        queue = collections.deque()
+        queue.append(amount)
+
+        # visited 集合用于记录已经访问过的金额，避免重复计算和陷入死循环
+        visited = {amount}
+
+        # level 记录 BFS 的层数，即使用的硬币数量
+        level = 0
+
+        # BFS 搜索过程
+        while queue:
+            level += 1 # 每进入新的一层，硬币数量加 1
+
+            # 获取当前层的节点数量，确保只处理当前层的节点
+            size = len(queue)
+            for _ in range(size):
+                curr_amount = queue.popleft() # 取出当前金额
+
+                # 尝试减去每一种硬币面额
+                for coin in coins:
+                    next_amount = curr_amount - coin
+
+                    # 如果 next_amount 变为 0，说明找到了目标金额，返回当前层数
+                    if next_amount == 0:
+                        return level
+                    
+                    # 如果 next_amount > 0 且之前未访问过
+                    if next_amount > 0 and next_amount not in visited:
+                        queue.append(next_amount) # 加入队列
+                        visited.add(next_amount) # 标记为已访问
+        
+        # 如果队列为空，但仍未找到 0，说明无法凑成目标金额
+        return -1
+
+```
+
+```java
+// Java
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.HashSet;
+import java.util.Set;
+
+class Solution {
+    public int coinChange(int[] coins, int amount) {
+        // 如果目标金额为 0，不需要任何硬币
+        if (amount == 0) {
+            return 0;
+        }
+
+        // 初始化队列，存储待处理的金额
+        // 从目标金额 amount 开始，反向寻找
+        Queue<Integer> queue = new LinkedList<>();
+        queue.offer(amount); // 将 amount 加入队列
+
+        // visited 集合用于记录已经访问过的金额，避免重复计算和陷入死循环
+        Set<Integer> visited = new HashSet<>();
+        visited.add(amount); // 标记 amount 为已访问
+
+        // level 记录 BFS 的层数，即使用的硬币数量
+        int level = 0;
+
+        // BFS 搜索过程
+        while (!queue.isEmpty()) {
+            level++; // 每进入新的一层，硬币数量加 1
+
+            // 获取当前层的节点数量，确保只处理当前层的节点
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                int currAmount = queue.poll(); // 从队列头部取出当前金额
+
+                // 尝试减去每一种硬币面额
+                for (int coin : coins) {
+                    int nextAmount = currAmount - coin;
+
+                    // 如果 nextAmount 变为 0，说明找到了目标金额，返回当前层数
+                    if (nextAmount == 0) {
+                        return level;
+                    }
+                    
+                    // 如果 nextAmount > 0 且之前未访问过
+                    if (nextAmount > 0 && !visited.contains(nextAmount)) {
+                        queue.offer(nextAmount); // 加入队列
+                        visited.add(nextAmount); // 标记为已访问
+                    }
+                }
+            }
+        }
+        
+        // 如果队列为空，但仍未找到 0，说明无法凑成目标金额
+        return -1;
+    }
+}
+```
+
+---
+
+解法二：BFS ACM 模式完整代码
+
+```python
+# Python ACM 模式
+import sys
+import collections
+
+class Solution:
+    def coinChange(self, coins: list[int], amount: int) -> int:
+        if amount == 0:
+            return 0
+
+        queue = collections.deque()
+        queue.append(amount)
+
+        visited = {amount}
+
+        level = 0
+
+        while queue:
+            level += 1
+            size = len(queue)
+            for _ in range(size):
+                curr_amount = queue.popleft()
+                for coin in coins:
+                    next_amount = curr_amount - coin
+                    if next_amount == 0:
+                        return level
+                    if next_amount > 0 and next_amount not in visited:
+                        queue.append(next_amount)
+                        visited.add(next_amount)
+        
+        return -1
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    coins_line = sys.stdin.readline().strip()
+    amount_line = sys.stdin.readline().strip()
+
+    coins = []
+    if coins_line != "[]":
+        coins_str = coins_line[1:-1].split(',')
+        coins = [int(x.strip()) for x in coins_str]
+    
+    amount = int(amount_line)
+    
+    solver = Solution()
+    result = solver.coinChange(coins, amount)
+    
+    print(result)
+
+```
+
+```java
+// Java ACM 模式
+import java.util.Arrays;
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.HashSet;
+import java.util.Set;
+
+public class Main {
+    public int coinChange(int[] coins, int amount) {
+        if (amount == 0) {
+            return 0;
+        }
+
+        Queue<Integer> queue = new LinkedList<>();
+        queue.offer(amount);
+
+        Set<Integer> visited = new HashSet<>();
+        visited.add(amount);
+
+        int level = 0;
+
+        while (!queue.isEmpty()) {
+            level++;
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                int currAmount = queue.poll();
+                for (int coin : coins) {
+                    int nextAmount = currAmount - coin;
+                    if (nextAmount == 0) {
+                        return level;
+                    }
+                    if (nextAmount > 0 && !visited.contains(nextAmount)) {
+                        queue.offer(nextAmount);
+                        visited.add(nextAmount);
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        String coinsLine = scanner.nextLine().trim();
+        int amount = Integer.parseInt(scanner.nextLine().trim());
+        scanner.close();
+
+        int[] coins;
+        if (coinsLine.equals("[]")) {
+            coins = new int[0];
+        } else {
+            String content = coinsLine.substring(1, coinsLine.length() - 1);
+            String[] strArr = content.split(",");
+            coins = new int[strArr.length];
+            for (int i = 0; i < strArr.length; i++) {
+                coins[i] = Integer.parseInt(strArr[i].trim());
+            }
+        }
+        
+        Main solver = new Main();
+        int result = solver.coinChange(coins, amount);
+        
+        System.out.println(result);
+    }
+}
+```
+
+---
+
+解法二：BFS 示例演示：`coins = [1, 2, 5], amount = 11`
+
+**初始化：**
+*   `queue = [11]`
+*   `visited = {11}`
+*   `level = 0`
+
+**BFS 循环：**
+
+*   **`level = 1`**
+    *   `size = 1`
+    *   `curr_amount = 11` (从队列取出)
+    *   尝试减去硬币：
+        *   `coin = 1`: `next_amount = 11 - 1 = 10`. `10 > 0` 且未访问。`queue.append(10)`, `visited.add(10)`.
+        *   `coin = 2`: `next_amount = 11 - 2 = 9`. `9 > 0` 且未访问。`queue.append(9)`, `visited.add(9)`.
+        *   `coin = 5`: `next_amount = 11 - 5 = 6`. `6 > 0` 且未访问。`queue.append(6)`, `visited.add(6)`.
+    *   当前队列：`[10, 9, 6]`
+
+*   **`level = 2`**
+    *   `size = 3`
+    *   `curr_amount = 10` (从队列取出)
+        *   `coin = 1`: `next_amount = 9`. 已访问，跳过。
+        *   `coin = 2`: `next_amount = 8`. `8 > 0` 且未访问。`queue.append(8)`, `visited.add(8)`.
+        *   `coin = 5`: `next_amount = 5`. `5 > 0` 且未访问。`queue.append(5)`, `visited.add(5)`.
+    *   `curr_amount = 9` (从队列取出)
+        *   `coin = 1`: `next_amount = 8`. 已访问，跳过。
+        *   `coin = 2`: `next_amount = 7`. `7 > 0` 且未访问。`queue.append(7)`, `visited.add(7)`.
+        *   `coin = 5`: `next_amount = 4`. `4 > 0` 且未访问。`queue.append(4)`, `visited.add(4)`.
+    *   `curr_amount = 6` (从队列取出)
+        *   `coin = 1`: `next_amount = 5`. 已访问，跳过。
+        *   `coin = 2`: `next_amount = 4`. 已访问，跳过。
+        *   `coin = 5`: `next_amount = 1`. `1 > 0` 且未访问。`queue.append(1)`, `visited.add(1)`.
+    *   当前队列：`[8, 5, 7, 4, 1]`
+
+*   **`level = 3`**
+    *   `size = 5`
+    *   `curr_amount = 8` (从队列取出)
+        *   `coin = 1`: `next_amount = 7`. 已访问，跳过。
+        *   `coin = 2`: `next_amount = 6`. 已访问，跳过。
+        *   `coin = 5`: `next_amount = 3`. `3 > 0` 且未访问。`queue.append(3)`, `visited.add(3)`.
+    *   `curr_amount = 5` (从队列取出)
+        *   `coin = 1`: `next_amount = 4`. 已访问，跳过。
+        *   `coin = 2`: `next_amount = 3`. 已访问，跳过。
+        *   `coin = 5`: `next_amount = 0`. **找到 `0`！返回 `level = 3`。**
+
+最终返回 `3`。 (例如 `11 = 5 + 5 + 1`)
+
+---
+
+
+
+
+
+
+
+
 
 
 
