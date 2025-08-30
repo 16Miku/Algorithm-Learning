@@ -14134,6 +14134,614 @@ public class Main { // ACM模式下通常将所有代码放在Main类中
 
 
 
+
+
+
+### 题目：279. 完全平方数 (Perfect Squares)
+好的，作为一名高级软件工程师，我将为您详细讲解LeetCode第279题“完全平方数”，并提供其常用解法、代码实现以及示例演示。
+
+---
+
+
+
+**链接：** [LeetCode 279 - 完全平方数](https://leetcode.cn/problems/perfect-squares/)
+
+**题目描述：**
+给你一个整数 `n` ，返回 **和为 `n` 的完全平方数的最少数量** 。
+
+**完全平方数** 是一个整数，其值等于另一个整数的平方；换句话说，其值等于一个整数自乘的积。例如，1、4、9 和 16 都是完全平方数，而 3 和 11 不是。
+
+**示例 1：**
+输入：`n = 12`
+输出：`3`
+解释：`12 = 4 + 4 + 4`
+
+**示例 2：**
+输入：`n = 13`
+输出：`2`
+解释：`13 = 4 + 9`
+
+**提示：**
+*   `1 <= n <= 10^4`
+
+---
+
+题目分析
+
+这道题目要求我们找到一个正整数 `n` 可以表示为多少个完全平方数之和，并且要求这个数量是**最少**的。
+
+**什么是完全平方数？**
+1, 4, 9, 16, 25, ... 它们分别是 1^2, 2^2, 3^2, 4^2, 5^2, ...
+
+**问题的本质：**
+这是一个经典的“凑数”问题，类似于“硬币找零”问题。我们有一系列“面值”（完全平方数），需要凑出目标金额 `n`，并要求使用的“硬币”数量最少。这类问题通常可以使用**动态规划 (Dynamic Programming)** 或 **广度优先搜索 (BFS)** 来解决。
+
+**思考方向：**
+
+1.  **动态规划 (DP)：**
+    *   `dp[i]` 表示凑成整数 `i` 所需的最少完全平方数数量。
+    *   要计算 `dp[i]`，我们可以尝试减去一个完全平方数 `j*j`。那么 `i` 就可以由 `i - j*j` 加上一个 `j*j` 凑成。所以 `dp[i] = dp[i - j*j] + 1`。
+    *   我们希望找到所有可能的 `j*j` 中，使得 `dp[i - j*j] + 1` 最小的那个值。
+
+2.  **广度优先搜索 (BFS)：**
+    *   将问题看作在一个图中的最短路径问题。
+    *   图的节点是整数 `0` 到 `n`。
+    *   从 `n` 开始，每次减去一个完全平方数，就相当于从一个节点走到另一个节点。
+    *   目标是找到从 `n` 到 `0` 的最短路径（即最少步数），每一步代表使用一个完全平方数。
+    *   BFS 天然适合解决最短路径问题。
+
+Lagrange's Four-Square Theorem（拉格朗日四平方和定理）指出，任何一个正整数都可以表示为四个整数的平方和。这意味着答案最大不会超过 4。虽然这可以用来优化某些数学解法，但在编程竞赛中，DP 或 BFS 更为通用且易于实现。
+
+---
+
+#### 解法一：动态规划 (Dynamic Programming)
+
+**算法思想：**
+使用一个数组 `dp`，其中 `dp[i]` 存储表示整数 `i` 所需的最少完全平方数数量。通过从小到大计算 `dp` 数组的值，直到 `dp[n]`。
+
+**详细步骤：**
+
+1.  **初始化 `dp` 数组：**
+    *   创建一个大小为 `n+1` 的数组 `dp`。
+    *   `dp[0] = 0`，因为 0 不需要任何完全平方数来表示。
+    *   对于所有 `i > 0`，将 `dp[i]` 初始化为一个很大的值（例如 `Integer.MAX_VALUE` 或 `float('inf')`），表示目前还不知道如何表示 `i`，或者需要无限多个完全平方数。
+2.  **遍历 `i` 从 `1` 到 `n`：**
+    *   对于每个 `i`，我们尝试找到所有小于或等于 `i` 的完全平方数 `j*j`。
+    *   `j` 从 `1` 开始，只要 `j*j <= i` 就继续。
+    *   **状态转移方程：** `dp[i] = min(dp[i], dp[i - j*j] + 1)`。
+        *   `dp[i - j*j]` 表示凑成 `i - j*j` 所需的最少完全平方数数量。
+        *   `+ 1` 表示再加一个完全平方数 `j*j`。
+        *   我们遍历所有可能的 `j*j`，取最小值来更新 `dp[i]`。
+3.  **返回结果：** `dp[n]` 就是最终答案。
+
+**复杂度分析：**
+
+*   **时间复杂度：** `O(n * sqrt(n))`。
+    *   外层循环 `i` 从 `1` 到 `n`，共 `n` 次。
+    *   内层循环 `j` 从 `1` 到 `sqrt(i)`，最多 `sqrt(n)` 次。
+    *   所以总时间复杂度是 `O(n * sqrt(n))`。
+*   **空间复杂度：** `O(n)`。
+    *   `dp` 数组的大小为 `n+1`。
+
+
+
+
+
+
+
+
+
+**核心模式代码：**
+
+```python
+# Python
+import math
+
+class Solution:
+    def numSquares(self, n: int) -> int:
+        # dp[i] 表示和为 i 的完全平方数的最少数量
+        # 初始化 dp 数组，dp[0] = 0，其他为无穷大
+        # dp 数组的大小为 n+1，索引 i 对应数字 i
+        dp = [float('inf')] * (n + 1)
+        dp[0] = 0
+
+        # 遍历所有数字 i 从 1 到 n
+        for i in range(1, n + 1):
+            # 遍历所有可能的完全平方数 j*j，其中 j*j <= i
+            # j 从 1 开始，每次递增
+            for j in range(1, int(math.sqrt(i)) + 1):
+                # 状态转移方程：
+                # dp[i] 可以通过 dp[i - j*j] + 1 得到
+                # 即，凑成 i 的最少数量 = (凑成 i - j*j 的最少数量) + 1 (加上一个 j*j)
+                # 我们需要取所有可能情况中的最小值
+                dp[i] = min(dp[i], dp[i - j*j] + 1)
+        
+        # 最终 dp[n] 就是和为 n 的完全平方数的最少数量
+        return dp[n]
+
+```
+
+```java
+// Java
+import java.util.Arrays;
+
+class Solution {
+    public int numSquares(int n) {
+        // dp[i] 表示和为 i 的完全平方数的最少数量
+        // 初始化 dp 数组，dp[0] = 0，其他为无穷大
+        // dp 数组的大小为 n+1，索引 i 对应数字 i
+        int[] dp = new int[n + 1];
+        // 将所有元素初始化为最大整数值，表示无穷大
+        Arrays.fill(dp, Integer.MAX_VALUE);
+        dp[0] = 0; // 0 需要 0 个完全平方数
+
+        // 遍历所有数字 i 从 1 到 n
+        for (int i = 1; i <= n; i++) {
+            // 遍历所有可能的完全平方数 j*j，其中 j*j <= i
+            // j 从 1 开始，每次递增
+            for (int j = 1; j * j <= i; j++) {
+                // 状态转移方程：
+                // dp[i] 可以通过 dp[i - j*j] + 1 得到
+                // 即，凑成 i 的最少数量 = (凑成 i - j*j 的最少数量) + 1 (加上一个 j*j)
+                // 我们需要取所有可能情况中的最小值
+                dp[i] = Math.min(dp[i], dp[i - j * j] + 1);
+            }
+        }
+        
+        // 最终 dp[n] 就是和为 n 的完全平方数的最少数量
+        return dp[n];
+    }
+}
+```
+
+**ACM 模式完整代码 (DP)：**
+
+```python
+# Python ACM 模式
+import sys
+import math
+
+class Solution:
+    def numSquares(self, n: int) -> int:
+        dp = [float('inf')] * (n + 1)
+        dp[0] = 0
+
+        for i in range(1, n + 1):
+            for j in range(1, int(math.sqrt(i)) + 1):
+                dp[i] = min(dp[i], dp[i - j*j] + 1)
+        
+        return dp[n]
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    # 读取一行输入，例如: 12
+    n_str = sys.stdin.readline().strip()
+    n = int(n_str)
+    
+    solver = Solution()
+    result = solver.numSquares(n)
+    
+    # 打印结果
+    print(result)
+
+```
+
+```java
+// Java ACM 模式
+import java.util.Arrays;
+import java.util.Scanner; // 导入Scanner类用于读取输入
+
+public class Main { // ACM模式下通常将所有代码放在Main类中
+    public int numSquares(int n) {
+        int[] dp = new int[n + 1];
+        Arrays.fill(dp, Integer.MAX_VALUE);
+        dp[0] = 0;
+
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j * j <= i; j++) {
+                dp[i] = Math.min(dp[i], dp[i - j * j] + 1);
+            }
+        }
+        return dp[n];
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        int n = scanner.nextInt(); // 读取一个整数作为 n
+        scanner.close(); // 关闭Scanner
+
+        Main solver = new Main(); // 在ACM模式下，通常Main类就是Solution
+        int result = solver.numSquares(n);
+        
+        // 打印结果
+        System.out.println(result);
+    }
+}
+```
+
+**示例演示 (DP)：`n = 12`**
+
+`dp` 数组初始化为 `[0, inf, inf, inf, inf, inf, inf, inf, inf, inf, inf, inf, inf]`
+
+1.  **`i = 1`**
+    *   `j = 1` (`1*1 = 1 <= 1`)
+        *   `dp[1] = min(inf, dp[1-1] + 1) = min(inf, dp[0] + 1) = min(inf, 0 + 1) = 1`
+    *   `dp = [0, 1, inf, inf, inf, inf, inf, inf, inf, inf, inf, inf, inf]`
+
+2.  **`i = 2`**
+    *   `j = 1` (`1*1 = 1 <= 2`)
+        *   `dp[2] = min(inf, dp[2-1] + 1) = min(inf, dp[1] + 1) = min(inf, 1 + 1) = 2`
+    *   `dp = [0, 1, 2, inf, inf, inf, inf, inf, inf, inf, inf, inf, inf]`
+
+3.  **`i = 3`**
+    *   `j = 1` (`1*1 = 1 <= 3`)
+        *   `dp[3] = min(inf, dp[3-1] + 1) = min(inf, dp[2] + 1) = min(inf, 2 + 1) = 3`
+    *   `dp = [0, 1, 2, 3, inf, inf, inf, inf, inf, inf, inf, inf, inf]`
+
+4.  **`i = 4`**
+    *   `j = 1` (`1*1 = 1 <= 4`)
+        *   `dp[4] = min(inf, dp[4-1] + 1) = min(inf, dp[3] + 1) = min(inf, 3 + 1) = 4`
+    *   `j = 2` (`2*2 = 4 <= 4`)
+        *   `dp[4] = min(4, dp[4-4] + 1) = min(4, dp[0] + 1) = min(4, 0 + 1) = 1`
+    *   `dp = [0, 1, 2, 3, 1, inf, inf, inf, inf, inf, inf, inf, inf]`
+
+5.  **`i = 5`**
+    *   `j = 1` (`1*1 = 1 <= 5`)
+        *   `dp[5] = min(inf, dp[5-1] + 1) = min(inf, dp[4] + 1) = min(inf, 1 + 1) = 2`
+    *   `j = 2` (`2*2 = 4 <= 5`)
+        *   `dp[5] = min(2, dp[5-4] + 1) = min(2, dp[1] + 1) = min(2, 1 + 1) = 2`
+    *   `dp = [0, 1, 2, 3, 1, 2, inf, inf, inf, inf, inf, inf, inf]`
+    ...
+
+6.  **`i = 12`**
+    *   `j = 1` (`1*1 = 1 <= 12`)
+        *   `dp[12] = min(inf, dp[11] + 1)` (假设 `dp[11]` 之前已算得为 `3`，则 `3+1=4`) -> `dp[12] = 4`
+    *   `j = 2` (`2*2 = 4 <= 12`)
+        *   `dp[12] = min(4, dp[12-4] + 1) = min(4, dp[8] + 1)` (假设 `dp[8]` 之前已算得为 `2`，则 `2+1=3`) -> `dp[12] = 3`
+    *   `j = 3` (`3*3 = 9 <= 12`)
+        *   `dp[12] = min(3, dp[12-9] + 1) = min(3, dp[3] + 1)` (假设 `dp[3]` 之前已算得为 `3`，则 `3+1=4`) -> `dp[12] = 3`
+    *   `j = 4` (`4*4 = 16 > 12`)，循环结束。
+    *   `dp[12]` 最终为 `3`。
+
+最终返回 `dp[12]`，即 `3`。 (例如 `12 = 4 + 4 + 4`)
+
+---
+
+
+
+
+
+
+
+
+
+
+
+#### 解法二：广度优先搜索 (BFS)
+
+**算法思想：**
+将问题建模为从 `n` 到 `0` 的最短路径问题。每个节点代表一个整数，每条边代表减去一个完全平方数。BFS 天然能找到最短路径。
+
+**详细步骤：**
+
+1.  **预处理完全平方数：**
+    *   生成所有小于或等于 `n` 的完全平方数，存储在一个列表中（例如 `squares`）。
+2.  **初始化队列和访问数组/集合：**
+    *   创建一个队列 `queue`，用于存储待访问的数字。
+    *   将 `n` 加入队列。
+    *   创建一个布尔数组 `visited` 或哈希集合 `visited_set` 来记录已经访问过的数字，避免重复计算和陷入循环。将 `n` 标记为已访问。
+    *   初始化 `level = 0`，表示当前搜索的层数（即使用的完全平方数数量）。
+3.  **BFS 搜索：**
+    *   当队列不为空时，执行以下循环：
+        *   `level += 1` (每进入新的一层，表示又使用了一个完全平方数)。
+        *   获取当前层的大小 `size = queue.size()`。
+        *   遍历当前层的所有节点（`k` 从 `0` 到 `size - 1`）：
+            *   从队列中取出一个数字 `curr = queue.poll()`。
+            *   对于 `squares` 中的每一个完全平方数 `s`：
+                *   计算 `next_num = curr - s`。
+                *   如果 `next_num == 0`，说明我们找到了从 `n` 到 `0` 的一条路径，并且 `level` 就是最短路径的长度。直接返回 `level`。
+                *   如果 `next_num > 0` 且 `next_num` 未被访问过：
+                    *   将 `next_num` 加入队列。
+                    *   将 `next_num` 标记为已访问。
+    *   （理论上，由于拉格朗日四平方和定理，`n` 总是可以表示为最多四个完全平方数之和，所以循环一定会找到 `0` 并返回。）
+
+**复杂度分析：**
+
+*   **时间复杂度：** `O(N * sqrt(N))`。
+    *   在最坏情况下，队列中的每个数字（从 `n` 到 `0`）都会被访问一次。
+    *   对于每个访问的数字，我们都需要遍历 `sqrt(N)` 个完全平方数。
+    *   所以总时间复杂度是 `O(N * sqrt(N))`。
+*   **空间复杂度：** `O(N)`。
+    *   `queue` 和 `visited` 数组/集合在最坏情况下会存储 `N` 个数字。
+
+
+
+
+
+
+**核心模式代码：**
+
+```python
+# Python
+import collections
+import math
+
+class Solution:
+    def numSquares(self, n: int) -> int:
+        # 1. 预处理所有小于等于 n 的完全平方数
+        squares = []
+        for i in range(1, int(math.sqrt(n)) + 1):
+            squares.append(i * i)
+        
+        # 2. 初始化队列和访问集合
+        # 队列存储当前数字
+        queue = collections.deque()
+        queue.append(n)
+        
+        # visited 集合记录已经访问过的数字，避免重复计算和循环
+        visited = {n}
+        
+        # level 记录搜索的层数，即使用的完全平方数数量
+        level = 0
+        
+        # 3. BFS 搜索
+        while queue:
+            level += 1 # 进入新的一层，使用的完全平方数数量加 1
+            
+            # 获取当前层的大小，确保只处理当前层的节点
+            size = len(queue)
+            for _ in range(size):
+                curr = queue.popleft() # 从队列头部取出当前数字
+                
+                # 尝试减去每一个完全平方数
+                for s in squares:
+                    next_num = curr - s
+                    
+                    # 如果 next_num 为 0，说明找到了目标，当前 level 就是最少数量
+                    if next_num == 0:
+                        return level
+                    
+                    # 如果 next_num 为正数且未被访问过
+                    if next_num > 0 and next_num not in visited:
+                        queue.append(next_num) # 将其加入队列
+                        visited.add(next_num) # 标记为已访问
+        
+        # 理论上不会执行到这里，因为根据拉格朗日四平方和定理，任何正整数都可以表示为最多四个完全平方数之和
+        return -1 
+
+```
+
+```java
+// Java
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+class Solution {
+    public int numSquares(int n) {
+        // 1. 预处理所有小于等于 n 的完全平方数
+        List<Integer> squares = new ArrayList<>();
+        for (int i = 1; i * i <= n; i++) {
+            squares.add(i * i);
+        }
+        
+        // 2. 初始化队列和访问数组
+        // 队列存储当前数字
+        Queue<Integer> queue = new LinkedList<>();
+        queue.offer(n); // 将 n 作为起始节点加入队列
+        
+        // visited 数组记录已经访问过的数字，避免重复计算和循环
+        // 数组大小为 n+1，索引 i 对应数字 i
+        boolean[] visited = new boolean[n + 1];
+        visited[n] = true; // 标记 n 为已访问
+        
+        // level 记录搜索的层数，即使用的完全平方数数量
+        int level = 0;
+        
+        // 3. BFS 搜索
+        while (!queue.isEmpty()) {
+            level++; // 进入新的一层，使用的完全平方数数量加 1
+            
+            // 获取当前层的大小，确保只处理当前层的节点
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                int curr = queue.poll(); // 从队列头部取出当前数字
+                
+                // 尝试减去每一个完全平方数
+                for (int s : squares) {
+                    int nextNum = curr - s;
+                    
+                    // 如果 nextNum 为 0，说明找到了目标，当前 level 就是最少数量
+                    if (nextNum == 0) {
+                        return level;
+                    }
+                    
+                    // 如果 nextNum 为正数且未被访问过
+                    if (nextNum > 0 && !visited[nextNum]) {
+                        queue.offer(nextNum); // 将其加入队列
+                        visited[nextNum] = true; // 标记为已访问
+                    }
+                }
+            }
+        }
+        
+        // 理论上不会执行到这里，因为根据拉格朗日四平方和定理，任何正整数都可以表示为最多四个完全平方数之和
+        return -1; 
+    }
+}
+```
+
+**ACM 模式完整代码 (BFS)：**
+
+```python
+# Python ACM 模式
+import sys
+import collections
+import math
+
+class Solution:
+    def numSquares(self, n: int) -> int:
+        squares = []
+        for i in range(1, int(math.sqrt(n)) + 1):
+            squares.append(i * i)
+        
+        queue = collections.deque()
+        queue.append(n)
+        
+        visited = {n}
+        
+        level = 0
+        
+        while queue:
+            level += 1
+            
+            size = len(queue)
+            for _ in range(size):
+                curr = queue.popleft()
+                
+                for s in squares:
+                    next_num = curr - s
+                    
+                    if next_num == 0:
+                        return level
+                    
+                    if next_num > 0 and next_num not in visited:
+                        queue.append(next_num)
+                        visited.add(next_num)
+        
+        return -1
+
+# ACM 模式输入处理
+if __name__ == "__main__":
+    n_str = sys.stdin.readline().strip()
+    n = int(n_str)
+    
+    solver = Solution()
+    result = solver.numSquares(n)
+    
+    print(result)
+
+```
+
+```java
+// Java ACM 模式
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Scanner;
+
+public class Main {
+    public int numSquares(int n) {
+        List<Integer> squares = new ArrayList<>();
+        for (int i = 1; i * i <= n; i++) {
+            squares.add(i * i);
+        }
+        
+        Queue<Integer> queue = new LinkedList<>();
+        queue.offer(n);
+        
+        boolean[] visited = new boolean[n + 1];
+        visited[n] = true;
+        
+        int level = 0;
+        
+        while (!queue.isEmpty()) {
+            level++;
+            
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                int curr = queue.poll();
+                
+                for (int s : squares) {
+                    int nextNum = curr - s;
+                    
+                    if (nextNum == 0) {
+                        return level;
+                    }
+                    
+                    if (nextNum > 0 && !visited[nextNum]) {
+                        queue.offer(nextNum);
+                        visited[nextNum] = true;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        int n = scanner.nextInt();
+        scanner.close();
+
+        Main solver = new Main();
+        int result = solver.numSquares(n);
+        
+        System.out.println(result);
+    }
+}
+```
+
+**示例演示 (BFS)：`n = 13`**
+
+1.  **预处理 `squares`：** `[1, 4, 9]` (因为 `4*4=16 > 13`)
+2.  **初始化：**
+    *   `queue = [13]`
+    *   `visited = {13}`
+    *   `level = 0`
+
+3.  **BFS 循环：**
+
+    *   **Level 1 (`level = 1`)**
+        *   `size = 1`
+        *   `curr = 13` (从队列取出)
+        *   尝试减去 `squares` 中的数：
+            *   `13 - 1 = 12`。`12 > 0` 且未访问。`queue.add(12)`, `visited.add(12)`.
+            *   `13 - 4 = 9`。`9 > 0` 且未访问。`queue.add(9)`, `visited.add(9)`.
+            *   `13 - 9 = 4`。`4 > 0` 且未访问。`queue.add(4)`, `visited.add(4)`.
+        *   当前队列：`[12, 9, 4]`
+
+    *   **Level 2 (`level = 2`)**
+        *   `size = 3`
+        *   `curr = 12` (从队列取出)
+            *   `12 - 1 = 11`。`11 > 0` 且未访问。`queue.add(11)`, `visited.add(11)`.
+            *   `12 - 4 = 8`。`8 > 0` 且未访问。`queue.add(8)`, `visited.add(8)`.
+            *   `12 - 9 = 3`。`3 > 0` 且未访问。`queue.add(3)`, `visited.add(3)`.
+        *   `curr = 9` (从队列取出)
+            *   `9 - 1 = 8`。`8` 已访问，跳过。
+            *   `9 - 4 = 5`。`5 > 0` 且未访问。`queue.add(5)`, `visited.add(5)`.
+            *   `9 - 9 = 0`。**找到 `0`！返回 `level = 2`。**
+
+最终返回 `2`。 (例如 `13 = 4 + 9`)
+
+---
+
+总结
+
+*   **动态规划 (DP)** 和 **广度优先搜索 (BFS)** 都是解决此问题的有效方法，它们的渐近时间复杂度和空间复杂度都是 `O(N * sqrt(N))` 和 `O(N)`。
+*   **DP** 是自底向上构建解决方案，从 `0` 到 `n`。
+*   **BFS** 是从 `n` 开始，向 `0` 进行搜索，找到最短路径。
+*   在实际应用中，这两种方法都足够高效，并且易于理解和实现。您可以根据个人喜好选择其中一种。
+
+希望这份详细的讲解能帮助您彻底理解这道题目！
+
+
+
+
+
+
+
+
+
+
+
+
 ## 多维动态规划
 
 
