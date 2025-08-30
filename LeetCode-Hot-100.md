@@ -15425,6 +15425,752 @@ public class Main {
 
 
 
+
+
+### 139. 单词拆分
+好的，我们来详细讲解“单词拆分”这道算法题。
+
+题目及分析
+
+题目描述
+
+给你一个字符串 `s` 和一个字符串列表 `wordDict` 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 `s` 则返回 `true`。
+
+**注意：**
+1.  不要求字典中出现的单词全部都使用。
+2.  字典中的单词可以重复使用。
+
+示例
+
+**示例 1：**
+输入: `s = "leetcode"`, `wordDict = ["leet", "code"]`
+输出: `true`
+解释: 返回 `true` 因为 "leetcode" 可以由 "leet" 和 "code" 拼接成。
+
+**示例 2：**
+输入: `s = "applepenapple"`, `wordDict = ["apple", "pen"]`
+输出: `true`
+解释: 返回 `true` 因为 "applepenapple" 可以由 "apple" "pen" "apple" 拼接成。 注意，你可以重复使用字典中的单词。
+
+**示例 3：**
+输入: `s = "catsandog"`, `wordDict = ["cats", "dog", "sand", "and", "cat"]`
+输出: `false`
+
+提示
+
+*   `1 <= s.length <= 300`
+*   `1 <= wordDict.length <= 1000`
+*   `1 <= wordDict[i].length <= 20`
+*   `s` 和 `wordDict[i]` 仅由小写英文字母组成
+*   `wordDict` 中的所有字符串互不相同
+
+问题分析
+
+这道题目要求我们判断一个给定的字符串 `s` 是否能够被拆分成字典 `wordDict` 中单词的组合。字典中的单词可以重复使用。
+
+这是一个经典的动态规划（Dynamic Programming）问题，因为它具有以下两个特征：
+
+1.  **最优子结构（Optimal Substructure）**：
+    如果字符串 `s` 可以被拆分，那么它必然可以被拆分成 `s[0...j-1]` 和 `s[j...i-1]` 两部分。如果 `s[j...i-1]` 是一个字典中的单词，并且 `s[0...j-1]` 也可以被拆分，那么 `s[0...i-1]` 就可以被拆分。这意味着大问题的解可以由小问题的解推导出来。
+
+2.  **重叠子问题（Overlapping Subproblems）**：
+    在尝试拆分字符串 `s` 的过程中，我们可能会多次遇到相同的子字符串拆分问题。例如，在判断 "applepenapple" 时，我们可能会多次检查 "apple" 是否可拆分。如果不对这些子问题的结果进行存储，就会进行大量的重复计算。
+
+基于以上分析，我们可以使用动态规划（自底向上）或带记忆化搜索的递归（自顶向下）来解决这个问题。为了提高字典单词查找的效率，我们应该将 `wordDict` 转换成一个哈希集合（`HashSet` 或 `set`），这样查找单词的时间复杂度可以从 `O(L)` (其中 `L` 是字典单词的平均长度) 降低到平均 `O(1)`。
+
+#### 解法一：动态规划 (Bottom-up)
+
+讲解
+
+动态规划的核心思想是构建一个 `dp` 数组来存储子问题的解。
+
+1.  **定义 `dp` 数组**：
+    我们定义一个布尔数组 `dp`，长度为 `s.length() + 1`。
+    `dp[i]` 表示字符串 `s` 的前 `i` 个字符（即 `s[0...i-1]` 这个子字符串）是否可以被字典中的单词拆分。
+
+2.  **初始化**：
+    *   `dp[0] = true`：空字符串（长度为 0 的子字符串）总是可以被拆分的，这是我们的基本情况。
+    *   其他 `dp[i]` 初始化为 `false`。
+
+3.  **状态转移方程**：
+    我们需要从 `dp[0]` 开始，逐步计算到 `dp[s.length()]`。
+    对于每一个 `i` 从 `1` 到 `s.length()`：
+    `dp[i]` 为 `true` 的条件是：存在一个 `j`（`0 <= j < i`），使得 `dp[j]` 为 `true` **并且** `s[j...i-1]`（即从索引 `j` 开始，长度为 `i-j` 的子字符串）是 `wordDict` 中的一个单词。
+
+    用公式表示：
+    `dp[i] = dp[j] && wordDict.contains(s.substring(j, i))` (对于所有 `0 <= j < i`)
+
+    这个过程可以理解为：如果 `s` 的前 `j` 个字符可以被成功拆分，那么我们只需要检查 `s` 的 `j` 到 `i-1` 部分（也就是 `s.substring(j, i)`）是否是一个有效的单词。如果是，那么 `s` 的前 `i` 个字符就可以被拆分。
+
+4.  **最终结果**：
+    `dp[s.length()]` 就是我们最终的答案。
+
+为了优化 `wordDict.contains()` 的查找速度，我们应该将 `wordDict` 转换为 `HashSet`。
+
+**时间复杂度**：
+*   将 `wordDict` 转换为 `HashSet`：`O(M * L)`，其中 `M` 是字典中单词的数量，`L` 是字典单词的平均长度。
+*   主循环：外层循环 `i` 运行 `s.length()` 次。内层循环 `j` 运行 `i` 次。`s.substring(j, i)` 的操作是 `O(i-j)`，`HashSet` 查找是 `O(L)`。
+*   最坏情况下，总时间复杂度为 `O(N^2 * L)`，其中 `N` 是字符串 `s` 的长度。`N` 最大为 300，`L` 最大为 20。所以 `300^2 * 20 = 90000 * 20 = 1.8 * 10^6`，这个复杂度是可接受的。
+
+**空间复杂度**：
+*   `dp` 数组：`O(N)`
+*   `HashSet`：`O(M * L)`
+*   总空间复杂度：`O(N + M * L)`
+
+代码
+
+Java 版
+
+**核心模式 (Core Pattern)**
+
+```java
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+
+class Solution {
+    /**
+     * 判断字符串s是否可以由字典wordDict中的单词拼接而成。
+     *
+     * @param s        待判断的字符串。
+     * @param wordDict 字典，包含可用的单词列表。
+     * @return 如果s可以被拼接，则返回true；否则返回false。
+     */
+    public boolean wordBreak(String s, List<String> wordDict) {
+        // 将wordDict转换为HashSet，以便进行O(1)平均时间复杂度的查找。
+        Set<String> wordDictSet = new HashSet<>(wordDict);
+
+        // dp[i] 表示字符串s的前i个字符s[0...i-1]是否可以被拆分。
+        // dp数组的长度为s.length() + 1，因为dp[0]表示空字符串。
+        boolean[] dp = new boolean[s.length() + 1];
+
+        // 初始化dp[0]为true，表示空字符串可以被拆分。
+        dp[0] = true;
+
+        // 遍历字符串s的每一个可能的结束位置i（从1到s.length()）。
+        // i代表当前子字符串s[0...i-1]的长度。
+        for (int i = 1; i <= s.length(); i++) {
+            // 遍历所有可能的分割点j（从0到i-1）。
+            // j代表子字符串s[0...j-1]的结束位置（也是s[j...i-1]的开始位置）。
+            for (int j = 0; j < i; j++) {
+                // 如果s[0...j-1]可以被拆分 (dp[j]为true)
+                // 并且s[j...i-1] (即s.substring(j, i)) 是字典中的一个单词
+                if (dp[j] && wordDictSet.contains(s.substring(j, i))) {
+                    // 那么s[0...i-1]就可以被拆分。
+                    dp[i] = true;
+                    // 一旦找到一个有效的拆分方式，就可以跳出内层循环，进行下一个i的计算。
+                    break;
+                }
+            }
+        }
+
+        // 最终结果是dp[s.length()]，表示整个字符串s是否可以被拆分。
+        return dp[s.length()];
+    }
+}
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式为：
+第一行：字符串 `s`
+第二行：空格分隔的单词列表 `wordDict` (例如: "leet code")
+
+```java
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Scanner;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+public class Main {
+    /**
+     * 判断字符串s是否可以由字典wordDict中的单词拼接而成。
+     *
+     * @param s        待判断的字符串。
+     * @param wordDict 字典，包含可用的单词列表。
+     * @return 如果s可以被拼接，则返回true；否则返回false。
+     */
+    public static boolean wordBreak(String s, List<String> wordDict) {
+        // 将wordDict转换为HashSet，以便进行O(1)平均时间复杂度的查找。
+        Set<String> wordDictSet = new HashSet<>(wordDict);
+
+        // dp[i] 表示字符串s的前i个字符s[0...i-1]是否可以被拆分。
+        // dp数组的长度为s.length() + 1，因为dp[0]表示空字符串。
+        boolean[] dp = new boolean[s.length() + 1];
+
+        // 初始化dp[0]为true，表示空字符串可以被拆分。
+        dp[0] = true;
+
+        // 遍历字符串s的每一个可能的结束位置i（从1到s.length()）。
+        // i代表当前子字符串s[0...i-1]的长度。
+        for (int i = 1; i <= s.length(); i++) {
+            // 遍历所有可能的分割点j（从0到i-1）。
+            // j代表子字符串s[0...j-1]的结束位置（也是s[j...i-1]的开始位置）。
+            for (int j = 0; j < i; j++) {
+                // 如果s[0...j-1]可以被拆分 (dp[j]为true)
+                // 并且s[j...i-1] (即s.substring(j, i)) 是字典中的一个单词
+                if (dp[j] && wordDictSet.contains(s.substring(j, i))) {
+                    // 那么s[0...i-1]就可以被拆分。
+                    dp[i] = true;
+                    // 一旦找到一个有效的拆分方式，就可以跳出内层循环，进行下一个i的计算。
+                    break;
+                }
+            }
+        }
+
+        // 最终结果是dp[s.length()]，表示整个字符串s是否可以被拆分。
+        return dp[s.length()];
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // 读取字符串 s
+        String s = scanner.nextLine();
+
+        // 读取字典 wordDict，假设是空格分隔的字符串
+        String wordDictLine = scanner.nextLine();
+        List<String> wordDict = Arrays.stream(wordDictLine.split(" "))
+                                      .collect(Collectors.toList());
+
+        // 调用wordBreak方法并打印结果
+        System.out.println(wordBreak(s, wordDict));
+
+        scanner.close();
+    }
+}
+```
+
+Python 版
+
+**核心模式 (Core Pattern)**
+
+```python
+from typing import List, Set
+
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        # 将wordDict转换为set，以便进行O(1)平均时间复杂度的查找。
+        word_dict_set: Set[str] = set(wordDict)
+
+        # dp[i] 表示字符串s的前i个字符s[0...i-1]是否可以被拆分。
+        # dp数组的长度为s的长度 + 1，因为dp[0]表示空字符串。
+        dp: List[bool] = [False] * (len(s) + 1)
+
+        # 初始化dp[0]为True，表示空字符串可以被拆分。
+        dp[0] = True
+
+        # 遍历字符串s的每一个可能的结束位置i（从1到len(s)）。
+        # i代表当前子字符串s[0...i-1]的长度。
+        for i in range(1, len(s) + 1):
+            # 遍历所有可能的分割点j（从0到i-1）。
+            # j代表子字符串s[0...j-1]的结束位置（也是s[j...i-1]的开始位置）。
+            for j in range(i):
+                # 如果s[0...j-1]可以被拆分 (dp[j]为True)
+                # 并且s[j...i-1] (即s[j:i]) 是字典中的一个单词
+                if dp[j] and s[j:i] in word_dict_set:
+                    # 那么s[0...i-1]就可以被拆分。
+                    dp[i] = True
+                    # 一旦找到一个有效的拆分方式，就可以跳出内层循环，进行下一个i的计算。
+                    break
+        
+        # 最终结果是dp[len(s)]，表示整个字符串s是否可以被拆分。
+        return dp[len(s)]
+
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式为：
+第一行：字符串 `s`
+第二行：空格分隔的单词列表 `wordDict` (例如: "leet code")
+
+```python
+from typing import List, Set
+
+def word_break(s: str, wordDict: List[str]) -> bool:
+    # 将wordDict转换为set，以便进行O(1)平均时间复杂度的查找。
+    word_dict_set: Set[str] = set(wordDict)
+
+    # dp[i] 表示字符串s的前i个字符s[0...i-1]是否可以被拆分。
+    # dp数组的长度为s的长度 + 1，因为dp[0]表示空字符串。
+    dp: List[bool] = [False] * (len(s) + 1)
+
+    # 初始化dp[0]为True，表示空字符串可以被拆分。
+    dp[0] = True
+
+    # 遍历字符串s的每一个可能的结束位置i（从1到len(s)）。
+    # i代表当前子字符串s[0...i-1]的长度。
+    for i in range(1, len(s) + 1):
+        # 遍历所有可能的分割点j（从0到i-1）。
+        # j代表子字符串s[0...j-1]的结束位置（也是s[j...i-1]的开始位置）。
+        for j in range(i):
+            # 如果s[0...j-1]可以被拆分 (dp[j]为True)
+            # 并且s[j...i-1] (即s[j:i]) 是字典中的一个单词
+            if dp[j] and s[j:i] in word_dict_set:
+                # 那么s[0...i-1]就可以被拆分。
+                dp[i] = True
+                # 一旦找到一个有效的拆分方式，就可以跳出内层循环，进行下一个i的计算。
+                break
+    
+    # 最终结果是dp[len(s)]，表示整个字符串s是否可以被拆分。
+    return dp[len(s)]
+
+if __name__ == '__main__':
+    # 读取字符串 s
+    s_input = input()
+
+    # 读取字典 wordDict，假设是空格分隔的字符串
+    word_dict_line = input()
+    word_dict_list = word_dict_line.split()
+
+    # 调用word_break函数并打印结果
+    print(word_break(s_input, word_dict_list))
+
+```
+
+示例演示
+
+以 `s = "leetcode"`, `wordDict = ["leet", "code"]` 为例，逐步演示 `dp` 数组的计算过程。
+
+1.  **初始化**:
+    `s.length()` 为 8。`dp` 数组长度为 9。
+    `dp = [T, F, F, F, F, F, F, F, F]`
+    `wordDictSet = {"leet", "code"}`
+
+2.  **`i = 1`**: (检查 `s[0...0]`, 即 "l")
+    *   `j = 0`: `dp[0]` 为 `T`。`s[0:1]` 是 "l"。 "l" 不在 `wordDictSet` 中。
+    *   `dp[1]` 仍为 `F`。
+
+3.  **`i = 2`**: (检查 `s[0...1]`, 即 "le")
+    *   `j = 0`: `dp[0]` 为 `T`。`s[0:2]` 是 "le"。 "le" 不在 `wordDictSet` 中。
+    *   `j = 1`: `dp[1]` 为 `F`。条件 `dp[j]` 不满足。
+    *   `dp[2]` 仍为 `F`。
+
+4.  **`i = 3`**: (检查 `s[0...2]`, 即 "lee")
+    *   `j = 0`: `dp[0]` 为 `T`。`s[0:3]` 是 "lee"。 "lee" 不在 `wordDictSet` 中。
+    *   `j = 1`: `dp[1]` 为 `F`。条件 `dp[j]` 不满足。
+    *   `j = 2`: `dp[2]` 为 `F`。条件 `dp[j]` 不满足。
+    *   `dp[3]` 仍为 `F`。
+
+5.  **`i = 4`**: (检查 `s[0...3]`, 即 "leet")
+    *   `j = 0`: `dp[0]` 为 `T`。`s[0:4]` 是 "leet"。 "leet" 在 `wordDictSet` 中！
+        *   `dp[4]` 设置为 `T`。跳出内层循环。
+    *   `dp = [T, F, F, F, T, F, F, F, F]`
+
+6.  **`i = 5`**: (检查 `s[0...4]`, 即 "leetc")
+    *   `j = 0`: `dp[0]` 为 `T`。`s[0:5]` 是 "leetc"。不在。
+    *   `j = 1`: `dp[1]` 为 `F`。
+    *   `j = 2`: `dp[2]` 为 `F`。
+    *   `j = 3`: `dp[3]` 为 `F`。
+    *   `j = 4`: `dp[4]` 为 `T`。`s[4:5]` 是 "c"。不在。
+    *   `dp[5]` 仍为 `F`。
+
+7.  **`i = 6`**: (检查 `s[0...5]`, 即 "leetco")
+    *   `j = 0`: `dp[0]` 为 `T`。`s[0:6]` 是 "leetco"。不在。
+    *   `j = 1`: `dp[1]` 为 `F`。
+    *   `j = 2`: `dp[2]` 为 `F`。
+    *   `j = 3`: `dp[3]` 为 `F`。
+    *   `j = 4`: `dp[4]` 为 `T`。`s[4:6]` 是 "co"。不在。
+    *   `j = 5`: `dp[5]` 为 `F`。
+    *   `dp[6]` 仍为 `F`。
+
+8.  **`i = 7`**: (检查 `s[0...6]`, 即 "leetcod")
+    *   `j = 0`: `dp[0]` 为 `T`。`s[0:7]` 是 "leetcod"。不在。
+    *   ... (中间略过，直到 `j=4`)
+    *   `j = 4`: `dp[4]` 为 `T`。`s[4:7]` 是 "cod"。不在。
+    *   `j = 5`: `dp[5]` 为 `F`。
+    *   `j = 6`: `dp[6]` 为 `F`。
+    *   `dp[7]` 仍为 `F`。
+
+9.  **`i = 8`**: (检查 `s[0...7]`, 即 "leetcode")
+    *   `j = 0`: `dp[0]` 为 `T`。`s[0:8]` 是 "leetcode"。不在。
+    *   ... (中间略过，直到 `j=4`)
+    *   `j = 4`: `dp[4]` 为 `T`。`s[4:8]` 是 "code"。 "code" 在 `wordDictSet` 中！
+        *   `dp[8]` 设置为 `T`。跳出内层循环。
+    *   `dp = [T, F, F, F, T, F, F, F, T]`
+
+最终，`dp[8]` 为 `true`，所以返回 `true`。
+
+#### 解法二：带记忆化搜索的递归 (Top-down DP)
+
+讲解
+
+带记忆化搜索的递归是动态规划的另一种实现方式，通常被称为“自顶向下”的动态规划。它通过递归来解决问题，并使用一个缓存（memoization）来存储已经计算过的子问题的结果，避免重复计算。
+
+1.  **定义递归函数**：
+    我们定义一个递归函数 `canBreak(index)`，它返回布尔值，表示字符串 `s` 从 `index` 位置到末尾的子字符串 `s[index...s.length()-1]` 是否可以被字典中的单词拆分。
+
+2.  **基本情况**：
+    *   如果 `index == s.length()`，表示我们已经成功拆分了整个字符串，到达了字符串的末尾，此时返回 `true`。
+
+3.  **记忆化**：
+    *   使用一个数组 `memo`（或哈希表）来存储 `canBreak(index)` 的结果。
+    *   `memo[index]` 可以有三种状态：
+        *   `true`：表示 `s[index...]` 可以被拆分。
+        *   `false`：表示 `s[index...]` 不能被拆分。
+        *   `null` (或 -1)：表示 `s[index...]` 尚未计算。
+    *   在每次调用 `canBreak(index)` 时，首先检查 `memo[index]`。如果已经计算过，直接返回存储的结果。
+
+4.  **递归步骤**：
+    *   从 `index` 位置开始，遍历所有可能的结束位置 `i`，构建一个子字符串 `word = s[index...i]`。
+    *   如果 `word` 在 `wordDict` 中：
+        *   递归调用 `canBreak(i + 1)`，检查 `word` 后面的部分 `s[i+1...]` 是否也能被拆分。
+        *   如果 `canBreak(i + 1)` 返回 `true`，那么 `s[index...]` 就可以被拆分。我们将 `memo[index]` 设置为 `true` 并返回 `true`。
+    *   如果遍历完所有可能的 `word` 都没有找到有效的拆分路径，则表示 `s[index...]` 不能被拆分。我们将 `memo[index]` 设置为 `false` 并返回 `false`。
+
+**时间复杂度**：
+*   与自底向上的动态规划类似，每个子问题 `canBreak(index)` 最多计算一次。
+*   在计算 `canBreak(index)` 时，我们遍历 `s` 的剩余部分 `s[index...s.length()-1]`，并进行 `wordDict` 查找。
+*   总时间复杂度为 `O(N^2 * L)`，其中 `N` 是字符串 `s` 的长度，`L` 是字典单词的平均长度。
+
+**空间复杂度**：
+*   `memo` 数组：`O(N)`
+*   `HashSet`：`O(M * L)`
+*   递归栈的深度：最坏情况下 `O(N)`
+*   总空间复杂度：`O(N + M * L)`
+
+代码
+
+Java 版
+
+**核心模式 (Core Pattern)**
+
+```java
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
+
+class Solution {
+    // 用于存储字典单词的哈希集合，方便O(1)平均时间查找。
+    private Set<String> wordDictSet;
+    // 用于记忆化搜索的数组，memo[i] 存储 s[i...] 是否可被拆分的结果。
+    // 0: 未计算, 1: 可拆分, -1: 不可拆分
+    private int[] memo; 
+
+    /**
+     * 判断字符串s是否可以由字典wordDict中的单词拼接而成。
+     *
+     * @param s        待判断的字符串。
+     * @param wordDict 字典，包含可用的单词列表。
+     * @return 如果s可以被拼接，则返回true；否则返回false。
+     */
+    public boolean wordBreak(String s, List<String> wordDict) {
+        this.wordDictSet = new HashSet<>(wordDict);
+        // 初始化记忆化数组，长度为 s.length() + 1，表示从0到s.length()的子问题。
+        // Arrays.fill(memo, 0) 表示所有子问题都未计算。
+        this.memo = new int[s.length() + 1]; 
+        // 从字符串s的起始位置0开始进行递归判断。
+        return canBreak(s, 0);
+    }
+
+    /**
+     * 递归函数，判断字符串s从指定索引start开始的子字符串是否可以被拆分。
+     *
+     * @param s     原始字符串。
+     * @param start 当前子字符串的起始索引。
+     * @return 如果s[start...]可以被拆分，则返回true；否则返回false。
+     */
+    private boolean canBreak(String s, int start) {
+        // 基本情况：如果已经到达字符串末尾，说明成功拆分了所有字符。
+        if (start == s.length()) {
+            return true;
+        }
+
+        // 检查记忆化数组，如果当前子问题已经计算过，直接返回结果。
+        if (memo[start] != 0) {
+            return memo[start] == 1; // 1代表true，-1代表false
+        }
+
+        // 遍历所有可能的结束位置i，尝试截取一个单词。
+        // i从start开始，直到s.length()-1。
+        for (int i = start; i < s.length(); i++) {
+            // 截取当前子字符串 s[start...i]
+            String word = s.substring(start, i + 1);
+            // 如果这个子字符串是字典中的一个单词
+            // 并且从i+1位置开始的剩余字符串也能被拆分（递归调用）
+            if (wordDictSet.contains(word) && canBreak(s, i + 1)) {
+                // 那么s[start...]就可以被拆分。
+                memo[start] = 1; // 记录结果为true
+                return true;
+            }
+        }
+
+        // 如果遍历完所有可能的单词，都无法成功拆分，则s[start...]不可被拆分。
+        memo[start] = -1; // 记录结果为false
+        return false;
+    }
+}
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+第一行：字符串 `s`
+第二行：空格分隔的单词列表 `wordDict` (例如: "leet code")
+
+```java
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Scanner;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+public class Main {
+    // 用于存储字典单词的哈希集合，方便O(1)平均时间查找。
+    private static Set<String> wordDictSet;
+    // 用于记忆化搜索的数组，memo[i] 存储 s[i...] 是否可被拆分的结果。
+    // 0: 未计算, 1: 可拆分, -1: 不可拆分
+    private static int[] memo;
+
+    /**
+     * 判断字符串s是否可以由字典wordDict中的单词拼接而成。
+     *
+     * @param s        待判断的字符串。
+     * @param wordDict 字典，包含可用的单词列表。
+     * @return 如果s可以被拼接，则返回true；否则返回false。
+     */
+    public static boolean wordBreak(String s, List<String> wordDict) {
+        wordDictSet = new HashSet<>(wordDict);
+        memo = new int[s.length() + 1]; // 初始化记忆化数组
+        return canBreak(s, 0); // 从字符串s的起始位置0开始进行递归判断。
+    }
+
+    /**
+     * 递归函数，判断字符串s从指定索引start开始的子字符串是否可以被拆分。
+     *
+     * @param s     原始字符串。
+     * @param start 当前子字符串的起始索引。
+     * @return 如果s[start...]可以被拆分，则返回true；否则返回false。
+     */
+    private static boolean canBreak(String s, int start) {
+        // 基本情况：如果已经到达字符串末尾，说明成功拆分了所有字符。
+        if (start == s.length()) {
+            return true;
+        }
+
+        // 检查记忆化数组，如果当前子问题已经计算过，直接返回结果。
+        if (memo[start] != 0) {
+            return memo[start] == 1; // 1代表true，-1代表false
+        }
+
+        // 遍历所有可能的结束位置i，尝试截取一个单词。
+        // i从start开始，直到s.length()-1。
+        for (int i = start; i < s.length(); i++) {
+            // 截取当前子字符串 s[start...i]
+            String word = s.substring(start, i + 1);
+            // 如果这个子字符串是字典中的一个单词
+            // 并且从i+1位置开始的剩余字符串也能被拆分（递归调用）
+            if (wordDictSet.contains(word) && canBreak(s, i + 1)) {
+                // 那么s[start...]就可以被拆分。
+                memo[start] = 1; // 记录结果为true
+                return true;
+            }
+        }
+
+        // 如果遍历完所有可能的单词，都无法成功拆分，则s[start...]不可被拆分。
+        memo[start] = -1; // 记录结果为false
+        return false;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // 读取字符串 s
+        String s = scanner.nextLine();
+
+        // 读取字典 wordDict，假设是空格分隔的字符串
+        String wordDictLine = scanner.nextLine();
+        List<String> wordDict = Arrays.stream(wordDictLine.split(" "))
+                                      .collect(Collectors.toList());
+
+        // 调用wordBreak方法并打印结果
+        System.out.println(wordBreak(s, wordDict));
+
+        scanner.close();
+    }
+}
+```
+
+Python 版
+
+**核心模式 (Core Pattern)**
+
+Python 的 `functools.lru_cache` 装饰器可以非常方便地实现记忆化搜索。
+
+```python
+from typing import List, Set
+import functools
+
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        # 将wordDict转换为set，以便进行O(1)平均时间复杂度的查找。
+        word_dict_set: Set[str] = set(wordDict)
+
+        # 使用functools.lru_cache进行记忆化搜索
+        @functools.lru_cache(None) # None表示无限制缓存大小
+        def can_break(start: int) -> bool:
+            # 基本情况：如果已经到达字符串末尾，说明成功拆分了所有字符。
+            if start == len(s):
+                return True
+
+            # 遍历所有可能的结束位置i，尝试截取一个单词。
+            # i从start开始，直到len(s)-1。
+            for i in range(start, len(s)):
+                # 截取当前子字符串 s[start...i]
+                word = s[start : i + 1]
+                # 如果这个子字符串是字典中的一个单词
+                # 并且从i+1位置开始的剩余字符串也能被拆分（递归调用）
+                if word in word_dict_set and can_break(i + 1):
+                    # 那么s[start...]就可以被拆分。
+                    return True
+            
+            # 如果遍历完所有可能的单词，都无法成功拆分，则s[start...]不可被拆分。
+            return False
+
+        # 从字符串s的起始位置0开始进行递归判断。
+        return can_break(0)
+
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+第一行：字符串 `s`
+第二行：空格分隔的单词列表 `wordDict` (例如: "leet code")
+
+```python
+from typing import List, Set
+import functools # 导入functools模块用于lru_cache
+
+def word_break(s: str, wordDict: List[str]) -> bool:
+    # 将wordDict转换为set，以便进行O(1)平均时间复杂度的查找。
+    word_dict_set: Set[str] = set(wordDict)
+
+    # 使用functools.lru_cache进行记忆化搜索
+    @functools.lru_cache(None) # None表示无限制缓存大小
+    def can_break(start: int) -> bool:
+        # 基本情况：如果已经到达字符串末尾，说明成功拆分了所有字符。
+        if start == len(s):
+            return True
+
+        # 遍历所有可能的结束位置i，尝试截取一个单词。
+        # i从start开始，直到len(s)-1。
+        for i in range(start, len(s)):
+            # 截取当前子字符串 s[start...i]
+            word = s[start : i + 1]
+            # 如果这个子字符串是字典中的一个单词
+            # 并且从i+1位置开始的剩余字符串也能被拆分（递归调用）
+            if word in word_dict_set and can_break(i + 1):
+                # 那么s[start...]就可以被拆分。
+                return True
+        
+        # 如果遍历完所有可能的单词，都无法成功拆分，则s[start...]不可被拆分。
+        return False
+
+    # 从字符串s的起始位置0开始进行递归判断。
+    return can_break(0)
+
+if __name__ == '__main__':
+    # 读取字符串 s
+    s_input = input()
+
+    # 读取字典 wordDict，假设是空格分隔的字符串
+    word_dict_line = input()
+    word_dict_list = word_dict_line.split()
+
+    # 调用word_break函数并打印结果
+    print(word_break(s_input, word_dict_list))
+
+```
+
+示例演示
+
+以 `s = "applepenapple"`, `wordDict = ["apple", "pen"]` 为例，逐步演示 `can_break` 的调用过程。
+
+1.  **初始化**:
+    `wordDictSet = {"apple", "pen"}`
+    `memo` 数组（或 `lru_cache`）为空。
+    调用 `can_break(0)`。
+
+2.  **`can_break(0)`**: (检查 "applepenapple")
+    *   `i = 0`: `word = s[0:1]` = "a"。不在字典中。
+    *   `i = 1`: `word = s[0:2]` = "ap"。不在字典中。
+    *   ...
+    *   `i = 4`: `word = s[0:5]` = "apple"。在字典中！
+        *   递归调用 `can_break(5)`。
+
+3.  **`can_break(5)`**: (检查 "penapple")
+    *   `i = 5`: `word = s[5:6]` = "p"。不在字典中。
+    *   ...
+    *   `i = 7`: `word = s[5:8]` = "pen"。在字典中！
+        *   递归调用 `can_break(8)`。
+
+4.  **`can_break(8)`**: (检查 "apple")
+    *   `i = 8`: `word = s[8:9]` = "a"。不在字典中。
+    *   ...
+    *   `i = 12`: `word = s[8:13]` = "apple"。在字典中！
+        *   递归调用 `can_break(13)`。
+
+5.  **`can_break(13)`**: (检查 "")
+    *   `start == len(s)` (即 `13 == 13`)。
+    *   返回 `True`。
+    *   `memo[13]` 记录为 `True`。
+
+6.  **回到 `can_break(8)`**:
+    *   `can_break(13)` 返回 `True`。
+    *   条件 `word in word_dict_set and can_break(i + 1)` 满足。
+    *   `can_break(8)` 返回 `True`。
+    *   `memo[8]` 记录为 `True`。
+
+7.  **回到 `can_break(5)`**:
+    *   `can_break(8)` 返回 `True`。
+    *   条件 `word in word_dict_set and can_break(i + 1)` 满足。
+    *   `can_break(5)` 返回 `True`。
+    *   `memo[5]` 记录为 `True`。
+
+8.  **回到 `can_break(0)`**:
+    *   `can_break(5)` 返回 `True`。
+    *   条件 `word in word_dict_set and can_break(i + 1)` 满足。
+    *   `can_break(0)` 返回 `True`。
+    *   `memo[0]` 记录为 `True`。
+
+最终，`can_break(0)` 返回 `true`。
+
+通过记忆化，如果 `can_break(8)` 再次被调用，它会直接返回 `memo[8]` 中存储的结果 `True`，而不会再次递归计算。这大大提高了效率。
+
+总结
+
+两种解法本质上都是动态规划，只是实现方式不同。
+*   **自底向上 (Bottom-up DP)**：通常使用循环迭代填充 `dp` 数组，从最小的子问题开始解决。
+*   **自顶向下 (Top-down DP / 记忆化搜索)**：通常使用递归，从大问题开始分解，遇到重复子问题时查缓存。
+
+在实际应用中，两种方法各有优劣：
+*   **自底向上**：通常迭代实现，没有递归深度限制，性能通常稍好，更容易理解状态转移过程。
+*   **自顶向下**：代码可能更直观地反映问题的递归结构，特别是对于一些复杂问题，但可能会有递归深度限制（Python 默认递归深度有限制，Java 也可能栈溢出），且函数调用开销可能略大。
+
+对于“单词拆分”这类问题，两种方法的性能差异不大，都可以高效解决。选择哪种取决于个人偏好和具体场景。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 多维动态规划
 
 
