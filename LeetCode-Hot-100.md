@@ -16167,6 +16167,712 @@ if __name__ == '__main__':
 
 
 
+### 300. 最长递增子序列
+好的，我们来详细讲解“最长递增子序列”这道算法题。
+
+题目及分析
+
+题目描述
+
+给你一个整数数组 `nums` ，找到其中最长严格递增子序列的长度。
+
+子序列是由数组派生而来的序列，删除（或不删除）数组中的元素而不改变其余元素的顺序。例如，`[3,6,2,7]` 是数组 `[0,3,1,6,2,2,7]` 的子序列。
+
+示例
+
+**示例 1：**
+输入：`nums = [10,9,2,5,3,7,101,18]`
+输出：`4`
+解释：最长递增子序列是 `[2,3,7,101]`，因此长度为 `4` 。
+
+**示例 2：**
+输入：`nums = [0,1,0,3,2,3]`
+输出：`4`
+
+**示例 3：**
+输入：`nums = [7,7,7,7,7,7,7]`
+输出：`1`
+
+提示
+
+*   `1 <= nums.length <= 2500`
+*   `-10^4 <= nums[i] <= 10^4`
+
+进阶
+
+*   你能将算法的时间复杂度降低到 `O(n log(n))` 吗?
+
+问题分析
+
+这道题目要求我们从一个给定的整数数组中找出最长严格递增子序列的长度。
+
+**什么是子序列？**
+子序列是通过删除原数组中的零个或多个元素而不改变剩余元素的相对顺序而形成的新序列。例如，对于数组 `[1, 2, 3, 4, 5]`，`[1, 3, 5]` 是一个子序列，`[2, 4]` 也是一个子序列，而 `[5, 4]` 则不是（因为改变了相对顺序）。
+
+**什么是严格递增？**
+序列中的每个元素都必须严格大于其前一个元素。例如，`[2, 3, 7, 101]` 是严格递增的，而 `[2, 2, 3]` 则不是。
+
+这是一个经典的动态规划（Dynamic Programming）问题，因为它具有以下特征：
+
+1.  **最优子结构（Optimal Substructure）**：
+    一个数组的最长递增子序列的长度可以由其子数组的最长递增子序列的长度推导出来。例如，如果 `nums[i]` 是某个最长递增子序列的最后一个元素，那么这个子序列的前面部分（不包含 `nums[i]`）一定是在 `nums[0...i-1]` 中某个元素结尾的最长递增子序列。
+
+2.  **重叠子问题（Overlapping Subproblems）**：
+    在计算不同位置的最长递增子序列时，我们可能会多次计算相同子数组的最长递增子序列。
+
+基于以上分析，我们可以设计动态规划解决方案。同时，题目中的“进阶”部分提示我们可以将时间复杂度优化到 `O(N log N)`，这通常意味着需要结合二分查找。
+
+#### 解法一：动态规划 (O(N^2))
+
+讲解
+
+这是最直观的动态规划方法。
+
+1.  **定义 `dp` 数组**：
+    我们定义一个 `dp` 数组，`dp[i]` 表示以 `nums[i]` 结尾的最长严格递增子序列的长度。
+
+2.  **初始化**：
+    *   每个元素本身都可以构成一个长度为 1 的递增子序列。所以，将 `dp` 数组的所有元素初始化为 `1`。
+
+3.  **状态转移方程**：
+    我们需要遍历整个 `nums` 数组。对于每一个 `nums[i]`（从 `i = 0` 到 `N-1`）：
+    我们再遍历其之前的所有元素 `nums[j]`（从 `j = 0` 到 `i-1`）。
+    如果 `nums[i] > nums[j]`，这意味着 `nums[i]` 可以接在以 `nums[j]` 结尾的某个递增子序列的后面，从而形成一个更长的递增子序列。
+    此时，以 `nums[i]` 结尾的递增子序列的长度就可以是 `dp[j] + 1`。
+    我们需要在所有满足 `nums[i] > nums[j]` 的 `j` 中，选择能使 `dp[j] + 1` 最大的那个值来更新 `dp[i]`。
+    因此，状态转移方程为：
+    `dp[i] = max(dp[i], dp[j] + 1)` (对于所有 `0 <= j < i` 且 `nums[i] > nums[j]`)
+
+4.  **最终结果**：
+    `dp` 数组中的最大值就是整个数组的最长递增子序列的长度。如果数组为空，则长度为 0。
+
+**时间复杂度**：
+*   外层循环 `i` 遍历 `N` 次。
+*   内层循环 `j` 遍历 `i` 次。
+*   总时间复杂度为 `O(N^2)`。
+    对于 `N=2500`，`N^2 = 6.25 * 10^6`，这个复杂度是可接受的。
+
+**空间复杂度**：
+*   `dp` 数组需要 `O(N)` 的空间。
+
+代码
+
+Java 版
+
+**核心模式 (Core Pattern)**
+
+```java
+import java.util.Arrays;
+
+class Solution {
+    /**
+     * 找出数组中最长严格递增子序列的长度。
+     *
+     * @param nums 整数数组。
+     * @return 最长严格递增子序列的长度。
+     */
+    public int lengthOfLIS(int[] nums) {
+        // 如果数组为空或长度为0，则最长递增子序列的长度为0。
+        if (nums == null || nums.length == 0) {
+            return 0;
+        }
+
+        int n = nums.length;
+        // dp[i] 表示以 nums[i] 结尾的最长严格递增子序列的长度。
+        int[] dp = new int[n];
+
+        // 初始化dp数组。每个元素本身都可以构成一个长度为1的递增子序列。
+        Arrays.fill(dp, 1);
+
+        // 遍历数组中的每个元素 nums[i]
+        // i 从 1 开始，因为 dp[0] 已经初始化为 1
+        for (int i = 1; i < n; i++) {
+            // 遍历 nums[i] 之前的所有元素 nums[j]
+            for (int j = 0; j < i; j++) {
+                // 如果 nums[i] 大于 nums[j]，则 nums[i] 可以接在以 nums[j] 结尾的递增子序列之后。
+                if (nums[i] > nums[j]) {
+                    // 更新 dp[i]：取当前 dp[i] 和 (以 nums[j] 结尾的LIS长度 + 1) 中的最大值。
+                    // +1 是因为 nums[i] 接在了后面。
+                    dp[i] = Math.max(dp[i], dp[j] + 1);
+                }
+            }
+        }
+
+        // 遍历 dp 数组，找到其中的最大值，即为整个数组的最长递增子序列的长度。
+        int maxLength = 0;
+        for (int length : dp) {
+            maxLength = Math.max(maxLength, length);
+        }
+
+        return maxLength;
+    }
+}
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式为：
+一行，空格分隔的整数列表 (例如: `10 9 2 5 3 7 101 18`)
+
+```java
+import java.util.Arrays;
+import java.util.Scanner;
+import java.util.stream.Stream;
+
+public class Main {
+    /**
+     * 找出数组中最长严格递增子序列的长度。
+     *
+     * @param nums 整数数组。
+     * @return 最长严格递增子序列的长度。
+     */
+    public static int lengthOfLIS(int[] nums) {
+        // 如果数组为空或长度为0，则最长递增子序列的长度为0。
+        if (nums == null || nums.length == 0) {
+            return 0;
+        }
+
+        int n = nums.length;
+        // dp[i] 表示以 nums[i] 结尾的最长严格递增子序列的长度。
+        int[] dp = new int[n];
+
+        // 初始化dp数组。每个元素本身都可以构成一个长度为1的递增子序列。
+        Arrays.fill(dp, 1);
+
+        // 遍历数组中的每个元素 nums[i]
+        // i 从 1 开始，因为 dp[0] 已经初始化为 1
+        for (int i = 1; i < n; i++) {
+            // 遍历 nums[i] 之前的所有元素 nums[j]
+            for (int j = 0; j < i; j++) {
+                // 如果 nums[i] 大于 nums[j]，则 nums[i] 可以接在以 nums[j] 结尾的递增子序列之后。
+                if (nums[i] > nums[j]) {
+                    // 更新 dp[i]：取当前 dp[i] 和 (以 nums[j] 结尾的LIS长度 + 1) 中的最大值。
+                    // +1 是因为 nums[i] 接在了后面。
+                    dp[i] = Math.max(dp[i], dp[j] + 1);
+                }
+            }
+        }
+
+        // 遍历 dp 数组，找到其中的最大值，即为整个数组的最长递增子序列的长度。
+        int maxLength = 0;
+        for (int length : dp) {
+            maxLength = Math.max(maxLength, length);
+        }
+
+        return maxLength;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String line = scanner.nextLine(); // 读取一行输入
+        scanner.close();
+
+        // 将字符串按空格分割，并转换为整数数组
+        int[] nums = Stream.of(line.split(" "))
+                           .mapToInt(Integer::parseInt)
+                           .toArray();
+
+        // 调用方法并打印结果
+        System.out.println(lengthOfLIS(nums));
+    }
+}
+```
+
+Python 版
+
+**核心模式 (Core Pattern)**
+
+```python
+from typing import List
+
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+        # 如果数组为空或长度为0，则最长递增子序列的长度为0。
+        if not nums:
+            return 0
+
+        n = len(nums)
+        # dp[i] 表示以 nums[i] 结尾的最长严格递增子序列的长度。
+        # 初始化dp数组，每个元素本身都可以构成一个长度为1的递增子序列。
+        dp: List[int] = [1] * n
+
+        # 遍历数组中的每个元素 nums[i]
+        # i 从 1 开始，因为 dp[0] 已经初始化为 1
+        for i in range(1, n):
+            # 遍历 nums[i] 之前的所有元素 nums[j]
+            for j in range(i):
+                # 如果 nums[i] 大于 nums[j]，则 nums[i] 可以接在以 nums[j] 结尾的递增子序列之后。
+                if nums[i] > nums[j]:
+                    # 更新 dp[i]：取当前 dp[i] 和 (以 nums[j] 结尾的LIS长度 + 1) 中的最大值。
+                    # +1 是因为 nums[i] 接在了后面。
+                    dp[i] = max(dp[i], dp[j] + 1)
+        
+        # 遍历 dp 数组，找到其中的最大值，即为整个数组的最长递增子序列的长度。
+        return max(dp)
+
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+一行，空格分隔的整数列表 (例如: `10 9 2 5 3 7 101 18`)
+
+```python
+from typing import List
+
+def length_of_lis(nums: List[int]) -> int:
+    # 如果数组为空或长度为0，则最长递增子序列的长度为0。
+    if not nums:
+        return 0
+
+    n = len(nums)
+    # dp[i] 表示以 nums[i] 结尾的最长严格递增子序列的长度。
+    # 初始化dp数组，每个元素本身都可以构成一个长度为1的递增子序列。
+    dp: List[int] = [1] * n
+
+    # 遍历数组中的每个元素 nums[i]
+    # i 从 1 开始，因为 dp[0] 已经初始化为 1
+    for i in range(1, n):
+        # 遍历 nums[i] 之前的所有元素 nums[j]
+        for j in range(i):
+            # 如果 nums[i] 大于 nums[j]，则 nums[i] 可以接在以 nums[j] 结尾的递增子序列之后。
+            if nums[i] > nums[j]:
+                # 更新 dp[i]：取当前 dp[i] 和 (以 nums[j] 结尾的LIS长度 + 1) 中的最大值。
+                # +1 是因为 nums[i] 接在了后面。
+                dp[i] = max(dp[i], dp[j] + 1)
+    
+    # 遍历 dp 数组，找到其中的最大值，即为整个数组的最长递增子序列的长度。
+    return max(dp)
+
+if __name__ == '__main__':
+    # 读取一行输入，并分割成字符串列表，然后转换为整数列表
+    nums_str = input().split()
+    nums_list = [int(x) for x in nums_str]
+
+    # 调用函数并打印结果
+    print(length_of_lis(nums_list))
+
+```
+
+示例演示
+
+以 `nums = [10, 9, 2, 5, 3, 7, 101, 18]` 为例，逐步演示 `dp` 数组的计算过程。
+
+`n = 8`
+初始化 `dp = [1, 1, 1, 1, 1, 1, 1, 1]`
+
+1.  **`i = 0` (nums[0] = 10)**:
+    `dp[0]` 已经为 1。
+
+2.  **`i = 1` (nums[1] = 9)**:
+    *   `j = 0`: `nums[1] (9)` 不大于 `nums[0] (10)`。
+    *   `dp[1]` 保持为 1。
+    `dp = [1, 1, 1, 1, 1, 1, 1, 1]`
+
+3.  **`i = 2` (nums[2] = 2)**:
+    *   `j = 0`: `nums[2] (2)` 不大于 `nums[0] (10)`。
+    *   `j = 1`: `nums[2] (2)` 不大于 `nums[1] (9)`。
+    *   `dp[2]` 保持为 1。
+    `dp = [1, 1, 1, 1, 1, 1, 1, 1]`
+
+4.  **`i = 3` (nums[3] = 5)**:
+    *   `j = 0`: `nums[3] (5)` 不大于 `nums[0] (10)`。
+    *   `j = 1`: `nums[3] (5)` 不大于 `nums[1] (9)`。
+    *   `j = 2`: `nums[3] (5)` 大于 `nums[2] (2)`。
+        *   `dp[3] = max(dp[3], dp[2] + 1) = max(1, 1 + 1) = 2`。
+    *   `dp[3]` 更新为 2。
+    `dp = [1, 1, 1, 2, 1, 1, 1, 1]`
+
+5.  **`i = 4` (nums[4] = 3)**:
+    *   `j = 0`: `nums[4] (3)` 不大于 `nums[0] (10)`。
+    *   `j = 1`: `nums[4] (3)` 不大于 `nums[1] (9)`。
+    *   `j = 2`: `nums[4] (3)` 大于 `nums[2] (2)`。
+        *   `dp[4] = max(dp[4], dp[2] + 1) = max(1, 1 + 1) = 2`。
+    *   `j = 3`: `nums[4] (3)` 不大于 `nums[3] (5)`。
+    *   `dp[4]` 更新为 2。
+    `dp = [1, 1, 1, 2, 2, 1, 1, 1]`
+
+6.  **`i = 5` (nums[5] = 7)**:
+    *   `j = 0`: `nums[5] (7)` 不大于 `nums[0] (10)`。
+    *   `j = 1`: `nums[5] (7)` 不大于 `nums[1] (9)`。
+    *   `j = 2`: `nums[5] (7)` 大于 `nums[2] (2)`。
+        *   `dp[5] = max(dp[5], dp[2] + 1) = max(1, 1 + 1) = 2`。
+    *   `j = 3`: `nums[5] (7)` 大于 `nums[3] (5)`。
+        *   `dp[5] = max(2, dp[3] + 1) = max(2, 2 + 1) = 3`。
+    *   `j = 4`: `nums[5] (7)` 大于 `nums[4] (3)`。
+        *   `dp[5] = max(3, dp[4] + 1) = max(3, 2 + 1) = 3`。
+    *   `dp[5]` 更新为 3。
+    `dp = [1, 1, 1, 2, 2, 3, 1, 1]`
+
+7.  **`i = 6` (nums[6] = 101)**:
+    *   `j = 0`: `nums[6] (101)` 大于 `nums[0] (10)`。
+        *   `dp[6] = max(1, dp[0] + 1) = max(1, 1 + 1) = 2`。
+    *   `j = 1`: `nums[6] (101)` 大于 `nums[1] (9)`。
+        *   `dp[6] = max(2, dp[1] + 1) = max(2, 1 + 1) = 2`。 (保持2)
+    *   `j = 2`: `nums[6] (101)` 大于 `nums[2] (2)`。
+        *   `dp[6] = max(2, dp[2] + 1) = max(2, 1 + 1) = 2`。 (保持2)
+    *   `j = 3`: `nums[6] (101)` 大于 `nums[3] (5)`。
+        *   `dp[6] = max(2, dp[3] + 1) = max(2, 2 + 1) = 3`。
+    *   `j = 4`: `nums[6] (101)` 大于 `nums[4] (3)`。
+        *   `dp[6] = max(3, dp[4] + 1) = max(3, 2 + 1) = 3`。 (保持3)
+    *   `j = 5`: `nums[6] (101)` 大于 `nums[5] (7)`。
+        *   `dp[6] = max(3, dp[5] + 1) = max(3, 3 + 1) = 4`。
+    *   `dp[6]` 更新为 4。
+    `dp = [1, 1, 1, 2, 2, 3, 4, 1]`
+
+8.  **`i = 7` (nums[7] = 18)**:
+    *   `j = 0`: `nums[7] (18)` 大于 `nums[0] (10)`。
+        *   `dp[7] = max(1, dp[0] + 1) = max(1, 1 + 1) = 2`。
+    *   `j = 1`: `nums[7] (18)` 大于 `nums[1] (9)`。
+        *   `dp[7] = max(2, dp[1] + 1) = max(2, 1 + 1) = 2`。 (保持2)
+    *   `j = 2`: `nums[7] (18)` 大于 `nums[2] (2)`。
+        *   `dp[7] = max(2, dp[2] + 1) = max(2, 1 + 1) = 2`。 (保持2)
+    *   `j = 3`: `nums[7] (18)` 大于 `nums[3] (5)`。
+        *   `dp[7] = max(2, dp[3] + 1) = max(2, 2 + 1) = 3`。
+    *   `j = 4`: `nums[7] (18)` 大于 `nums[4] (3)`。
+        *   `dp[7] = max(3, dp[4] + 1) = max(3, 2 + 1) = 3`。 (保持3)
+    *   `j = 5`: `nums[7] (18)` 大于 `nums[5] (7)`。
+        *   `dp[7] = max(3, dp[5] + 1) = max(3, 3 + 1) = 4`。
+    *   `j = 6`: `nums[7] (18)` 不大于 `nums[6] (101)`。
+    *   `dp[7]` 更新为 4。
+    `dp = [1, 1, 1, 2, 2, 3, 4, 4]`
+
+最终 `dp` 数组为 `[1, 1, 1, 2, 2, 3, 4, 4]`。
+最大值为 4。
+
+#### 解法二：动态规划 + 二分查找 (O(N log N))
+
+讲解
+
+这个方法利用了“耐心排序”（Patience Sorting）的思想，可以将时间复杂度优化到 `O(N log N)`。
+
+核心思想是维护一个 `tails` 数组（或称为 `sub` 数组），它存储着所有长度为 `k+1` 的递增子序列中，最小的那个末尾元素。
+
+1.  **定义 `tails` 数组**：
+    `tails` 数组是一个严格递增的数组。
+    `tails[k]` 存储的是所有长度为 `k+1` 的递增子序列中，最小的那个结尾元素。
+    例如，如果 `tails = [2, 5, 7]`：
+    *   存在一个长度为 1 的递增子序列，其最小结尾元素是 2。
+    *   存在一个长度为 2 的递增子序列，其最小结尾元素是 5。
+    *   存在一个长度为 3 的递增子序列，其最小结尾元素是 7。
+
+2.  **遍历 `nums` 数组**：
+    对于 `nums` 中的每个数字 `num`：
+
+    *   **情况 1：`num` 大于 `tails` 中所有元素**
+        如果 `num` 比 `tails` 数组中的所有元素都大，这意味着 `num` 可以直接接在当前最长的递增子序列之后，形成一个更长的递增子序列。
+        此时，我们将 `num` 添加到 `tails` 数组的末尾。`tails` 数组的长度增加 1。
+
+    *   **情况 2：`num` 不大于 `tails` 中某个元素**
+        如果 `num` 不大于 `tails` 数组中的某个元素，这意味着 `num` 不能直接延长当前最长的递增子序列。
+        但是，`num` 可能可以替换 `tails` 数组中的某个元素，从而形成一个长度相同但结尾元素更小的递增子序列。
+        我们希望替换掉 `tails` 数组中第一个**大于或等于** `num` 的元素。
+        为什么？因为用一个更小的 `num` 替换掉 `tails[k]`，可以使得长度为 `k+1` 的递增子序列的结尾元素更小，这为后续的元素提供了更多的机会来延长这个子序列。
+        由于 `tails` 数组是严格递增的，我们可以使用**二分查找**（`lower_bound` 或 Java 的 `Arrays.binarySearch` 配合处理负值结果）来找到这个位置。
+        找到这个位置 `idx` 后，用 `num` 替换 `tails[idx]`。
+
+3.  **最终结果**：
+    `tails` 数组的最终长度就是最长递增子序列的长度。
+
+**时间复杂度**：
+*   遍历 `nums` 数组：`N` 次。
+*   每次迭代中，执行二分查找：`O(log K)`，其中 `K` 是 `tails` 数组的当前长度（最坏情况下 `K` 为 `N`）。
+*   总时间复杂度为 `O(N log N)`。
+
+**空间复杂度**：
+*   `tails` 数组需要 `O(N)` 的空间。
+
+代码
+
+Java 版
+
+**核心模式 (Core Pattern)**
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Arrays;
+
+class Solution {
+    /**
+     * 找出数组中最长严格递增子序列的长度 (O(N log N) 解法)。
+     *
+     * @param nums 整数数组。
+     * @return 最长严格递增子序列的长度。
+     */
+    public int lengthOfLIS(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            return 0;
+        }
+
+        // tails 数组存储所有长度为 k+1 的递增子序列中，最小的那个末尾元素。
+        // tails 数组本身是严格递增的。
+        // 我们可以使用一个数组来模拟 ArrayList 的行为，并用一个 size 变量来记录当前有效长度。
+        int[] tails = new int[nums.length];
+        int size = 0; // size 表示 tails 数组中有效元素的数量，也即当前最长递增子序列的长度
+
+        // 遍历原始数组 nums 中的每个数字
+        for (int num : nums) {
+            // 在 tails 数组中进行二分查找，寻找第一个大于或等于 num 的元素的位置。
+            // Arrays.binarySearch 返回的是元素索引，如果找不到则返回 (-(插入点) - 1)。
+            // 插入点是元素应该被插入的位置，以保持数组有序。
+            int i = Arrays.binarySearch(tails, 0, size, num);
+
+            // 如果 i 是负数，说明 num 不在 tails 数组中。
+            // 此时 i = -(插入点) - 1，所以实际插入点为 -(i + 1)。
+            if (i < 0) {
+                i = -(i + 1); // 找到应该替换的位置
+            }
+
+            // 将 num 放到找到的位置 i
+            tails[i] = num;
+
+            // 如果 i 等于当前的 size，说明 num 比 tails 数组中所有元素都大，
+            // 此时 tails 数组的长度增加了，最长递增子序列的长度也增加了。
+            if (i == size) {
+                size++;
+            }
+        }
+
+        // 最终 tails 数组的长度 (size) 就是最长递增子序列的长度。
+        return size;
+    }
+}
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+一行，空格分隔的整数列表 (例如: `10 9 2 5 3 7 101 18`)
+
+```java
+import java.util.Arrays;
+import java.util.Scanner;
+import java.util.stream.Stream;
+
+public class Main {
+    /**
+     * 找出数组中最长严格递增子序列的长度 (O(N log N) 解法)。
+     *
+     * @param nums 整数数组。
+     * @return 最长严格递增子序列的长度。
+     */
+    public static int lengthOfLIS(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            return 0;
+        }
+
+        // tails 数组存储所有长度为 k+1 的递增子序列中，最小的那个末尾元素。
+        // tails 数组本身是严格递增的。
+        // 我们可以使用一个数组来模拟 ArrayList 的行为，并用一个 size 变量来记录当前有效长度。
+        int[] tails = new int[nums.length];
+        int size = 0; // size 表示 tails 数组中有效元素的数量，也即当前最长递增子序列的长度
+
+        // 遍历原始数组 nums 中的每个数字
+        for (int num : nums) {
+            // 在 tails 数组中进行二分查找，寻找第一个大于或等于 num 的元素的位置。
+            // Arrays.binarySearch 返回的是元素索引，如果找不到则返回 (-(插入点) - 1)。
+            // 插入点是元素应该被插入的位置，以保持数组有序。
+            int i = Arrays.binarySearch(tails, 0, size, num);
+
+            // 如果 i 是负数，说明 num 不在 tails 数组中。
+            // 此时 i = -(插入点) - 1，所以实际插入点为 -(i + 1)。
+            if (i < 0) {
+                i = -(i + 1); // 找到应该替换的位置
+            }
+
+            // 将 num 放到找到的位置 i
+            tails[i] = num;
+
+            // 如果 i 等于当前的 size，说明 num 比 tails 数组中所有元素都大，
+            // 此时 tails 数组的长度增加了，最长递增子序列的长度也增加了。
+            if (i == size) {
+                size++;
+            }
+        }
+
+        // 最终 tails 数组的长度 (size) 就是最长递增子序列的长度。
+        return size;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String line = scanner.nextLine(); // 读取一行输入
+        scanner.close();
+
+        // 将字符串按空格分割，并转换为整数数组
+        int[] nums = Stream.of(line.split(" "))
+                           .mapToInt(Integer::parseInt)
+                           .toArray();
+
+        // 调用方法并打印结果
+        System.out.println(lengthOfLIS(nums));
+    }
+}
+```
+
+Python 版
+
+**核心模式 (Core Pattern)**
+
+Python 的 `bisect` 模块提供了二分查找的功能。`bisect_left(a, x)` 返回在 `a` 中插入 `x` 且保持 `a` 有序的插入点，如果 `x` 已经存在，则插入点在最左边。
+
+```python
+import bisect
+from typing import List
+
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+        if not nums:
+            return 0
+
+        # tails 列表存储所有长度为 k+1 的递增子序列中，最小的那个末尾元素。
+        # tails 列表本身是严格递增的。
+        tails: List[int] = []
+
+        # 遍历原始数组 nums 中的每个数字
+        for num in nums:
+            # 使用 bisect_left 找到在 tails 中插入 num 且保持 tails 有序的索引 i。
+            # 这个索引 i 也是 tails 中第一个大于或等于 num 的元素的位置。
+            i = bisect.bisect_left(tails, num)
+
+            # 如果 i 等于 tails 的长度，说明 num 比 tails 中所有元素都大。
+            # 此时 num 可以延长当前最长的递增子序列，直接添加到 tails 末尾。
+            if i == len(tails):
+                tails.append(num)
+            else:
+                # 否则，num 替换 tails[i] 处的元素。
+                # 这样做是为了让长度为 i+1 的递增子序列的末尾元素尽可能小，
+                # 从而为后续元素提供更多延长序列的机会。
+                tails[i] = num
+        
+        # 最终 tails 列表的长度就是最长递增子序列的长度。
+        return len(tails)
+
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+一行，空格分隔的整数列表 (例如: `10 9 2 5 3 7 101 18`)
+
+```python
+import bisect # 导入 bisect 模块
+from typing import List
+
+def length_of_lis(nums: List[int]) -> int:
+    if not nums:
+        return 0
+
+    # tails 列表存储所有长度为 k+1 的递增子序列中，最小的那个末尾元素。
+    # tails 列表本身是严格递增的。
+    tails: List[int] = []
+
+    # 遍历原始数组 nums 中的每个数字
+    for num in nums:
+        # 使用 bisect_left 找到在 tails 中插入 num 且保持 tails 有序的索引 i。
+        # 这个索引 i 也是 tails 中第一个大于或等于 num 的元素的位置。
+        i = bisect.bisect_left(tails, num)
+
+        # 如果 i 等于 tails 的长度，说明 num 比 tails 中所有元素都大。
+        # 此时 num 可以延长当前最长的递增子序列，直接添加到 tails 末尾。
+        if i == len(tails):
+            tails.append(num)
+        else:
+            # 否则，num 替换 tails[i] 处的元素。
+            # 这样做是为了让长度为 i+1 的递增子序列的末尾元素尽可能小，
+            # 从而为后续元素提供更多延长序列的机会。
+            tails[i] = num
+    
+    # 最终 tails 列表的长度就是最长递增子序列的长度。
+    return len(tails)
+
+if __name__ == '__main__':
+    # 读取一行输入，并分割成字符串列表，然后转换为整数列表
+    nums_str = input().split()
+    nums_list = [int(x) for x in nums_str]
+
+    # 调用函数并打印结果
+    print(length_of_lis(nums_list))
+
+```
+
+示例演示
+
+以 `nums = [10, 9, 2, 5, 3, 7, 101, 18]` 为例，逐步演示 `tails` 数组的计算过程。
+
+初始化 `tails = []`
+
+1.  **`num = 10`**:
+    *   `tails` 为空，将 10 添加到 `tails`。
+    *   `tails = [10]`
+    *   `len(tails) = 1`
+
+2.  **`num = 9`**:
+    *   `9` 不大于 `tails` 的最后一个元素 `10`。
+    *   二分查找 `9` 在 `tails` 中的位置：`i = 0` (因为 `tails[0] = 10 >= 9`)。
+    *   替换 `tails[0]` 为 `9`。
+    *   `tails = [9]`
+    *   `len(tails) = 1`
+
+3.  **`num = 2`**:
+    *   `2` 不大于 `tails` 的最后一个元素 `9`。
+    *   二分查找 `2` 在 `tails` 中的位置：`i = 0` (因为 `tails[0] = 9 >= 2`)。
+    *   替换 `tails[0]` 为 `2`。
+    *   `tails = [2]`
+    *   `len(tails) = 1`
+
+4.  **`num = 5`**:
+    *   `5` 大于 `tails` 的最后一个元素 `2`。
+    *   将 `5` 添加到 `tails` 末尾。
+    *   `tails = [2, 5]`
+    *   `len(tails) = 2`
+
+5.  **`num = 3`**:
+    *   `3` 不大于 `tails` 的最后一个元素 `5`。
+    *   二分查找 `3` 在 `tails` 中的位置：`i = 1` (因为 `tails[0] = 2 < 3`，而 `tails[1] = 5 >= 3`)。
+    *   替换 `tails[1]` 为 `3`。
+    *   `tails = [2, 3]`
+    *   `len(tails) = 2`
+
+6.  **`num = 7`**:
+    *   `7` 大于 `tails` 的最后一个元素 `3`。
+    *   将 `7` 添加到 `tails` 末尾。
+    *   `tails = [2, 3, 7]`
+    *   `len(tails) = 3`
+
+7.  **`num = 101`**:
+    *   `101` 大于 `tails` 的最后一个元素 `7`。
+    *   将 `101` 添加到 `tails` 末尾。
+    *   `tails = [2, 3, 7, 101]`
+    *   `len(tails) = 4`
+
+8.  **`num = 18`**:
+    *   `18` 不大于 `tails` 的最后一个元素 `101`。
+    *   二分查找 `18` 在 `tails` 中的位置：`i = 3` (因为 `tails[0]=2 < 18`, `tails[1]=3 < 18`, `tails[2]=7 < 18`, 而 `tails[3]=101 >= 18`)。
+    *   替换 `tails[3]` 为 `18`。
+    *   `tails = [2, 3, 7, 18]`
+    *   `len(tails) = 4`
+
+遍历结束。最终 `tails` 的长度为 `4`。
+
+**总结**
+解法一的 `O(N^2)` 动态规划方法更容易理解，但效率相对较低。
+解法二的 `O(N log N)` 方法通过维护一个 `tails` 数组并结合二分查找，极大地提高了效率，是解决 LIS 问题的优选方案。虽然 `tails` 数组不一定直接是最终的 LIS 本身，但它的长度总是正确的 LIS 长度。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
