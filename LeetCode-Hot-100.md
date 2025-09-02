@@ -16867,6 +16867,402 @@ if __name__ == '__main__':
 
 
 
+### 152. 乘积最大子数组
+好的，我们来详细讲解“乘积最大子数组”这道算法题。
+
+题目及分析
+
+题目描述
+
+给你一个整数数组 `nums` ，请你找出数组中乘积最大的非空连续子数组（该子数组中至少包含一个数字），并返回该子数组所对应的乘积。
+
+测试用例的答案是一个 32-位 整数。
+
+示例
+
+**示例 1:**
+输入: `nums = [2,3,-2,4]`
+输出: `6`
+解释: 子数组 `[2,3]` 有最大乘积 `6`。
+
+**示例 2:**
+输入: `nums = [-2,0,-1]`
+输出: `0`
+解释: 结果不能为 `2`，因为 `[-2,-1]` 不是子数组。注意这里 `0` 会将子数组隔断，`[-2]` 和 `[-1]` 都是长度为1的子数组，最大乘积是 `0` (由 `[0]` 构成)。
+
+提示
+
+*   `1 <= nums.length <= 2 * 10^4`
+*   `-10 <= nums[i] <= 10`
+*   `nums` 的任何子数组的乘积都 保证 是一个 32-位 整数
+
+问题分析
+
+这道题目要求我们找到一个整数数组中，乘积最大的**非空连续子数组**。
+
+**关键点：**
+
+1.  **连续子数组 (Contiguous Subarray)**：这意味着我们不能跳过元素。例如，对于 `[1, 2, 3, 4]`，`[1, 3]` 不是连续子数组，而 `[1, 2]` 和 `[2, 3, 4]` 都是。
+2.  **乘积最大**：这是我们的优化目标。
+3.  **负数的影响**：这是这道题目的核心难点。
+    *   当一个正数乘以一个正数，结果会变大。
+    *   当一个负数乘以一个负数，结果会变成正数，并且**可能变得更大**。例如，`[-2, -3]` 的乘积是 `6`。
+    *   当一个正数乘以一个负数，结果会变成负数，并且**可能变得更小**。
+    *   当遇到 `0` 时，任何包含 `0` 的子数组乘积都会变成 `0`。这意味着 `0` 会“重置”当前的乘积，将数组分成独立的子问题。
+
+由于负数的存在，我们不能简单地只追踪最大乘积，因为一个非常小的（负的）乘积在遇到下一个负数时，可能会变成一个非常大的正乘积。因此，我们需要同时追踪以当前位置结尾的**最大乘积**和**最小乘积**。
+
+这显然是一个动态规划（Dynamic Programming）问题，因为它具有：
+
+*   **最优子结构**：一个位置的最大/最小乘积子数组可以由前一个位置的最大/最小乘积子数组推导出来。
+*   **重叠子问题**：在计算不同位置的子数组乘积时，我们可能会多次依赖于相同的子问题的结果。
+
+#### 解法一：动态规划 (O(N) 时间复杂度, O(1) 空间复杂度优化)
+
+讲解
+
+我们将使用动态规划来解决这个问题。由于我们只需要前一个位置的最大/最小乘积来计算当前位置的，所以可以进行空间优化，只用几个变量来存储。
+
+1.  **定义状态（隐式）**：
+    我们维护两个变量：
+    *   `max_so_far`: 表示以当前遍历到的元素 `nums[i]` **结尾**的乘积最大的子数组的乘积。
+    *   `min_so_far`: 表示以当前遍历到的元素 `nums[i]` **结尾**的乘积最小的子数组的乘积。
+    *   `overall_max`: 记录到目前为止遍历过的所有子数组中的最大乘积。
+
+2.  **初始化**：
+    对于数组的第一个元素 `nums[0]`：
+    *   `max_so_far = nums[0]`
+    *   `min_so_far = nums[0]`
+    *   `overall_max = nums[0]` (因为单个元素也是一个子数组)
+
+3.  **状态转移**：
+    从数组的第二个元素开始遍历（`i` 从 `1` 到 `n-1`）：
+    对于每个 `nums[i]`，我们需要计算以它结尾的最大和最小乘积。
+    考虑 `nums[i]`，它有三种可能成为以 `nums[i]` 结尾的子数组的一部分：
+    *   `nums[i]` 自己（作为长度为 1 的子数组）。
+    *   `nums[i]` 乘以 `max_so_far` （如果 `nums[i]` 是正数，这可能使乘积更大；如果 `nums[i]` 是负数，这可能使乘积更小）。
+    *   `nums[i]` 乘以 `min_so_far` （如果 `nums[i]` 是负数，这可能使乘积变成正数，并且可能更大！）。
+
+    因此，更新 `max_so_far` 和 `min_so_far` 的逻辑如下：
+
+    *   为了防止 `max_so_far` 在计算 `min_so_far` 之前就被更新，我们需要一个临时变量 `temp_max_so_far` 来保存更新前的 `max_so_far`。
+
+    *   **`current_max_product = max(nums[i], temp_max_so_far * nums[i], min_so_far * nums[i])`**
+        （以 `nums[i]` 结尾的最大乘积，可能是 `nums[i]` 本身，或者 `nums[i]` 乘以之前的最大乘积，或者 `nums[i]` 乘以之前的最小乘积（负负得正））
+
+    *   **`current_min_product = min(nums[i], temp_max_so_far * nums[i], min_so_far * nums[i])`**
+        （以 `nums[i]` 结尾的最小乘积，可能是 `nums[i]` 本身，或者 `nums[i]` 乘以之前的最大乘积（正负得负），或者 `nums[i]` 乘以之前的最小乘积（负负得正，但可能比 `nums[i]` 本身小））
+
+    *   每次计算完 `current_max_product` 后，都要更新 `overall_max = max(overall_max, current_max_product)`。
+
+4.  **最终结果**：
+    `overall_max` 就是我们最终需要返回的最大乘积。
+
+**时间复杂度**：
+*   我们只需要遍历数组一次。
+*   每次遍历执行常数次比较和乘法操作。
+*   总时间复杂度为 `O(N)`。
+
+**空间复杂度**：
+*   我们只使用了几个常数级别的变量 (`max_so_far`, `min_so_far`, `overall_max`, `temp_max_so_far`)。
+*   总空间复杂度为 `O(1)`。
+
+代码
+
+Java 版
+
+**核心模式 (Core Pattern)**
+
+```java
+class Solution {
+    /**
+     * 找出数组中乘积最大的非空连续子数组的乘积。
+     *
+     * @param nums 整数数组。
+     * @return 乘积最大的非空连续子数组的乘积。
+     */
+    public int maxProduct(int[] nums) {
+        // 如果数组为空，根据题目提示，数组长度至少为1，所以不会出现空数组。
+        // 但为了严谨性，可以加上判断。
+        // if (nums == null || nums.length == 0) {
+        //     return 0; // 或者抛出异常，根据具体要求
+        // }
+
+        // max_so_far 存储以当前元素结尾的最大乘积子数组的乘积
+        int max_so_far = nums[0];
+        // min_so_far 存储以当前元素结尾的最小乘积子数组的乘积
+        // 需要追踪最小乘积是因为负数乘以负数可能得到一个很大的正数
+        int min_so_far = nums[0];
+        // overall_max 存储全局的最大乘积
+        int overall_max = nums[0];
+
+        // 从第二个元素开始遍历数组
+        for (int i = 1; i < nums.length; i++) {
+            int current_num = nums[i];
+
+            // 在更新 max_so_far 之前，需要保存当前的 max_so_far，
+            // 因为 min_so_far 的计算可能会用到更新前的 max_so_far。
+            int temp_max_so_far = max_so_far;
+
+            // 计算以 current_num 结尾的最大乘积：
+            // 可能是 current_num 本身
+            // 可能是 current_num 乘以之前的最大乘积 (max_so_far * current_num)
+            // 可能是 current_num 乘以之前的最小乘积 (min_so_far * current_num) - 处理负负得正的情况
+            max_so_far = Math.max(current_num, Math.max(temp_max_so_far * current_num, min_so_far * current_num));
+
+            // 计算以 current_num 结尾的最小乘积：
+            // 可能是 current_num 本身
+            // 可能是 current_num 乘以之前的最大乘积 (temp_max_so_far * current_num) - 处理正负得负的情况
+            // 可能是 current_num 乘以之前的最小乘积 (min_so_far * current_num)
+            min_so_far = Math.min(current_num, Math.min(temp_max_so_far * current_num, min_so_far * current_num));
+
+            // 更新全局最大乘积
+            overall_max = Math.max(overall_max, max_so_far);
+        }
+
+        return overall_max;
+    }
+}
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式为：
+一行，空格分隔的整数列表 (例如: `2 3 -2 4`)
+
+```java
+import java.util.Arrays;
+import java.util.Scanner;
+import java.util.stream.Stream;
+
+public class Main {
+    /**
+     * 找出数组中乘积最大的非空连续子数组的乘积。
+     *
+     * @param nums 整数数组。
+     * @return 乘积最大的非空连续子数组的乘积。
+     */
+    public static int maxProduct(int[] nums) {
+        // 题目提示 1 <= nums.length <= 2 * 10^4，所以 nums 不会为空
+        // if (nums == null || nums.length == 0) {
+        //     return 0;
+        // }
+
+        // max_so_far 存储以当前元素结尾的最大乘积子数组的乘积
+        int max_so_far = nums[0];
+        // min_so_far 存储以当前元素结尾的最小乘积子数组的乘积
+        // 需要追踪最小乘积是因为负数乘以负数可能得到一个很大的正数
+        int min_so_far = nums[0];
+        // overall_max 存储全局的最大乘积
+        int overall_max = nums[0];
+
+        // 从第二个元素开始遍历数组
+        for (int i = 1; i < nums.length; i++) {
+            int current_num = nums[i];
+
+            // 在更新 max_so_far 之前，需要保存当前的 max_so_far，
+            // 因为 min_so_far 的计算可能会用到更新前的 max_so_far。
+            int temp_max_so_far = max_so_far;
+
+            // 计算以 current_num 结尾的最大乘积：
+            // 可能是 current_num 本身
+            // 可能是 current_num 乘以之前的最大乘积 (max_so_far * current_num)
+            // 可能是 current_num 乘以之前的最小乘积 (min_so_far * current_num) - 处理负负得正的情况
+            max_so_far = Math.max(current_num, Math.max(temp_max_so_far * current_num, min_so_far * current_num));
+
+            // 计算以 current_num 结尾的最小乘积：
+            // 可能是 current_num 本身
+            // 可能是 current_num 乘以之前的最大乘积 (temp_max_so_far * current_num) - 处理正负得负的情况
+            // 可能是 current_num 乘以之前的最小乘积 (min_so_far * current_num)
+            min_so_far = Math.min(current_num, Math.min(temp_max_so_far * current_num, min_so_far * current_num));
+
+            // 更新全局最大乘积
+            overall_max = Math.max(overall_max, max_so_far);
+        }
+
+        return overall_max;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String line = scanner.nextLine(); // 读取一行输入
+        scanner.close();
+
+        // 将字符串按空格分割，并转换为整数数组
+        int[] nums = Stream.of(line.split(" "))
+                           .mapToInt(Integer::parseInt)
+                           .toArray();
+
+        // 调用方法并打印结果
+        System.out.println(maxProduct(nums));
+    }
+}
+```
+
+Python 版
+
+**核心模式 (Core Pattern)**
+
+```python
+from typing import List
+
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        # 题目提示 1 <= nums.length <= 2 * 10^4，所以 nums 不会为空
+        # if not nums:
+        #     return 0
+
+        # max_so_far 存储以当前元素结尾的最大乘积子数组的乘积
+        max_so_far: int = nums[0]
+        # min_so_far 存储以当前元素结尾的最小乘积子数组的乘积
+        # 需要追踪最小乘积是因为负数乘以负数可能得到一个很大的正数
+        min_so_far: int = nums[0]
+        # overall_max 存储全局的最大乘积
+        overall_max: int = nums[0]
+
+        # 从第二个元素开始遍历数组
+        for i in range(1, len(nums)):
+            current_num: int = nums[i]
+
+            # 在更新 max_so_far 之前，需要保存当前的 max_so_far，
+            # 因为 min_so_far 的计算可能会用到更新前的 max_so_far。
+            temp_max_so_far: int = max_so_far
+
+            # 计算以 current_num 结尾的最大乘积：
+            # 可能是 current_num 本身
+            # 可能是 current_num 乘以之前的最大乘积 (max_so_far * current_num)
+            # 可能是 current_num 乘以之前的最小乘积 (min_so_far * current_num) - 处理负负得正的情况
+            max_so_far = max(current_num, temp_max_so_far * current_num, min_so_far * current_num)
+
+            # 计算以 current_num 结尾的最小乘积：
+            # 可能是 current_num 本身
+            # 可能是 current_num 乘以之前的最大乘积 (temp_max_so_far * current_num) - 处理正负得负的情况
+            # 可能是 current_num 乘以之前的最小乘积 (min_so_far * current_num)
+            min_so_far = min(current_num, temp_max_so_far * current_num, min_so_far * current_num)
+
+            # 更新全局最大乘积
+            overall_max = max(overall_max, max_so_far)
+        
+        return overall_max
+
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+一行，空格分隔的整数列表 (例如: `2 3 -2 4`)
+
+```python
+from typing import List
+
+def max_product(nums: List[int]) -> int:
+    # 题目提示 1 <= nums.length <= 2 * 10^4，所以 nums 不会为空
+    # if not nums:
+    #     return 0
+
+    # max_so_far 存储以当前元素结尾的最大乘积子数组的乘积
+    max_so_far: int = nums[0]
+    # min_so_far 存储以当前元素结尾的最小乘积子数组的乘积
+    # 需要追踪最小乘积是因为负数乘以负数可能得到一个很大的正数
+    min_so_far: int = nums[0]
+    # overall_max 存储全局的最大乘积
+    overall_max: int = nums[0]
+
+    # 从第二个元素开始遍历数组
+    for i in range(1, len(nums)):
+        current_num: int = nums[i]
+
+        # 在更新 max_so_far 之前，需要保存当前的 max_so_far，
+        # 因为 min_so_far 的计算可能会用到更新前的 max_so_far。
+        temp_max_so_far: int = max_so_far
+
+        # 计算以 current_num 结尾的最大乘积：
+        # 可能是 current_num 本身
+        # 可能是 current_num 乘以之前的最大乘积 (max_so_far * current_num)
+        # 可能是 current_num 乘以之前的最小乘积 (min_so_far * current_num) - 处理负负得正的情况
+        max_so_far = max(current_num, temp_max_so_far * current_num, min_so_far * current_num)
+
+        # 计算以 current_num 结尾的最小乘积：
+        # 可能是 current_num 本身
+        # 可能是 current_num 乘以之前的最大乘积 (temp_max_so_far * current_num) - 处理正负得负的情况
+        # 可能是 current_num 乘以之前的最小乘积 (min_so_far * current_num)
+        min_so_far = min(current_num, temp_max_so_far * current_num, min_so_far * current_num)
+
+        # 更新全局最大乘积
+        overall_max = max(overall_max, max_so_far)
+    
+    return overall_max
+
+if __name__ == '__main__':
+    # 读取一行输入，并分割成字符串列表，然后转换为整数列表
+    nums_str = input().split()
+    nums_list = [int(x) for x in nums_str]
+
+    # 调用函数并打印结果
+    print(max_product(nums_list))
+
+```
+
+示例演示
+
+以 `nums = [2, 3, -2, 4]` 为例，逐步演示变量的变化过程。
+
+**初始化:**
+`nums = [2, 3, -2, 4]`
+`max_so_far = 2`
+`min_so_far = 2`
+`overall_max = 2`
+
+**`i = 1` (current_num = 3):**
+*   `temp_max_so_far = 2`
+*   `max_so_far = max(3, 2 * 3, 2 * 3) = max(3, 6, 6) = 6`
+*   `min_so_far = min(3, 2 * 3, 2 * 3) = min(3, 6, 6) = 3`
+*   `overall_max = max(2, 6) = 6`
+
+**当前状态:**
+`max_so_far = 6`
+`min_so_far = 3`
+`overall_max = 6`
+
+**`i = 2` (current_num = -2):**
+*   `temp_max_so_far = 6`
+*   `max_so_far = max(-2, 6 * (-2), 3 * (-2)) = max(-2, -12, -6) = -2`
+    *   (这里因为 `-2` 是负数，`6 * (-2)` 和 `3 * (-2)` 都变成负数，所以最大的反而是 `-2` 本身)
+*   `min_so_far = min(-2, 6 * (-2), 3 * (-2)) = min(-2, -12, -6) = -12`
+*   `overall_max = max(6, -2) = 6`
+
+**当前状态:**
+`max_so_far = -2`
+`min_so_far = -12`
+`overall_max = 6`
+
+**`i = 3` (current_num = 4):**
+*   `temp_max_so_far = -2`
+*   `max_so_far = max(4, (-2) * 4, (-12) * 4) = max(4, -8, -48) = 4`
+*   `min_so_far = min(4, (-2) * 4, (-12) * 4) = min(4, -8, -48) = -48`
+*   `overall_max = max(6, 4) = 6`
+
+**当前状态:**
+`max_so_far = 4`
+`min_so_far = -48`
+`overall_max = 6`
+
+**遍历结束。**
+
+**最终结果:** `overall_max = 6`。
+
+这个结果与示例 1 的输出一致。
+
+总结
+
+乘积最大子数组问题是一个经典的动态规划问题，其关键在于**同时追踪以当前元素结尾的最大乘积和最小乘积**。这是因为负数的存在使得“最小”可能在下一步变成“最大”。通过 `O(N)` 的时间复杂度和 `O(1)` 的空间复杂度，我们可以高效地解决这个问题。
+
+
+
+
+
+
+
 
 
 
