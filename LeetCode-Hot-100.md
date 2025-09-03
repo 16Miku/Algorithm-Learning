@@ -17278,6 +17278,1560 @@ if __name__ == '__main__':
 
 
 
+### 64. 最小路径和
+好的，我们来详细讲解“最小路径和”这道算法题。
+
+题目及分析
+
+题目描述
+
+给定一个包含非负整数的 `m x n` 网格 `grid` ，请找出一条从左上角到右下角的路径，使得路径上的数字总和为最小。
+
+**说明：** 每次只能向下或者向右移动一步。
+
+示例
+
+**示例 1：**
+输入：`grid = [[1,3,1],[1,5,1],[4,2,1]]`
+输出：`7`
+解释：因为路径 `1→3→1→1→1` 的总和最小。
+
+**示例 2：**
+输入：`grid = [[1,2,3],[4,5,6]]`
+输出：`12`
+
+提示
+
+*   `m == grid.length`
+*   `n == grid[i].length`
+*   `1 <= m, n <= 200`
+*   `0 <= grid[i][j] <= 200`
+
+问题分析
+
+这道题目要求我们在一个 `m x n` 的网格中，从左上角 `(0,0)` 出发，每次只能向下或向右移动一步，最终到达右下角 `(m-1, n-1)`，并找到一条路径，使得路径上所有数字的总和最小。
+
+这是一个经典的动态规划（Dynamic Programming）问题，因为它具备以下两个核心特征：
+
+1.  **最优子结构 (Optimal Substructure)**：
+    要找到到达 `(i, j)` 的最小路径和，我们必须从 `(i-1, j)`（上方）或 `(i, j-1)`（左方）中的一个单元格移动过来。因此，到达 `(i, j)` 的最小路径和，就是 `min(到达(i-1, j)的最小路径和, 到达(i, j-1)的最小路径和) + grid[i][j]`。这表明大问题的解可以由小问题的最优解推导出来。
+
+2.  **重叠子问题 (Overlapping Subproblems)**：
+    在计算到达不同单元格的最小路径和时，我们可能会多次需要计算到达同一个中间单元格的最小路径和。例如，计算 `(i+1, j)` 和 `(i, j+1)` 的最小路径和时，都可能需要 `(i, j)` 的最小路径和。动态规划通过存储这些子问题的解来避免重复计算。
+
+基于以上分析，我们可以使用动态规划来解决此问题。
+
+#### 解法一：动态规划 (O(m*n) 空间复杂度)
+
+讲解
+
+我们创建一个与 `grid` 大小相同的 `dp` 数组，其中 `dp[i][j]` 表示从左上角 `(0,0)` 到达单元格 `(i,j)` 的最小路径和。
+
+1.  **定义 `dp` 数组**：
+    `dp[i][j]`：表示从 `(0,0)` 到达 `(i,j)` 的最小路径和。
+
+2.  **初始化**：
+    *   **起始点**：`dp[0][0] = grid[0][0]`。这是路径的起点。
+    *   **第一行**：对于 `dp[0][j]` (其中 `j > 0`)，由于只能向右移动，所以 `dp[0][j] = dp[0][j-1] + grid[0][j]`。
+    *   **第一列**：对于 `dp[i][0]` (其中 `i > 0`)，由于只能向下移动，所以 `dp[i][0] = dp[i-1][0] + grid[i][0]`。
+
+3.  **状态转移方程**：
+    对于网格中除了第一行和第一列之外的任何单元格 `(i,j)` (其中 `i > 0` 且 `j > 0`)：
+    要到达 `(i,j)`，可以从 `(i-1,j)`（上方）向下移动，也可以从 `(i,j-1)`（左方）向右移动。我们选择其中路径和较小的那一个：
+    `dp[i][j] = min(dp[i-1][j], dp[i][j-1]) + grid[i][j]`
+
+4.  **最终结果**：
+    `dp[m-1][n-1]` 就是从左上角到右下角的最小路径和。
+
+**时间复杂度**：
+*   我们需要填充 `m x n` 个 `dp` 单元格，每个单元格的计算都是常数时间操作。
+*   总时间复杂度为 `O(m * n)`。
+
+**空间复杂度**：
+*   我们创建了一个 `m x n` 大小的 `dp` 数组。
+*   总空间复杂度为 `O(m * n)`。
+
+代码
+
+Java 版
+
+**核心模式 (Core Pattern)**
+
+```java
+class Solution {
+    /**
+     * 计算从左上角到右下角的最小路径和。
+     *
+     * @param grid 包含非负整数的 m x n 网格。
+     * @return 最小路径和。
+     */
+    public int minPathSum(int[][] grid) {
+        // 获取网格的行数和列数
+        int m = grid.length;
+        int n = grid[0].length;
+
+        // 创建一个dp数组，dp[i][j] 表示从 (0,0) 到达 (i,j) 的最小路径和。
+        int[][] dp = new int[m][n];
+
+        // 初始化起始点
+        dp[0][0] = grid[0][0];
+
+        // 初始化第一行：只能从左边移动过来
+        for (int j = 1; j < n; j++) {
+            dp[0][j] = dp[0][j - 1] + grid[0][j];
+        }
+
+        // 初始化第一列：只能从上方移动过来
+        for (int i = 1; i < m; i++) {
+            dp[i][0] = dp[i - 1][0] + grid[i][0];
+        }
+
+        // 填充剩余的dp数组
+        // 对于每个单元格 (i,j)，它可以从 (i-1,j) 或 (i,j-1) 移动过来
+        // 选择路径和较小的那个
+        for (int i = 1; i < m; i++) {
+            for (int j = 1; j < n; j++) {
+                dp[i][j] = Math.min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j];
+            }
+        }
+
+        // 最终结果是到达右下角 (m-1, n-1) 的最小路径和
+        return dp[m - 1][n - 1];
+    }
+}
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式为：
+第一行：`m` 和 `n` (行数和列数，空格分隔)
+接下来 `m` 行：每行 `n` 个整数 (空格分隔)
+
+```java
+import java.util.Scanner;
+import java.util.Arrays; // 引入Arrays用于stream操作
+
+public class Main {
+    /**
+     * 计算从左上角到右下角的最小路径和。
+     *
+     * @param grid 包含非负整数的 m x n 网格。
+     * @return 最小路径和。
+     */
+    public static int minPathSum(int[][] grid) {
+        int m = grid.length;
+        int n = grid[0].length;
+
+        int[][] dp = new int[m][n];
+
+        dp[0][0] = grid[0][0];
+
+        for (int j = 1; j < n; j++) {
+            dp[0][j] = dp[0][j - 1] + grid[0][j];
+        }
+
+        for (int i = 1; i < m; i++) {
+            dp[i][0] = dp[i - 1][0] + grid[i][0];
+        }
+
+        for (int i = 1; i < m; i++) {
+            for (int j = 1; j < n; j++) {
+                dp[i][j] = Math.min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j];
+            }
+        }
+
+        return dp[m - 1][n - 1];
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // 读取 m 和 n
+        int m = scanner.nextInt();
+        int n = scanner.nextInt();
+
+        // 创建网格
+        int[][] grid = new int[m][n];
+
+        // 读取网格数据
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                grid[i][j] = scanner.nextInt();
+            }
+        }
+
+        scanner.close();
+
+        // 调用方法并打印结果
+        System.out.println(minPathSum(grid));
+    }
+}
+```
+
+Python 版
+
+**核心模式 (Core Pattern)**
+
+```python
+from typing import List
+
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        # 获取网格的行数和列数
+        m = len(grid)
+        n = len(grid[0])
+
+        # 创建一个dp数组，dp[i][j] 表示从 (0,0) 到达 (i,j) 的最小路径和。
+        dp: List[List[int]] = [[0] * n for _ in range(m)]
+
+        # 初始化起始点
+        dp[0][0] = grid[0][0]
+
+        # 初始化第一行：只能从左边移动过来
+        for j in range(1, n):
+            dp[0][j] = dp[0][j - 1] + grid[0][j]
+
+        # 初始化第一列：只能从上方移动过来
+        for i in range(1, m):
+            dp[i][0] = dp[i - 1][0] + grid[i][0]
+
+        # 填充剩余的dp数组
+        # 对于每个单元格 (i,j)，它可以从 (i-1,j) 或 (i,j-1) 移动过来
+        # 选择路径和较小的那个
+        for i in range(1, m):
+            for j in range(1, n):
+                dp[i][j] = min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j]
+
+        # 最终结果是到达右下角 (m-1, n-1) 的最小路径和
+        return dp[m - 1][n - 1]
+
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+第一行：`m` 和 `n` (行数和列数，空格分隔)
+接下来 `m` 行：每行 `n` 个整数 (空格分隔)
+
+```python
+from typing import List
+
+def min_path_sum(grid: List[List[int]]) -> int:
+    m = len(grid)
+    n = len(grid[0])
+
+    dp: List[List[int]] = [[0] * n for _ in range(m)]
+
+    dp[0][0] = grid[0][0]
+
+    for j in range(1, n):
+        dp[0][j] = dp[0][j - 1] + grid[0][j]
+
+    for i in range(1, m):
+        dp[i][0] = dp[i - 1][0] + grid[i][0]
+
+    for i in range(1, m):
+        for j in range(1, n):
+            dp[i][j] = min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j]
+
+    return dp[m - 1][n - 1]
+
+if __name__ == '__main__':
+    # 读取 m 和 n
+    m_n_str = input().split()
+    m = int(m_n_str[0])
+    n = int(m_n_str[1])
+
+    # 创建网格并读取数据
+    grid_input: List[List[int]] = []
+    for _ in range(m):
+        row_str = input().split()
+        row_int = [int(x) for x in row_str]
+        grid_input.append(row_int)
+
+    # 调用函数并打印结果
+    print(min_path_sum(grid_input))
+
+```
+
+示例演示
+
+以 `grid = [[1,3,1],[1,5,1],[4,2,1]]` 为例，逐步演示 `dp` 数组的计算过程。
+
+`m = 3`, `n = 3`
+初始化 `dp` 数组：
+`dp = [[0, 0, 0],`
+`      [0, 0, 0],`
+`      [0, 0, 0]]`
+
+1.  **初始化 `dp[0][0]`**:
+    `dp[0][0] = grid[0][0] = 1`
+    `dp = [[1, 0, 0],`
+    `      [0, 0, 0],`
+    `      [0, 0, 0]]`
+
+2.  **初始化第一行**:
+    *   `j = 1`: `dp[0][1] = dp[0][0] + grid[0][1] = 1 + 3 = 4`
+    *   `j = 2`: `dp[0][2] = dp[0][1] + grid[0][2] = 4 + 1 = 5`
+    `dp = [[1, 4, 5],`
+    `      [0, 0, 0],`
+    `      [0, 0, 0]]`
+
+3.  **初始化第一列**:
+    *   `i = 1`: `dp[1][0] = dp[0][0] + grid[1][0] = 1 + 1 = 2`
+    *   `i = 2`: `dp[2][0] = dp[1][0] + grid[2][0] = 2 + 4 = 6`
+    `dp = [[1, 4, 5],`
+    `      [2, 0, 0],`
+    `      [6, 0, 0]]`
+
+4.  **填充剩余部分**:
+
+    *   **`i = 1, j = 1`**: (单元格 `grid[1][1] = 5`)
+        `dp[1][1] = min(dp[0][1], dp[1][0]) + grid[1][1]`
+        `dp[1][1] = min(4, 2) + 5 = 2 + 5 = 7`
+        `dp = [[1, 4, 5],`
+        `      [2, 7, 0],`
+        `      [6, 0, 0]]`
+
+    *   **`i = 1, j = 2`**: (单元格 `grid[1][2] = 1`)
+        `dp[1][2] = min(dp[0][2], dp[1][1]) + grid[1][2]`
+        `dp[1][2] = min(5, 7) + 1 = 5 + 1 = 6`
+        `dp = [[1, 4, 5],`
+        `      [2, 7, 6],`
+        `      [6, 0, 0]]`
+
+    *   **`i = 2, j = 1`**: (单元格 `grid[2][1] = 2`)
+        `dp[2][1] = min(dp[1][1], dp[2][0]) + grid[2][1]`
+        `dp[2][1] = min(7, 6) + 2 = 6 + 2 = 8`
+        `dp = [[1, 4, 5],`
+        `      [2, 7, 6],`
+        `      [6, 8, 0]]`
+
+    *   **`i = 2, j = 2`**: (单元格 `grid[2][2] = 1`)
+        `dp[2][2] = min(dp[1][2], dp[2][1]) + grid[2][2]`
+        `dp[2][2] = min(6, 8) + 1 = 6 + 1 = 7`
+        `dp = [[1, 4, 5],`
+        `      [2, 7, 6],`
+        `      [6, 8, 7]]`
+
+最终结果为 `dp[2][2] = 7`。
+
+#### 解法二：动态规划 (O(min(m,n)) 空间复杂度优化)
+
+讲解
+
+我们可以对解法一进行空间优化。注意到在计算 `dp[i][j]` 时，我们只依赖于 `dp[i-1][j]`（上一行的同一列）和 `dp[i][j-1]`（当前行的前一列）。这意味着我们不需要存储整个 `m x n` 的 `dp` 数组，只需要存储上一行的信息即可。
+
+进一步，我们甚至可以只用一个一维数组来存储。这个一维数组的大小为 `n`（列数）。
+
+1.  **定义 `dp` 数组**：
+    我们使用一个一维数组 `dp`，长度为 `n`。
+    `dp[j]` 在处理第 `i` 行时，表示从 `(0,0)` 到达 `(i,j)` 的最小路径和。
+    在处理第 `i` 行之前，`dp[j]` 存储的是 `(i-1,j)` 的最小路径和。
+
+2.  **初始化**：
+    *   首先，初始化 `dp` 数组的第一行。
+        `dp[0] = grid[0][0]`
+        对于 `j` 从 `1` 到 `n-1`：`dp[j] = dp[j-1] + grid[0][j]`。
+    *   此时 `dp` 数组存储的是到达 `grid` 第一行所有单元格的最小路径和。
+
+3.  **状态转移**：
+    从第二行开始 (`i` 从 `1` 到 `m-1`) 遍历：
+    *   **更新当前行的第一个元素** (`dp[0]`)：
+        `dp[0] = dp[0] + grid[i][0]`
+        (这里的 `dp[0]` 在 `grid[i][0]` 左侧是上一行的 `dp[0]`，表示从 `(0,0)` 到达 `(i-1,0)` 的路径和，加上 `grid[i][0]` 就是到达 `(i,0)` 的路径和)。
+    *   **更新当前行的其余元素** (`dp[j]`，`j` 从 `1` 到 `n-1`)：
+        `dp[j] = min(dp[j], dp[j-1]) + grid[i][j]`
+        (这里的 `dp[j]` 在 `grid[i][j]` 左侧是上一行的 `dp[j]`，表示从 `(0,0)` 到达 `(i-1,j)` 的路径和。而 `dp[j-1]` 已经更新为当前行 `(i, j-1)` 的最小路径和。我们取两者中的最小值)。
+
+4.  **最终结果**：
+    循环结束后，`dp[n-1]`（即一维 `dp` 数组的最后一个元素）就是从左上角到右下角的最小路径和。
+
+**时间复杂度**：
+*   依然是遍历 `m x n` 个单元格，每个单元格的计算是常数时间。
+*   总时间复杂度为 `O(m * n)`。
+
+**空间复杂度**：
+*   我们只使用了一个长度为 `n` 的一维数组。
+*   总空间复杂度为 `O(n)`。
+*   如果 `m < n`，我们也可以选择使用长度为 `m` 的数组，这样空间复杂度就是 `O(min(m,n))`。为了简化，我们以 `O(n)` 为例。
+
+代码
+
+Java 版
+
+**核心模式 (Core Pattern)**
+
+```java
+import java.util.Arrays;
+
+class Solution {
+    /**
+     * 计算从左上角到右下角的最小路径和 (O(n) 空间优化)。
+     *
+     * @param grid 包含非负整数的 m x n 网格。
+     * @return 最小路径和。
+     */
+    public int minPathSum(int[][] grid) {
+        int m = grid.length;
+        int n = grid[0].length;
+
+        // dp 数组用于存储当前行或上一行的最小路径和信息。
+        // dp[j] 表示从 (0,0) 到达当前行 (i,j) 的最小路径和。
+        int[] dp = new int[n];
+
+        // 初始化 dp 数组的第一行
+        // dp[0] 存储 grid[0][0]
+        dp[0] = grid[0][0];
+        // 填充第一行的其余元素，只能从左边过来
+        for (int j = 1; j < n; j++) {
+            dp[j] = dp[j - 1] + grid[0][j];
+        }
+
+        // 从第二行开始遍历 (i 从 1 到 m-1)
+        for (int i = 1; i < m; i++) {
+            // 更新当前行的第一个元素 (grid[i][0])
+            // 只能从上方 (i-1, 0) 移动过来
+            dp[0] = dp[0] + grid[i][0];
+
+            // 更新当前行的其余元素 (j 从 1 到 n-1)
+            // 可以从上方 (i-1, j) 或 左方 (i, j-1) 移动过来
+            for (int j = 1; j < n; j++) {
+                // dp[j] (在等号右边) 此时是上一行 (i-1, j) 的最小路径和
+                // dp[j-1] (在等号右边) 此时是当前行 (i, j-1) 的最小路径和
+                dp[j] = Math.min(dp[j], dp[j - 1]) + grid[i][j];
+            }
+        }
+
+        // 最终 dp[n-1] 存储的就是到达右下角 (m-1, n-1) 的最小路径和
+        return dp[n - 1];
+    }
+}
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+第一行：`m` 和 `n` (行数和列数，空格分隔)
+接下来 `m` 行：每行 `n` 个整数 (空格分隔)
+
+```java
+import java.util.Scanner;
+import java.util.Arrays;
+
+public class Main {
+    /**
+     * 计算从左上角到右下角的最小路径和 (O(n) 空间优化)。
+     *
+     * @param grid 包含非负整数的 m x n 网格。
+     * @return 最小路径和。
+     */
+    public static int minPathSum(int[][] grid) {
+        int m = grid.length;
+        int n = grid[0].length;
+
+        int[] dp = new int[n];
+
+        dp[0] = grid[0][0];
+        for (int j = 1; j < n; j++) {
+            dp[j] = dp[j - 1] + grid[0][j];
+        }
+
+        for (int i = 1; i < m; i++) {
+            dp[0] = dp[0] + grid[i][0]; // 更新当前行第一个元素
+            for (int j = 1; j < n; j++) {
+                dp[j] = Math.min(dp[j], dp[j - 1]) + grid[i][j];
+            }
+        }
+
+        return dp[n - 1];
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        int m = scanner.nextInt();
+        int n = scanner.nextInt();
+
+        int[][] grid = new int[m][n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                grid[i][j] = scanner.nextInt();
+            }
+        }
+
+        scanner.close();
+
+        System.out.println(minPathSum(grid));
+    }
+}
+```
+
+Python 版
+
+**核心模式 (Core Pattern)**
+
+```python
+from typing import List
+
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        m = len(grid)
+        n = len(grid[0])
+
+        # dp 列表用于存储当前行或上一行的最小路径和信息。
+        # dp[j] 表示从 (0,0) 到达当前行 (i,j) 的最小路径和。
+        dp: List[int] = [0] * n
+
+        # 初始化 dp 列表的第一行
+        # dp[0] 存储 grid[0][0]
+        dp[0] = grid[0][0]
+        # 填充第一行的其余元素，只能从左边过来
+        for j in range(1, n):
+            dp[j] = dp[j - 1] + grid[0][j]
+
+        # 从第二行开始遍历 (i 从 1 到 m-1)
+        for i in range(1, m):
+            # 更新当前行的第一个元素 (grid[i][0])
+            # 只能从上方 (i-1, 0) 移动过来
+            dp[0] = dp[0] + grid[i][0]
+
+            # 更新当前行的其余元素 (j 从 1 到 n-1)
+            # 可以从上方 (i-1, j) 或 左方 (i, j-1) 移动过来
+            for j in range(1, n):
+                # dp[j] (在等号右边) 此时是上一行 (i-1, j) 的最小路径和
+                # dp[j-1] (在等号右边) 此时是当前行 (i, j-1) 的最小路径和
+                dp[j] = min(dp[j], dp[j - 1]) + grid[i][j]
+        
+        # 最终 dp[n-1] 存储的就是到达右下角 (m-1, n-1) 的最小路径和
+        return dp[n - 1]
+
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+第一行：`m` 和 `n` (行数和列数，空格分隔)
+接下来 `m` 行：每行 `n` 个整数 (空格分隔)
+
+```python
+from typing import List
+
+def min_path_sum(grid: List[List[int]]) -> int:
+    m = len(grid)
+    n = len(grid[0])
+
+    dp: List[int] = [0] * n
+
+    dp[0] = grid[0][0]
+    for j in range(1, n):
+        dp[j] = dp[j - 1] + grid[0][j]
+
+    for i in range(1, m):
+        dp[0] = dp[0] + grid[i][0] # 更新当前行第一个元素
+        for j in range(1, n):
+            dp[j] = min(dp[j], dp[j - 1]) + grid[i][j]
+    
+    return dp[n - 1]
+
+if __name__ == '__main__':
+    m_n_str = input().split()
+    m = int(m_n_str[0])
+    n = int(m_n_str[1])
+
+    grid_input: List[List[int]] = []
+    for _ in range(m):
+        row_str = input().split()
+        row_int = [int(x) for x in row_str]
+        grid_input.append(row_int)
+
+    print(min_path_sum(grid_input))
+
+```
+
+示例演示
+
+以 `grid = [[1,3,1],[1,5,1],[4,2,1]]` 为例，逐步演示 `dp` 数组的计算过程。
+
+`m = 3`, `n = 3`
+初始化 `dp` 数组（长度为 `n=3`）：`dp = [0, 0, 0]`
+
+1.  **初始化第一行 (`i = 0`)**:
+    *   `dp[0] = grid[0][0] = 1`
+    *   `j = 1`: `dp[1] = dp[0] + grid[0][1] = 1 + 3 = 4`
+    *   `j = 2`: `dp[2] = dp[1] + grid[0][2] = 4 + 1 = 5`
+    **当前 `dp = [1, 4, 5]`** (代表到达 `(0,0)`, `(0,1)`, `(0,2)` 的最小路径和)
+
+2.  **处理第二行 (`i = 1`)**:
+    *   **更新 `dp[0]`**: `dp[0] = dp[0] + grid[1][0] = 1 + 1 = 2`
+        (此时 `dp[0]` 代表到达 `(1,0)` 的最小路径和)
+    *   **更新 `j = 1` (`grid[1][1] = 5`)**:
+        `dp[1] = min(dp[1](旧值), dp[0](新值)) + grid[1][1]`
+        `dp[1] = min(4, 2) + 5 = 2 + 5 = 7`
+        (此时 `dp[1]` 代表到达 `(1,1)` 的最小路径和)
+    *   **更新 `j = 2` (`grid[1][2] = 1`)**:
+        `dp[2] = min(dp[2](旧值), dp[1](新值)) + grid[1][2]`
+        `dp[2] = min(5, 7) + 1 = 5 + 1 = 6`
+        (此时 `dp[2]` 代表到达 `(1,2)` 的最小路径和)
+    **当前 `dp = [2, 7, 6]`** (代表到达 `(1,0)`, `(1,1)`, `(1,2)` 的最小路径和)
+
+3.  **处理第三行 (`i = 2`)**:
+    *   **更新 `dp[0]`**: `dp[0] = dp[0] + grid[2][0] = 2 + 4 = 6`
+        (此时 `dp[0]` 代表到达 `(2,0)` 的最小路径和)
+    *   **更新 `j = 1` (`grid[2][1] = 2`)**:
+        `dp[1] = min(dp[1](旧值), dp[0](新值)) + grid[2][1]`
+        `dp[1] = min(7, 6) + 2 = 6 + 2 = 8`
+        (此时 `dp[1]` 代表到达 `(2,1)` 的最小路径和)
+    *   **更新 `j = 2` (`grid[2][2] = 1`)**:
+        `dp[2] = min(dp[2](旧值), dp[1](新值)) + grid[2][2]`
+        `dp[2] = min(6, 8) + 1 = 6 + 1 = 7`
+        (此时 `dp[2]` 代表到达 `(2,2)` 的最小路径和)
+    **当前 `dp = [6, 8, 7]`** (代表到达 `(2,0)`, `(2,1)`, `(2,2)` 的最小路径和)
+
+最终结果为 `dp[n-1]`，即 `dp[2] = 7`。
+
+总结
+
+两种动态规划解法都能正确解决问题。
+*   **解法一 (O(m*n) 空间)**：直观易懂，直接映射 `dp[i][j]` 到网格位置。
+*   **解法二 (O(min(m,n)) 空间)**：通过观察状态依赖关系，优化了空间复杂度，尤其适用于 `m` 或 `n` 很大而另一个维度较小的情况。在实际面试中，如果能给出空间优化的方案，会是加分项。
+
+
+
+
+
+
+
+### 72. 编辑距离
+好的，我们来详细讲解“编辑距离”这道算法题。
+
+题目及分析
+
+题目描述
+
+给你两个单词 `word1` 和 `word2`， 请返回将 `word1` 转换成 `word2` 所使用的最少操作数。
+
+你可以对一个单词进行如下三种操作：
+1.  插入一个字符
+2.  删除一个字符
+3.  替换一个字符
+
+示例
+
+**示例 1：**
+输入：`word1 = "horse"`, `word2 = "ros"`
+输出：`3`
+解释：
+`horse` -> `rorse` (将 'h' 替换为 'r')
+`rorse` -> `rose` (删除 'r')
+`rose` -> `ros` (删除 'e')
+
+**示例 2：**
+输入：`word1 = "intention"`, `word2 = "execution"`
+输出：`5`
+解释：
+`intention` -> `inention` (删除 't')
+`inention` -> `enention` (将 'i' 替换为 'e')
+`enention` -> `exention` (将 'n' 替换为 'x')
+`exention` -> `exection` (将 'n' 替换为 'c')
+`exection` -> `execution` (插入 'u')
+
+提示
+
+*   `0 <= word1.length, word2.length <= 500`
+*   `word1` 和 `word2` 由小写英文字母组成
+
+问题分析
+
+这道题目是经典的**编辑距离（Edit Distance）**问题，也称为 **Levenshtein 距离**。它要求我们计算将一个字符串转换成另一个字符串所需的最少操作数。允许的操作包括插入、删除和替换字符。
+
+这是一个典型的动态规划（Dynamic Programming）问题，因为它具有以下两个核心特征：
+
+1.  **最优子结构（Optimal Substructure）**：
+    将 `word1` 的前 `i` 个字符转换成 `word2` 的前 `j` 个字符的最小操作数，可以通过考虑 `word1` 的前 `i-1` 个字符和 `word2` 的前 `j-1` 个字符之间的关系来推导。也就是说，大问题的解可以由小问题的最优解推导出来。
+
+2.  **重叠子问题（Overlapping Subproblems）**：
+    在计算不同长度前缀的编辑距离时，我们可能会多次遇到相同的子问题。例如，计算 `word1` 的前 `i` 个字符与 `word2` 的前 `j` 个字符的编辑距离，以及 `word1` 的前 `i-1` 个字符与 `word2` 的前 `j+1` 个字符的编辑距离时，都可能需要 `word1` 的前 `i-1` 个字符与 `word2` 的前 `j` 个字符的编辑距离。动态规划通过存储这些子问题的解来避免重复计算。
+
+基于以上分析，我们可以设计动态规划解决方案。
+
+#### 解法一：动态规划 (O(m*n) 空间复杂度)
+
+讲解
+
+我们将创建一个二维 `dp` 数组，其中 `dp[i][j]` 表示将 `word1` 的前 `i` 个字符 (`word1[0...i-1]`) 转换成 `word2` 的前 `j` 个字符 (`word2[0...j-1]`) 所需的最小操作数。
+
+1.  **定义 `dp` 数组**：
+    `dp[i][j]`：表示 `word1` 的前 `i` 个字符与 `word2` 的前 `j` 个字符之间的编辑距离。
+    `word1` 的长度为 `m`，`word2` 的长度为 `n`。`dp` 数组的大小将是 `(m+1) x (n+1)`。
+    *   `dp[0][0]` 表示空字符串到空字符串的距离。
+    *   `dp[i][0]` 表示 `word1` 的前 `i` 个字符到空字符串的距离。
+    *   `dp[0][j]` 表示空字符串到 `word2` 的前 `j` 个字符的距离。
+
+2.  **初始化（Base Cases）**：
+    *   `dp[0][0] = 0`：将空字符串转换为空字符串需要 0 次操作。
+    *   **第一列** (`dp[i][0]`)：将 `word1` 的前 `i` 个字符转换成空字符串，需要 `i` 次删除操作。
+        所以，`dp[i][0] = i` (对于 `i` 从 `1` 到 `m`)。
+    *   **第一行** (`dp[0][j]`)：将空字符串转换成 `word2` 的前 `j` 个字符，需要 `j` 次插入操作。
+        所以，`dp[0][j] = j` (对于 `j` 从 `1` 到 `n`)。
+
+3.  **状态转移方程**：
+    对于 `i` 从 `1` 到 `m`，`j` 从 `1` 到 `n`：
+    我们要考虑 `word1` 的第 `i` 个字符 (`word1.charAt(i-1)`) 和 `word2` 的第 `j` 个字符 (`word2.charAt(j-1)`)。
+
+    *   **情况 1：`word1.charAt(i-1) == word2.charAt(j-1)`** (当前字符匹配)
+        如果两个字符串的当前字符相同，那么不需要对这两个字符进行额外操作。编辑距离就等于 `word1` 的前 `i-1` 个字符与 `word2` 的前 `j-1` 个字符之间的编辑距离。
+        `dp[i][j] = dp[i-1][j-1]`
+
+    *   **情况 2：`word1.charAt(i-1) != word2.charAt(j-1)`** (当前字符不匹配)
+        如果两个字符串的当前字符不相同，我们需要执行一个操作来使它们匹配。我们有三种选择，并取其中操作数最小的一个：
+        1.  **插入操作**：在 `word1` 的末尾插入 `word2.charAt(j-1)`。这等价于先将 `word1` 的前 `i` 个字符转换成 `word2` 的前 `j-1` 个字符，然后再插入一个字符。
+            操作数：`dp[i][j-1] + 1`
+        2.  **删除操作**：删除 `word1.charAt(i-1)`。这等价于先将 `word1` 的前 `i-1` 个字符转换成 `word2` 的前 `j` 个字符，然后再删除一个字符。
+            操作数：`dp[i-1][j] + 1`
+        3.  **替换操作**：将 `word1.charAt(i-1)` 替换为 `word2.charAt(j-1)`。这等价于先将 `word1` 的前 `i-1` 个字符转换成 `word2` 的前 `j-1` 个字符，然后再替换一个字符。
+            操作数：`dp[i-1][j-1] + 1`
+
+        所以，当字符不匹配时：
+        `dp[i][j] = min(dp[i][j-1], dp[i-1][j], dp[i-1][j-1]) + 1`
+
+    综合以上两种情况，状态转移方程为：
+    `if word1.charAt(i-1) == word2.charAt(j-1):`
+    `    dp[i][j] = dp[i-1][j-1]`
+    `else:`
+    `    dp[i][j] = min(dp[i][j-1], dp[i-1][j], dp[i-1][j-1]) + 1`
+
+4.  **最终结果**：
+    `dp[m][n]` 就是将 `word1` 转换成 `word2` 所需的最少操作数。
+
+**时间复杂度**：
+*   我们需要填充 `(m+1) x (n+1)` 个 `dp` 单元格。每个单元格的计算都是常数时间操作。
+*   总时间复杂度为 `O(m * n)`。
+
+**空间复杂度**：
+*   我们创建了一个 `(m+1) x (n+1)` 大小的 `dp` 数组。
+*   总空间复杂度为 `O(m * n)`。
+
+代码
+
+Java 版
+
+**核心模式 (Core Pattern)**
+
+```java
+class Solution {
+    /**
+     * 计算将 word1 转换成 word2 所使用的最少操作数（编辑距离）。
+     * 操作包括插入、删除、替换一个字符。
+     *
+     * @param word1 字符串1。
+     * @param word2 字符串2。
+     * @return 最少操作数。
+     */
+    public int minDistance(String word1, String word2) {
+        int m = word1.length();
+        int n = word2.length();
+
+        // dp[i][j] 表示 word1 的前 i 个字符与 word2 的前 j 个字符之间的编辑距离。
+        // dp 数组的大小为 (m+1) x (n+1)，因为需要处理空字符串的情况（索引0）。
+        int[][] dp = new int[m + 1][n + 1];
+
+        // 初始化边界条件：
+        // dp[i][0]：word1 的前 i 个字符转换成空字符串，需要 i 次删除操作。
+        for (int i = 0; i <= m; i++) {
+            dp[i][0] = i;
+        }
+        // dp[0][j]：空字符串转换成 word2 的前 j 个字符，需要 j 次插入操作。
+        for (int j = 0; j <= n; j++) {
+            dp[0][j] = j;
+        }
+
+        // 填充 dp 数组
+        // i 对应 word1 的长度，j 对应 word2 的长度
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                // 如果 word1 的第 i 个字符 (word1.charAt(i-1)) 和 word2 的第 j 个字符 (word2.charAt(j-1)) 相同
+                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
+                    // 不需要额外操作，编辑距离等于 word1 的前 i-1 个字符与 word2 的前 j-1 个字符的编辑距离。
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else {
+                    // 如果字符不相同，需要进行一个操作：
+                    // 1. 插入：dp[i][j-1] + 1 (在 word1 后面插入一个字符，使其匹配 word2 的当前字符)
+                    // 2. 删除：dp[i-1][j] + 1 (从 word1 中删除当前字符)
+                    // 3. 替换：dp[i-1][j-1] + 1 (将 word1 的当前字符替换为 word2 的当前字符)
+                    // 取这三种操作中的最小值。
+                    dp[i][j] = Math.min(dp[i - 1][j - 1], Math.min(dp[i][j - 1], dp[i - 1][j])) + 1;
+                }
+            }
+        }
+
+        // 最终结果是 dp[m][n]，即 word1 转换成 word2 的最小操作数。
+        return dp[m][n];
+    }
+}
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式为：
+第一行：`word1`
+第二行：`word2`
+
+```java
+import java.util.Scanner;
+
+public class Main {
+    /**
+     * 计算将 word1 转换成 word2 所使用的最少操作数（编辑距离）。
+     * 操作包括插入、删除、替换一个字符。
+     *
+     * @param word1 字符串1。
+     * @param word2 字符串2。
+     * @return 最少操作数。
+     */
+    public static int minDistance(String word1, String word2) {
+        int m = word1.length();
+        int n = word2.length();
+
+        // dp[i][j] 表示 word1 的前 i 个字符与 word2 的前 j 个字符之间的编辑距离。
+        // dp 数组的大小为 (m+1) x (n+1)，因为需要处理空字符串的情况（索引0）。
+        int[][] dp = new int[m + 1][n + 1];
+
+        // 初始化边界条件：
+        // dp[i][0]：word1 的前 i 个字符转换成空字符串，需要 i 次删除操作。
+        for (int i = 0; i <= m; i++) {
+            dp[i][0] = i;
+        }
+        // dp[0][j]：空字符串转换成 word2 的前 j 个字符，需要 j 次插入操作。
+        for (int j = 0; j <= n; j++) {
+            dp[0][j] = j;
+        }
+
+        // 填充 dp 数组
+        // i 对应 word1 的长度，j 对应 word2 的长度
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                // 如果 word1 的第 i 个字符 (word1.charAt(i-1)) 和 word2 的第 j 个字符 (word2.charAt(j-1)) 相同
+                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
+                    // 不需要额外操作，编辑距离等于 word1 的前 i-1 个字符与 word2 的前 j-1 个字符的编辑距离。
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else {
+                    // 如果字符不相同，需要进行一个操作：
+                    // 1. 插入：dp[i][j-1] + 1 (在 word1 后面插入一个字符，使其匹配 word2 的当前字符)
+                    // 2. 删除：dp[i-1][j] + 1 (从 word1 中删除当前字符)
+                    // 3. 替换：dp[i-1][j-1] + 1 (将 word1 的当前字符替换为 word2 的当前字符)
+                    // 取这三种操作中的最小值。
+                    dp[i][j] = Math.min(dp[i - 1][j - 1], Math.min(dp[i][j - 1], dp[i - 1][j])) + 1;
+                }
+            }
+        }
+
+        // 最终结果是 dp[m][n]，即 word1 转换成 word2 的最小操作数。
+        return dp[m][n];
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // 读取 word1 和 word2
+        String word1 = scanner.nextLine();
+        String word2 = scanner.nextLine();
+
+        scanner.close();
+
+        // 调用方法并打印结果
+        System.out.println(minDistance(word1, word2));
+    }
+}
+```
+
+Python 版
+
+**核心模式 (Core Pattern)**
+
+```python
+from typing import List
+
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        m = len(word1)
+        n = len(word2)
+
+        # dp[i][j] 表示 word1 的前 i 个字符与 word2 的前 j 个字符之间的编辑距离。
+        # dp 数组的大小为 (m+1) x (n+1)，因为需要处理空字符串的情况（索引0）。
+        dp: List[List[int]] = [[0] * (n + 1) for _ in range(m + 1)]
+
+        # 初始化边界条件：
+        # dp[i][0]：word1 的前 i 个字符转换成空字符串，需要 i 次删除操作。
+        for i in range(m + 1):
+            dp[i][0] = i
+        # dp[0][j]：空字符串转换成 word2 的前 j 个字符，需要 j 次插入操作。
+        for j in range(n + 1):
+            dp[0][j] = j
+
+        # 填充 dp 数组
+        # i 对应 word1 的长度，j 对应 word2 的长度
+        for i in range(1, m + 1):
+            for j in range(1, n + 1):
+                # 如果 word1 的第 i 个字符 (word1[i-1]) 和 word2 的第 j 个字符 (word2[j-1]) 相同
+                if word1[i - 1] == word2[j - 1]:
+                    # 不需要额外操作，编辑距离等于 word1 的前 i-1 个字符与 word2 的前 j-1 个字符的编辑距离。
+                    dp[i][j] = dp[i - 1][j - 1]
+                else:
+                    # 如果字符不相同，需要进行一个操作：
+                    # 1. 插入：dp[i][j-1] + 1 (在 word1 后面插入一个字符，使其匹配 word2 的当前字符)
+                    # 2. 删除：dp[i-1][j] + 1 (从 word1 中删除当前字符)
+                    # 3. 替换：dp[i-1][j-1] + 1 (将 word1 的当前字符替换为 word2 的当前字符)
+                    # 取这三种操作中的最小值。
+                    dp[i][j] = min(dp[i - 1][j - 1], dp[i][j - 1], dp[i - 1][j]) + 1
+        
+        # 最终结果是 dp[m][n]，即 word1 转换成 word2 的最小操作数。
+        return dp[m][n]
+
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+第一行：`word1`
+第二行：`word2`
+
+```python
+from typing import List
+
+def min_distance(word1: str, word2: str) -> int:
+    m = len(word1)
+    n = len(word2)
+
+    dp: List[List[int]] = [[0] * (n + 1) for _ in range(m + 1)]
+
+    for i in range(m + 1):
+        dp[i][0] = i
+    for j in range(n + 1):
+        dp[0][j] = j
+
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if word1[i - 1] == word2[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1]
+            else:
+                dp[i][j] = min(dp[i - 1][j - 1], dp[i][j - 1], dp[i - 1][j]) + 1
+    
+    return dp[m][n]
+
+if __name__ == '__main__':
+    # 读取 word1 和 word2
+    word1_input = input()
+    word2_input = input()
+
+    # 调用函数并打印结果
+    print(min_distance(word1_input, word2_input))
+
+```
+
+示例演示
+
+以 `word1 = "horse"`, `word2 = "ros"` 为例，逐步演示 `dp` 数组的计算过程。
+
+`m = 5`, `n = 3`
+`dp` 数组大小为 `(5+1) x (3+1) = 6 x 4`。
+
+**1. 初始化 `dp` 数组：**
+
+| `dp` | "" | r | o | s |
+| :--- | :- | :- | :- | :- |
+| ""   | 0  | 1  | 2  | 3  |
+| h    | 1  | 0  | 0  | 0  |
+| o    | 2  | 0  | 0  | 0  |
+| r    | 3  | 0  | 0  | 0  |
+| s    | 4  | 0  | 0  | 0  |
+| e    | 5  | 0  | 0  | 0  |
+
+**2. 填充 `dp` 数组：**
+
+*   **`i = 1` (word1[0] = 'h')**
+    *   `j = 1` (word2[0] = 'r'): `h != r`
+        `dp[1][1] = min(dp[0][0], dp[1][0], dp[0][1]) + 1 = min(0, 1, 1) + 1 = 1`
+    *   `j = 2` (word2[1] = 'o'): `h != o`
+        `dp[1][2] = min(dp[0][1], dp[1][1], dp[0][2]) + 1 = min(1, 1, 2) + 1 = 2`
+    *   `j = 3` (word2[2] = 's'): `h != s`
+        `dp[1][3] = min(dp[0][2], dp[1][2], dp[0][3]) + 1 = min(2, 2, 3) + 1 = 3`
+
+    `dp` 数组更新后 (第一行)：
+
+| `dp` | "" | r | o | s |
+| :--- | :- | :- | :- | :- |
+| ""   | 0  | 1  | 2  | 3  |
+| h    | 1  | **1** | **2** | **3** |
+| o    | 2  | 0  | 0  | 0  |
+| r    | 3  | 0  | 0  | 0  |
+| s    | 4  | 0  | 0  | 0  |
+| e    | 5  | 0  | 0  | 0  |
+
+*   **`i = 2` (word1[1] = 'o')**
+    *   `j = 1` (word2[0] = 'r'): `o != r`
+        `dp[2][1] = min(dp[1][0], dp[2][0], dp[1][1]) + 1 = min(1, 2, 1) + 1 = 2`
+    *   `j = 2` (word2[1] = 'o'): `o == o`
+        `dp[2][2] = dp[1][1] = 1`
+    *   `j = 3` (word2[2] = 's'): `o != s`
+        `dp[2][3] = min(dp[1][2], dp[2][2], dp[1][3]) + 1 = min(2, 1, 3) + 1 = 2`
+
+    `dp` 数组更新后 (第二行)：
+
+| `dp` | "" | r | o | s |
+| :--- | :- | :- | :- | :- |
+| ""   | 0  | 1  | 2  | 3  |
+| h    | 1  | 1  | 2  | 3  |
+| o    | 2  | **2** | **1** | **2** |
+| r    | 3  | 0  | 0  | 0  |
+| s    | 4  | 0  | 0  | 0  |
+| e    | 5  | 0  | 0  | 0  |
+
+*   **`i = 3` (word1[2] = 'r')**
+    *   `j = 1` (word2[0] = 'r'): `r == r`
+        `dp[3][1] = dp[2][0] = 2`
+    *   `j = 2` (word2[1] = 'o'): `r != o`
+        `dp[3][2] = min(dp[2][1], dp[3][1], dp[2][2]) + 1 = min(2, 2, 1) + 1 = 2`
+    *   `j = 3` (word2[2] = 's'): `r != s`
+        `dp[3][3] = min(dp[2][2], dp[3][2], dp[2][3]) + 1 = min(1, 2, 2) + 1 = 2`
+
+    `dp` 数组更新后 (第三行)：
+
+| `dp` | "" | r | o | s |
+| :--- | :- | :- | :- | :- |
+| ""   | 0  | 1  | 2  | 3  |
+| h    | 1  | 1  | 2  | 3  |
+| o    | 2  | 2  | 1  | 2  |
+| r    | 3  | **2** | **2** | **2** |
+| s    | 4  | 0  | 0  | 0  |
+| e    | 5  | 0  | 0  | 0  |
+
+*   **`i = 4` (word1[3] = 's')**
+    *   `j = 1` (word2[0] = 'r'): `s != r`
+        `dp[4][1] = min(dp[3][0], dp[4][0], dp[3][1]) + 1 = min(3, 4, 2) + 1 = 3`
+    *   `j = 2` (word2[1] = 'o'): `s != o`
+        `dp[4][2] = min(dp[3][1], dp[4][1], dp[3][2]) + 1 = min(2, 3, 2) + 1 = 3`
+    *   `j = 3` (word2[2] = 's'): `s == s`
+        `dp[4][3] = dp[3][2] = 2`
+
+    `dp` 数组更新后 (第四行)：
+
+| `dp` | "" | r | o | s |
+| :--- | :- | :- | :- | :- |
+| ""   | 0  | 1  | 2  | 3  |
+| h    | 1  | 1  | 2  | 3  |
+| o    | 2  | 2  | 1  | 2  |
+| r    | 3  | 2  | 2  | 2  |
+| s    | 4  | **3** | **3** | **2** |
+| e    | 5  | 0  | 0  | 0  |
+
+*   **`i = 5` (word1[4] = 'e')**
+    *   `j = 1` (word2[0] = 'r'): `e != r`
+        `dp[5][1] = min(dp[4][0], dp[5][0], dp[4][1]) + 1 = min(4, 5, 3) + 1 = 4`
+    *   `j = 2` (word2[1] = 'o'): `e != o`
+        `dp[5][2] = min(dp[4][1], dp[5][1], dp[4][2]) + 1 = min(3, 4, 3) + 1 = 4`
+    *   `j = 3` (word2[2] = 's'): `e != s`
+        `dp[5][3] = min(dp[4][2], dp[5][2], dp[4][3]) + 1 = min(3, 4, 2) + 1 = 3`
+
+    `dp` 数组更新后 (第五行)：
+
+| `dp` | "" | r | o | s |
+| :--- | :- | :- | :- | :- |
+| ""   | 0  | 1  | 2  | 3  |
+| h    | 1  | 1  | 2  | 3  |
+| o    | 2  | 2  | 1  | 2  |
+| r    | 3  | 2  | 2  | 2  |
+| s    | 4  | 3  | 3  | 2  |
+| e    | 5  | **4** | **4** | **3** |
+
+最终结果是 `dp[m][n]`，即 `dp[5][3] = 3`。这与示例输出一致。
+
+#### 解法二：动态规划 (O(min(m,n)) 空间复杂度优化)
+
+讲解
+
+在解法一中，我们观察到 `dp[i][j]` 的计算只依赖于 `dp[i-1][j-1]`、`dp[i-1][j]` 和 `dp[i][j-1]`。这意味着我们只需要存储当前行和上一行的 `dp` 值，而不需要整个 `m x n` 的 `dp` 表。
+
+我们可以将空间复杂度优化到 `O(min(m, n))`。为了方便说明，我们假设 `word1` 较短，`m <= n`，那么我们可以使用一个长度为 `m+1` 的一维数组来表示 `dp` 状态。通常为了代码简洁，我们会选择使用 `O(n)` 的空间，其中 `n` 是 `word2` 的长度。
+
+**核心思想**：
+使用一个一维数组 `dp`，其长度为 `n+1`。
+在处理第 `i` 行时：
+*   `dp[j]` (当前值) 存储的是 `dp[i-1][j]` (上一行的值)。
+*   `dp[j-1]` (已经更新的值) 存储的是 `dp[i][j-1]` (当前行，左侧的值)。
+*   我们需要一个额外的变量 `prev_diag` 来存储 `dp[i-1][j-1]` (左上角的值)，因为 `dp[j]` 会先被 `dp[i-1][j]` 覆盖。
+
+1.  **定义 `dp` 数组**：
+    `dp` 数组（一维）长度为 `n + 1`。`dp[j]` 存储将 `word1` 的当前处理前缀转换成 `word2` 的前 `j` 个字符的最小操作数。
+
+2.  **初始化**：
+    *   `dp[0] = 0` (空字符串到空字符串)
+    *   对于 `j` 从 `1` 到 `n`：`dp[j] = j` (空字符串到 `word2` 的前 `j` 个字符的距离)。
+    *   此时 `dp` 数组实际上存储的是 `dp[0][j]` 的值。
+
+3.  **状态转移**：
+    从 `i` 从 `1` 到 `m` 遍历 `word1` 的每个字符：
+    *   需要一个 `prev_diag` 变量来保存 `dp[i-1][j-1]` 的值。在开始处理第 `i` 行的 `j=1` 之前，`prev_diag` 应等于 `dp[i-1][0]` (即上一次循环的 `dp[0]`，当前 `dp[0]` 还没更新)。
+    *   首先更新 `dp[0]`：`dp[0] = i` (将 `word1` 的前 `i` 个字符转换成空字符串)。
+    *   然后遍历 `j` 从 `1` 到 `n`：
+        *   保存当前的 `dp[j]` (即 `dp[i-1][j]`) 到 `temp` 变量，作为下次循环的 `prev_diag`。
+        *   如果 `word1.charAt(i-1) == word2.charAt(j-1)`:
+            `dp[j] = prev_diag`
+        *   否则 (`word1.charAt(i-1) != word2.charAt(j-1)`):
+            `dp[j] = min(dp[j], dp[j-1], prev_diag) + 1`
+            (这里的 `dp[j]` 是旧值 `dp[i-1][j]`，`dp[j-1]` 是新值 `dp[i][j-1]`)
+        *   更新 `prev_diag = temp`。
+
+4.  **最终结果**：
+    循环结束后，`dp[n]` 就是最终的最小编辑距离。
+
+**时间复杂度**：
+*   仍然是遍历 `m x n` 次。
+*   总时间复杂度为 `O(m * n)`。
+
+**空间复杂度**：
+*   我们使用了一个长度为 `n+1` 的一维数组。
+*   总空间复杂度为 `O(n)`。 (如果 `m < n`，我们可以交换 `word1` 和 `word2` 来优化到 `O(min(m,n))`)
+
+代码
+
+Java 版
+
+**核心模式 (Core Pattern)**
+
+```java
+import java.util.Arrays;
+
+class Solution {
+    /**
+     * 计算将 word1 转换成 word2 所使用的最少操作数（编辑距离），
+     * 使用 O(n) 空间优化。
+     *
+     * @param word1 字符串1。
+     * @param word2 字符串2。
+     * @return 最少操作数。
+     */
+    public int minDistance(String word1, String word2) {
+        int m = word1.length();
+        int n = word2.length();
+
+        // 优化：如果 word1 比 word2 长，交换它们以减少 dp 数组的空间。
+        // 这样 dp 数组的长度总是 min(m, n) + 1
+        if (m < n) {
+            return minDistance(word2, word1); // 递归调用，但会用更短的字符串作为 word1
+        }
+        // 经过上面的交换，现在 m 总是 >= n，所以 dp 数组的长度为 n+1
+        // dp[j] 表示将 word1 的当前前缀转换成 word2 的前 j 个字符的最小操作数。
+        int[] dp = new int[n + 1];
+
+        // 初始化 dp 数组的第一行 (对应将空字符串转换成 word2 的前 j 个字符)
+        // dp[0] 对应 dp[0][0] = 0
+        // dp[j] 对应 dp[0][j] = j
+        for (int j = 0; j <= n; j++) {
+            dp[j] = j;
+        }
+
+        // 遍历 word1 的每个字符 (从索引 0 到 m-1，对应 dp 数组的行 i 从 1 到 m)
+        for (int i = 1; i <= m; i++) {
+            // 在开始处理当前行 (i) 之前，保存 dp[i-1][j-1] 的值。
+            // 这里的 prev_diag 相当于 2D dp 数组中的 dp[i-1][j-1]
+            int prev_diag = dp[0]; // 此时 dp[0] 存储的是 dp[i-1][0]
+
+            // 更新当前行的第一个元素 (dp[i][0])，即 word1 的前 i 个字符转换成空字符串
+            dp[0] = i;
+
+            // 遍历 word2 的每个字符 (从索引 0 到 n-1，对应 dp 数组的列 j 从 1 到 n)
+            for (int j = 1; j <= n; j++) {
+                // 保存 dp[i-1][j] 的值，用于下一次循环作为 prev_diag
+                int temp = dp[j]; // temp 存储的是 dp[i-1][j]
+
+                // 如果 word1 的当前字符 (word1.charAt(i-1)) 与 word2 的当前字符 (word2.charAt(j-1)) 相同
+                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
+                    // 不需要额外操作，直接继承左上角的值 (dp[i-1][j-1])
+                    dp[j] = prev_diag;
+                } else {
+                    // 如果字符不相同，取三种操作的最小值 + 1
+                    // 1. 删除：dp[i-1][j] + 1  -> 对应当前 dp[j] (旧值) + 1
+                    // 2. 插入：dp[i][j-1] + 1  -> 对应 dp[j-1] (已更新为当前行的值) + 1
+                    // 3. 替换：dp[i-1][j-1] + 1 -> 对应 prev_diag + 1
+                    dp[j] = Math.min(prev_diag, Math.min(dp[j], dp[j - 1])) + 1;
+                }
+                // 更新 prev_diag 为当前 dp[i-1][j] 的值，用于下一个 j 的计算
+                prev_diag = temp;
+            }
+        }
+
+        // 最终结果是 dp[n]，即 word1 转换成 word2 的最小操作数。
+        return dp[n];
+    }
+}
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+第一行：`word1`
+第二行：`word2`
+
+```java
+import java.util.Scanner;
+import java.util.Arrays;
+
+public class Main {
+    /**
+     * 计算将 word1 转换成 word2 所使用的最少操作数（编辑距离），
+     * 使用 O(n) 空间优化。
+     *
+     * @param word1 字符串1。
+     * @param word2 字符串2。
+     * @return 最少操作数。
+     */
+    public static int minDistance(String word1, String word2) {
+        int m = word1.length();
+        int n = word2.length();
+
+        // 优化：如果 word1 比 word2 长，交换它们以减少 dp 数组的空间。
+        // 这样 dp 数组的长度总是 min(m, n) + 1
+        if (m < n) {
+            // 注意：这里需要确保 word1 和 word2 始终是原始字符串，
+            // 递归调用会处理交换后的情况。
+            // 实际上，更简单的做法是在当前函数内直接交换。
+            String tempWord = word1;
+            word1 = word2;
+            word2 = tempWord;
+            int tempLen = m;
+            m = n;
+            n = tempLen;
+        }
+        
+        // 经过上面的交换，现在 m 总是 >= n，所以 dp 数组的长度为 n+1
+        int[] dp = new int[n + 1];
+
+        // 初始化 dp 数组的第一行 (对应将空字符串转换成 word2 的前 j 个字符)
+        for (int j = 0; j <= n; j++) {
+            dp[j] = j;
+        }
+
+        // 遍历 word1 的每个字符 (从索引 0 到 m-1，对应 dp 数组的行 i 从 1 到 m)
+        for (int i = 1; i <= m; i++) {
+            int prev_diag = dp[0]; // 此时 dp[0] 存储的是 dp[i-1][0]
+
+            // 更新当前行的第一个元素 (dp[i][0])
+            dp[0] = i;
+
+            // 遍历 word2 的每个字符 (从索引 0 到 n-1，对应 dp 数组的列 j 从 1 到 n)
+            for (int j = 1; j <= n; j++) {
+                int temp = dp[j]; // temp 存储的是 dp[i-1][j]
+
+                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
+                    dp[j] = prev_diag;
+                } else {
+                    dp[j] = Math.min(prev_diag, Math.min(dp[j], dp[j - 1])) + 1;
+                }
+                
+                prev_diag = temp; // 更新 prev_diag
+            }
+        }
+
+        return dp[n];
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        String word1 = scanner.nextLine();
+        String word2 = scanner.nextLine();
+
+        scanner.close();
+
+        System.out.println(minDistance(word1, word2));
+    }
+}
+```
+
+Python 版
+
+**核心模式 (Core Pattern)**
+
+```python
+from typing import List
+
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        m = len(word1)
+        n = len(word2)
+
+        # 优化：如果 word1 比 word2 长，交换它们以减少 dp 列表的空间。
+        # 这样 dp 列表的长度总是 min(m, n) + 1
+        if m < n:
+            word1, word2 = word2, word1
+            m, n = n, m
+        
+        # dp 列表的长度为 n+1
+        # dp[j] 表示将 word1 的当前前缀转换成 word2 的前 j 个字符的最小操作数。
+        dp: List[int] = [0] * (n + 1)
+
+        # 初始化 dp 列表的第一行 (对应将空字符串转换成 word2 的前 j 个字符)
+        for j in range(n + 1):
+            dp[j] = j
+
+        # 遍历 word1 的每个字符 (i 从 1 到 m)
+        for i in range(1, m + 1):
+            # 在开始处理当前行 (i) 之前，保存 dp[i-1][j-1] 的值。
+            # 这里的 prev_diag 相当于 2D dp 数组中的 dp[i-1][j-1]
+            prev_diag = dp[0] # 此时 dp[0] 存储的是 dp[i-1][0]
+
+            # 更新当前行的第一个元素 (dp[i][0])
+            dp[0] = i
+
+            # 遍历 word2 的每个字符 (j 从 1 到 n)
+            for j in range(1, n + 1):
+                # 保存 dp[i-1][j] 的值，用于下一次循环作为 prev_diag
+                temp = dp[j] # temp 存储的是 dp[i-1][j]
+
+                # 如果 word1 的当前字符 (word1[i-1]) 与 word2 的当前字符 (word2[j-1]) 相同
+                if word1[i - 1] == word2[j - 1]:
+                    # 不需要额外操作，直接继承左上角的值 (dp[i-1][j-1])
+                    dp[j] = prev_diag
+                else:
+                    # 如果字符不相同，取三种操作的最小值 + 1
+                    # 1. 删除：dp[i-1][j] + 1  -> 对应当前 dp[j] (旧值) + 1
+                    # 2. 插入：dp[i][j-1] + 1  -> 对应 dp[j-1] (已更新为当前行的值) + 1
+                    # 3. 替换：dp[i-1][j-1] + 1 -> 对应 prev_diag + 1
+                    dp[j] = min(prev_diag, dp[j], dp[j - 1]) + 1
+                
+                # 更新 prev_diag 为当前 dp[i-1][j] 的值，用于下一个 j 的计算
+                prev_diag = temp
+        
+        # 最终结果是 dp[n]，即 word1 转换成 word2 的最小操作数。
+        return dp[n]
+
+```
+
+**ACM 模式 (ACM Pattern)**
+
+假设输入格式与解法一相同：
+第一行：`word1`
+第二行：`word2`
+
+```python
+from typing import List
+
+def min_distance(word1: str, word2: str) -> int:
+    m = len(word1)
+    n = len(word2)
+
+    # 优化：如果 word1 比 word2 长，交换它们以减少 dp 列表的空间。
+    # 这样 dp 列表的长度总是 min(m, n) + 1
+    if m < n:
+        word1, word2 = word2, word1
+        m, n = n, m
+    
+    dp: List[int] = [0] * (n + 1)
+
+    for j in range(n + 1):
+        dp[j] = j
+
+    for i in range(1, m + 1):
+        prev_diag = dp[0] # 存储 dp[i-1][0]
+
+        dp[0] = i # 更新 dp[i][0]
+
+        for j in range(1, n + 1):
+            temp = dp[j] # 存储 dp[i-1][j]
+
+            if word1[i - 1] == word2[j - 1]:
+                dp[j] = prev_diag
+            else:
+                dp[j] = min(prev_diag, dp[j], dp[j - 1]) + 1
+            
+            prev_diag = temp # 更新 prev_diag
+    
+    return dp[n]
+
+if __name__ == '__main__':
+    word1_input = input()
+    word2_input = input()
+
+    print(min_distance(word1_input, word2_input))
+
+```
+
+示例演示
+
+以 `word1 = "horse"`, `word2 = "ros"` 为例，逐步演示 `dp` 数组和 `prev_diag` 的计算过程。
+
+`m = 5`, `n = 3`
+由于 `m > n`，我们交换 `word1` 和 `word2`，并更新 `m, n`。
+`word1 = "ros"`, `word2 = "horse"`
+`m = 3`, `n = 5` (这里的 `m` 和 `n` 对应代码中的 `m` 和 `n`)
+
+`dp` 数组长度为 `n + 1 = 6`。
+初始化 `dp = [0, 1, 2, 3, 4, 5]` (对应 `dp[0][j]`，即空字符串到 `horse` 各前缀的距离)
+
+**1. 处理 `i = 1` (word1[0] = 'r')**
+
+*   `prev_diag = dp[0]` (此时 `dp[0]` 是 `0`，即 `dp[0][0]`) -> `prev_diag = 0`
+*   `dp[0] = i = 1` (更新 `dp[1][0]`) -> `dp = [1, 1, 2, 3, 4, 5]`
+
+*   **`j = 1` (word2[0] = 'h')**
+    *   `temp = dp[1]` (此时 `dp[1]` 是 `1`，即 `dp[0][1]`) -> `temp = 1`
+    *   `word1[0] ('r') != word2[0] ('h')`
+    *   `dp[1] = min(prev_diag, dp[1](旧), dp[0](新)) + 1 = min(0, 1, 1) + 1 = 1`
+    *   `prev_diag = temp = 1`
+    *   `dp = [1, 1, 2, 3, 4, 5]`
+
+*   **`j = 2` (word2[1] = 'o')**
+    *   `temp = dp[2]` (此时 `dp[2]` 是 `2`，即 `dp[0][2]`) -> `temp = 2`
+    *   `word1[0] ('r') != word2[1] ('o')`
+    *   `dp[2] = min(prev_diag, dp[2](旧), dp[1](新)) + 1 = min(1, 2, 1) + 1 = 2`
+    *   `prev_diag = temp = 2`
+    *   `dp = [1, 1, 2, 3, 4, 5]`
+
+*   **`j = 3` (word2[2] = 'r')**
+    *   `temp = dp[3]` (此时 `dp[3]` 是 `3`，即 `dp[0][3]`) -> `temp = 3`
+    *   `word1[0] ('r') == word2[2] ('r')`
+    *   `dp[3] = prev_diag = 2`
+    *   `prev_diag = temp = 3`
+    *   `dp = [1, 1, 2, 2, 4, 5]` (注意 `dp[3]` 从3变为2)
+
+*   **`j = 4` (word2[3] = 's')**
+    *   `temp = dp[4]` (此时 `dp[4]` 是 `4`，即 `dp[0][4]`) -> `temp = 4`
+    *   `word1[0] ('r') != word2[3] ('s')`
+    *   `dp[4] = min(prev_diag, dp[4](旧), dp[3](新)) + 1 = min(3, 4, 2) + 1 = 3`
+    *   `prev_diag = temp = 4`
+    *   `dp = [1, 1, 2, 2, 3, 5]`
+
+*   **`j = 5` (word2[4] = 'e')**
+    *   `temp = dp[5]` (此时 `dp[5]` 是 `5`，即 `dp[0][5]`) -> `temp = 5`
+    *   `word1[0] ('r') != word2[4] ('e')`
+    *   `dp[5] = min(prev_diag, dp[5](旧), dp[4](新)) + 1 = min(4, 5, 3) + 1 = 4`
+    *   `prev_diag = temp = 5`
+    *   `dp = [1, 1, 2, 2, 3, 4]`
+
+**结束 `i = 1` 循环后，`dp = [1, 1, 2, 2, 3, 4]`** (代表 `ros` 的前 1 个字符 'r' 到 `horse` 各前缀的距离)
+
+**2. 处理 `i = 2` (word1[1] = 'o')**
+
+*   `prev_diag = dp[0]` (此时 `dp[0]` 是 `1`，即 `dp[1][0]`) -> `prev_diag = 1`
+*   `dp[0] = i = 2` (更新 `dp[2][0]`) -> `dp = [2, 1, 2, 2, 3, 4]`
+
+*   **`j = 1` (word2[0] = 'h')**
+    *   `temp = dp[1]` (此时 `dp[1]` 是 `1`，即 `dp[1][1]`) -> `temp = 1`
+    *   `word1[1] ('o') != word2[0] ('h')`
+    *   `dp[1] = min(prev_diag, dp[1](旧), dp[0](新)) + 1 = min(1, 1, 2) + 1 = 2`
+    *   `prev_diag = temp = 1`
+    *   `dp = [2, 2, 2, 2, 3, 4]`
+
+*   **`j = 2` (word2[1] = 'o')**
+    *   `temp = dp[2]` (此时 `dp[2]` 是 `2`，即 `dp[1][2]`) -> `temp = 2`
+    *   `word1[1] ('o') == word2[1] ('o')`
+    *   `dp[2] = prev_diag = 1`
+    *   `prev_diag = temp = 2`
+    *   `dp = [2, 2, 1, 2, 3, 4]`
+
+*   **`j = 3` (word2[2] = 'r')**
+    *   `temp = dp[3]` (此时 `dp[3]` 是 `2`，即 `dp[1][3]`) -> `temp = 2`
+    *   `word1[1] ('o') != word2[2] ('r')`
+    *   `dp[3] = min(prev_diag, dp[3](旧), dp[2](新)) + 1 = min(2, 2, 1) + 1 = 2`
+    *   `prev_diag = temp = 2`
+    *   `dp = [2, 2, 1, 2, 3, 4]`
+
+*   **`j = 4` (word2[3] = 's')**
+    *   `temp = dp[4]` (此时 `dp[4]` 是 `3`，即 `dp[1][4]`) -> `temp = 3`
+    *   `word1[1] ('o') != word2[3] ('s')`
+    *   `dp[4] = min(prev_diag, dp[4](旧), dp[3](新)) + 1 = min(2, 3, 2) + 1 = 3`
+    *   `prev_diag = temp = 3`
+    *   `dp = [2, 2, 1, 2, 3, 4]`
+
+*   **`j = 5` (word2[4] = 'e')**
+    *   `temp = dp[5]` (此时 `dp[5]` 是 `4`，即 `dp[1][5]`) -> `temp = 4`
+    *   `word1[1] ('o') != word2[4] ('e')`
+    *   `dp[5] = min(prev_diag, dp[5](旧), dp[4](新)) + 1 = min(3, 4, 3) + 1 = 4`
+    *   `prev_diag = temp = 4`
+    *   `dp = [2, 2, 1, 2, 3, 4]`
+
+**结束 `i = 2` 循环后，`dp = [2, 2, 1, 2, 3, 4]`** (代表 `ros` 的前 2 个字符 'ro' 到 `horse` 各前缀的距离)
+
+**3. 处理 `i = 3` (word1[2] = 's')**
+
+*   `prev_diag = dp[0]` (此时 `dp[0]` 是 `2`，即 `dp[2][0]`) -> `prev_diag = 2`
+*   `dp[0] = i = 3` (更新 `dp[3][0]`) -> `dp = [3, 2, 1, 2, 3, 4]`
+
+*   **`j = 1` (word2[0] = 'h')**
+    *   `temp = dp[1]` (此时 `dp[1]` 是 `2`，即 `dp[2][1]`) -> `temp = 2`
+    *   `word1[2] ('s') != word2[0] ('h')`
+    *   `dp[1] = min(prev_diag, dp[1](旧), dp[0](新)) + 1 = min(2, 2, 3) + 1 = 3`
+    *   `prev_diag = temp = 2`
+    *   `dp = [3, 3, 1, 2, 3, 4]`
+
+*   **`j = 2` (word2[1] = 'o')**
+    *   `temp = dp[2]` (此时 `dp[2]` 是 `1`，即 `dp[2][2]`) -> `temp = 1`
+    *   `word1[2] ('s') != word2[1] ('o')`
+    *   `dp[2] = min(prev_diag, dp[2](旧), dp[1](新)) + 1 = min(2, 1, 3) + 1 = 2`
+    *   `prev_diag = temp = 1`
+    *   `dp = [3, 3, 2, 2, 3, 4]`
+
+*   **`j = 3` (word2[2] = 'r')**
+    *   `temp = dp[3]` (此时 `dp[3]` 是 `2`，即 `dp[2][3]`) -> `temp = 2`
+    *   `word1[2] ('s') != word2[2] ('r')`
+    *   `dp[3] = min(prev_diag, dp[3](旧), dp[2](新)) + 1 = min(1, 2, 2) + 1 = 2`
+    *   `prev_diag = temp = 2`
+    *   `dp = [3, 3, 2, 2, 3, 4]`
+
+*   **`j = 4` (word2[3] = 's')**
+    *   `temp = dp[4]` (此时 `dp[4]` 是 `3`，即 `dp[2][4]`) -> `temp = 3`
+    *   `word1[2] ('s') == word2[3] ('s')`
+    *   `dp[4] = prev_diag = 2`
+    *   `prev_diag = temp = 3`
+    *   `dp = [3, 3, 2, 2, 2, 4]`
+
+*   **`j = 5` (word2[4] = 'e')**
+    *   `temp = dp[5]` (此时 `dp[5]` 是 `4`，即 `dp[2][5]`) -> `temp = 4`
+    *   `word1[2] ('s') != word2[4] ('e')`
+    *   `dp[5] = min(prev_diag, dp[5](旧), dp[4](新)) + 1 = min(3, 4, 2) + 1 = 3`
+    *   `prev_diag = temp = 4`
+    *   `dp = [3, 3, 2, 2, 2, 3]`
+
+**结束 `i = 3` 循环后，`dp = [3, 3, 2, 2, 2, 3]`** (代表 `ros` 的前 3 个字符 'ros' 到 `horse` 各前缀的距离)
+
+最终结果是 `dp[n]`，即 `dp[5] = 3`。这与示例输出一致。
+
+总结
+
+编辑距离问题是动态规划的经典应用。
+*   **O(m*n) 空间解法**：直观且易于理解，直接构建二维 `dp` 表。
+*   **O(min(m,n)) 空间优化解法**：通过观察状态依赖性，将空间复杂度降至一维数组，这在处理大字符串时非常有用。虽然代码实现上需要更细致地管理 `prev_diag` 变量，但其核心思想和时间复杂度与二维 DP 相同。
+
+在实际面试中，如果能给出空间优化的方案，通常会是加分项。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 技巧
 
 
