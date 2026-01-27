@@ -4755,7 +4755,283 @@ class Solution:
 
 **循环结束。** 返回 `result_indices = [0, 1, 2]`。
 
-经过修正和详细的步骤演示，现在两个示例的输出都与预期结果一致了。这个 `matched_chars_count` 逻辑是处理此类“字符计数匹配”问题的标准且高效的方法。
+经过修正和详细的步骤演示，现在两个示例的输出都与预期结果一致了。这个 `matched_chars_count` 逻辑是处理此类"字符计数匹配"问题的标准且高效的方法。
+
+---
+
+### Python 基础知识补充
+
+#### 1. 列表乘法创建固定长度数组：`[0] * 26`
+
+```python
+# Python 创建固定长度数组
+p_counts = [0] * 26        # 创建长度为26的列表，全部初始化为0
+
+# Java 对比
+# int[] p_counts = new int[26];  // Java 默认初始化为0
+```
+
+**注意事项：**
+```python
+# 一维数组：可以用乘法
+arr = [0] * 5              # [0, 0, 0, 0, 0] ✓ 正确
+
+# 二维数组：不能直接用乘法！
+wrong = [[0] * 3] * 2      # [[0,0,0], [0,0,0]] 但两行是同一个引用！
+wrong[0][0] = 1            # 结果：[[1,0,0], [1,0,0]] 两行都变了！
+
+# 正确写法：用列表推导式
+correct = [[0] * 3 for _ in range(2)]  # 每行是独立的列表
+correct[0][0] = 1          # 结果：[[1,0,0], [0,0,0]] ✓
+```
+
+#### 2. ord() 函数：字符转 ASCII 码
+
+```python
+# ord() 返回字符的 ASCII 码值
+ord('a')                   # 97
+ord('b')                   # 98
+ord('z')                   # 122
+
+# 计算字符在字母表中的位置（0-25）
+idx = ord('c') - ord('a')  # 99 - 97 = 2，即 'c' 是第3个字母（索引2）
+
+# Java 对比
+# int idx = 'c' - 'a';     // Java 中 char 可以直接做减法
+```
+
+**本题应用：**
+```python
+# 把字符映射到数组索引
+char = 'c'
+idx = ord(char) - ord('a')  # idx = 2
+p_counts[idx] += 1          # 相当于 p_counts['c'] += 1
+```
+
+#### 3. 固定长度滑动窗口模板
+
+这道题是**固定长度**滑动窗口，与上一题（不定长窗口）不同：
+
+```python
+def fixed_window(s, k):
+    """固定长度为 k 的滑动窗口模板"""
+    left = 0
+
+    for right in range(len(s)):
+        # 1. 扩大窗口：处理 s[right]
+        # ... 更新窗口状态 ...
+
+        # 2. 窗口大小超过 k 时，收缩左边界
+        if right - left + 1 > k:
+            # ... 处理 s[left] 移出窗口 ...
+            left += 1
+
+        # 3. 窗口大小等于 k 时，检查/记录结果
+        if right - left + 1 == k:
+            # ... 检查是否满足条件 ...
+            pass
+
+    return result
+```
+
+**两种滑动窗口对比：**
+
+| 类型 | 窗口大小 | 收缩条件 | 典型题目 |
+|------|----------|----------|----------|
+| 固定长度 | 固定为 k | `窗口大小 > k` | 438. 找异位词 |
+| 不定长度 | 动态变化 | `不满足条件时` | 3. 无重复字符 |
+
+#### 4. 比较运算符 `<=` 的判断逻辑
+
+```python
+# 本题核心判断逻辑
+if window_counts[idx] <= p_counts[idx]:
+    matched_chars_count += 1
+
+# 含义解释：
+# - p_counts[idx]：目标字符串 p 中该字符需要的数量
+# - window_counts[idx]：当前窗口中该字符的数量
+# - 如果窗口中的数量 <= 需要的数量，说明这个字符是"有效匹配"
+# - 如果窗口中的数量 > 需要的数量，说明这个字符"多余了"
+```
+
+**举例说明：**
+```python
+# p = "abc"，所以 p_counts = {'a':1, 'b':1, 'c':1}
+# 假设窗口中已有 {'a':1}
+
+# 再加入一个 'a'
+window_counts['a'] = 2
+# 2 <= 1 为 False，说明第二个 'a' 是多余的，不增加 matched_count
+
+# 再加入一个 'b'
+window_counts['b'] = 1
+# 1 <= 1 为 True，说明这个 'b' 是需要的，matched_count += 1
+```
+
+#### 5. 本题代码逐行解析（带 Java 对照注释）
+
+```python
+from typing import List
+
+class Solution:
+    def findAnagrams(self, s: str, p: str) -> List[int]:
+        result_indices = []           # List<Integer> result = new ArrayList<>();
+        n = len(s)                    # int n = s.length();
+        m = len(p)                    # int m = p.length();
+
+        if m > n:                     # if (m > n)
+            return result_indices     #     return result;
+
+        # 统计 p 中每个字符的频率
+        p_counts = [0] * 26           # int[] pCounts = new int[26];
+        for c in p:                   # for (char c : p.toCharArray())
+            p_counts[ord(c) - ord('a')] += 1  # pCounts[c - 'a']++;
+
+        # 初始化窗口
+        window_counts = [0] * 26      # int[] windowCounts = new int[26];
+        left = 0                      # int left = 0;
+        matched_chars_count = 0       # int matchedCount = 0;
+
+        # 遍历 s
+        for right in range(n):        # for (int right = 0; right < n; right++)
+            # 右边界字符进入窗口
+            idx_r = ord(s[right]) - ord('a')  # int idxR = s.charAt(right) - 'a';
+            window_counts[idx_r] += 1         # windowCounts[idxR]++;
+
+            # 判断是否是有效匹配
+            if window_counts[idx_r] <= p_counts[idx_r]:  # if (windowCounts[idxR] <= pCounts[idxR])
+                matched_chars_count += 1                  #     matchedCount++;
+
+            # 窗口超过 m，左边界收缩
+            if right - left + 1 > m:          # if (right - left + 1 > m)
+                idx_l = ord(s[left]) - ord('a')  # int idxL = s.charAt(left) - 'a';
+
+                # 移出前判断是否是有效匹配
+                if window_counts[idx_l] <= p_counts[idx_l]:
+                    matched_chars_count -= 1
+
+                window_counts[idx_l] -= 1     # windowCounts[idxL]--;
+                left += 1                     # left++;
+
+            # 检查是否找到异位词
+            if matched_chars_count == m:      # if (matchedCount == m)
+                result_indices.append(left)   #     result.add(left);
+
+        return result_indices
+```
+
+#### 6. 更简洁的写法：使用 Counter
+
+```python
+from collections import Counter
+
+class Solution:
+    def findAnagrams(self, s: str, p: str) -> List[int]:
+        if len(p) > len(s):
+            return []
+
+        p_count = Counter(p)          # 统计 p 的字符频率
+        window = Counter(s[:len(p)])  # 初始窗口
+
+        result = []
+        if window == p_count:         # Counter 可以直接比较！
+            result.append(0)
+
+        # 滑动窗口
+        for i in range(len(p), len(s)):
+            # 加入右边字符
+            window[s[i]] += 1
+            # 移出左边字符
+            left_char = s[i - len(p)]
+            window[left_char] -= 1
+            if window[left_char] == 0:
+                del window[left_char]  # 删除计数为0的键
+
+            # 比较
+            if window == p_count:
+                result.append(i - len(p) + 1)
+
+        return result
+```
+
+**Counter 的特点：**
+```python
+from collections import Counter
+
+# 创建
+cnt = Counter("aabbc")     # Counter({'a': 2, 'b': 2, 'c': 1})
+
+# 直接比较（非常方便！）
+Counter("abc") == Counter("cba")  # True，因为字符频率相同
+
+# 访问不存在的键返回 0（不会报错）
+cnt['z']                   # 0，不是 KeyError
+
+# 删除计数为 0 的键
+cnt['c'] -= 1              # cnt['c'] = 0
+del cnt['c']               # 删除键 'c'
+```
+
+#### 7. Java vs Python 对照表
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 创建固定长度数组 | `int[] arr = new int[26];` | `arr = [0] * 26` |
+| 字符转索引 | `c - 'a'` | `ord(c) - ord('a')` |
+| 获取字符串长度 | `s.length()` | `len(s)` |
+| 获取字符 | `s.charAt(i)` | `s[i]` |
+| 添加到列表 | `list.add(x)` | `list.append(x)` |
+| 字符频率统计 | 手动用数组 | `Counter(s)` |
+| 比较两个频率表 | 遍历比较 | `counter1 == counter2` |
+
+#### 8. 算法模式总结：固定长度滑动窗口 + 字符匹配计数
+
+```python
+"""
+固定长度滑动窗口 + 匹配计数模板
+
+适用场景：
+- 在字符串 s 中找所有长度为 m 的子串，满足某种字符频率条件
+- 例如：找异位词、找排列等
+
+核心思路：
+1. 预处理目标字符串的字符频率
+2. 维护固定大小的滑动窗口
+3. 用 matched_count 记录有效匹配的字符数
+4. 当 matched_count == m 时，找到一个答案
+"""
+
+def fixed_window_match(s, p):
+    m = len(p)
+    target_counts = [0] * 26
+    for c in p:
+        target_counts[ord(c) - ord('a')] += 1
+
+    window_counts = [0] * 26
+    matched = 0
+    result = []
+
+    for right in range(len(s)):
+        # 进入窗口
+        idx = ord(s[right]) - ord('a')
+        window_counts[idx] += 1
+        if window_counts[idx] <= target_counts[idx]:
+            matched += 1
+
+        # 超出窗口大小，收缩
+        if right >= m:
+            left_idx = ord(s[right - m]) - ord('a')
+            if window_counts[left_idx] <= target_counts[left_idx]:
+                matched -= 1
+            window_counts[left_idx] -= 1
+
+        # 检查结果
+        if matched == m:
+            result.append(right - m + 1)
+
+    return result
+```
 
 
 
