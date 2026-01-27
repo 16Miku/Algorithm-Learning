@@ -2724,6 +2724,181 @@ class Solution:
 
 这个过程清晰地展示了排序 + 双指针方法如何有效地找到所有不重复的三元组，并通过跳过重复元素来避免结果中的重复。
 
+---
+
+#### Python 基础知识补充
+
+##### 1. 列表排序 `sort()` vs `sorted()`
+
+```python
+# ===== sort()：原地排序，修改原列表，返回 None =====
+nums = [3, 1, 2]
+nums.sort()                  # nums 变为 [1, 2, 3]
+print(nums)                  # [1, 2, 3]
+
+# ===== sorted()：返回新列表，原列表不变 =====
+nums = [3, 1, 2]
+new_nums = sorted(nums)      # new_nums = [1, 2, 3]
+print(nums)                  # [3, 1, 2]（原列表不变）
+
+# ===== 本题使用 sort() 原地排序 =====
+nums.sort()                  # 相当于 Java: Arrays.sort(nums);
+```
+
+**对比 Java**：
+```java
+// Java
+Arrays.sort(nums);           // 原地排序
+```
+
+##### 2. `continue` 和 `break`
+
+```python
+# ===== continue：跳过本次循环，继续下一次 =====
+for i in range(5):
+    if i == 2:
+        continue             # 跳过 i=2
+    print(i)                 # 输出 0, 1, 3, 4
+
+# ===== break：直接退出整个循环 =====
+for i in range(5):
+    if i == 3:
+        break                # 退出循环
+    print(i)                 # 输出 0, 1, 2
+
+# ===== 本题应用 =====
+if i > 0 and nums[i] == nums[i-1]:
+    continue                 # 跳过重复的 nums[i]
+
+if nums[i] > 0:
+    break                    # 剪枝：第一个数大于0，后面不可能和为0
+```
+
+##### 3. `and` 和 `or` 逻辑运算
+
+```python
+# ===== Python 用 and/or/not，不用 &&/||/! =====
+if i > 0 and nums[i] == nums[i-1]:   # 相当于 Java: if (i > 0 && nums[i] == nums[i-1])
+    pass
+
+if a > 0 or b > 0:                    # 相当于 Java: if (a > 0 || b > 0)
+    pass
+
+if not flag:                          # 相当于 Java: if (!flag)
+    pass
+```
+
+##### 4. 列表添加元素 `append()`
+
+```python
+# ===== append()：在列表末尾添加一个元素 =====
+result = []
+result.append([1, 2, 3])     # result = [[1, 2, 3]]
+result.append([-1, 0, 1])    # result = [[1, 2, 3], [-1, 0, 1]]
+
+# ===== 对比 Java =====
+# Java: result.add(Arrays.asList(nums[i], nums[left], nums[right]));
+# Python: result.append([nums[i], nums[left], nums[right]])
+```
+
+##### 5. 本题代码逐行解析
+
+```python
+class Solution:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        result = []                      # 相当于 Java: List<List<Integer>> result = new ArrayList<>();
+        n = len(nums)
+
+        nums.sort()                      # 相当于 Java: Arrays.sort(nums);
+
+        for i in range(n - 2):           # 相当于 Java: for (int i = 0; i < n - 2; i++)
+            # 剪枝：第一个数大于0，三数之和不可能为0
+            if nums[i] > 0:
+                break
+
+            # 跳过重复的第一个数
+            if i > 0 and nums[i] == nums[i - 1]:  # 相当于 Java: if (i > 0 && nums[i] == nums[i-1])
+                continue
+
+            left = i + 1
+            right = n - 1
+            target = -nums[i]
+
+            while left < right:
+                current_sum = nums[left] + nums[right]
+
+                if current_sum == target:
+                    # 找到三元组，添加到结果
+                    result.append([nums[i], nums[left], nums[right]])
+
+                    # 跳过重复的 left 和 right
+                    while left < right and nums[left] == nums[left + 1]:
+                        left += 1
+                    while left < right and nums[right] == nums[right - 1]:
+                        right -= 1
+
+                    left += 1
+                    right -= 1
+                elif current_sum < target:
+                    left += 1
+                else:
+                    right -= 1
+
+        return result
+```
+
+##### 6. 去重技巧总结
+
+本题有**三处去重**，非常重要：
+
+```python
+# 1. 对第一个数 nums[i] 去重
+if i > 0 and nums[i] == nums[i - 1]:
+    continue
+
+# 2. 对第二个数 nums[left] 去重（找到三元组后）
+while left < right and nums[left] == nums[left + 1]:
+    left += 1
+
+# 3. 对第三个数 nums[right] 去重（找到三元组后）
+while left < right and nums[right] == nums[right - 1]:
+    right -= 1
+```
+
+##### 7. Java vs Python 对照表
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 排序数组 | `Arrays.sort(nums)` | `nums.sort()` |
+| 逻辑与 | `&&` | `and` |
+| 逻辑或 | `\|\|` | `or` |
+| 逻辑非 | `!` | `not` |
+| 添加到列表 | `list.add(item)` | `list.append(item)` |
+| 创建列表 | `Arrays.asList(a, b, c)` | `[a, b, c]` |
+| for 循环 | `for (int i = 0; i < n-2; i++)` | `for i in range(n - 2):` |
+
+##### 8. 算法模式总结：排序 + 双指针
+
+```python
+# 三数之和模板
+def threeSum(nums):
+    nums.sort()                          # 1. 先排序
+    result = []
+
+    for i in range(len(nums) - 2):       # 2. 固定第一个数
+        if i > 0 and nums[i] == nums[i-1]:  # 3. 去重
+            continue
+
+        left, right = i + 1, len(nums) - 1  # 4. 双指针
+        while left < right:
+            # 5. 根据和的大小移动指针
+            pass
+
+    return result
+```
+
+这种模式还可用于：四数之和、最接近的三数之和等。
+
 
 
 
