@@ -9,6 +9,133 @@ https://leetcode.cn/studyplan/top-100-liked/
 
 ## 哈希
 
+### 1. 两数之和
+
+给定一个整数数组 `nums` 和一个整数目标值 `target`，请你在该数组中找出**和为目标值** `target` 的那**两个**整数，并返回它们的数组下标。
+
+你可以假设每种输入只会对应一个答案，并且你不能使用两次同一个元素。
+
+你可以按任意顺序返回答案。
+
+**示例 1：**
+
+```
+输入：nums = [2,7,11,15], target = 9
+输出：[0,1]
+解释：因为 nums[0] + nums[1] == 9 ，返回 [0, 1]
+```
+
+**示例 2：**
+
+```
+输入：nums = [3,2,4], target = 6
+输出：[1,2]
+```
+
+**示例 3：**
+
+```
+输入：nums = [3,3], target = 6
+输出：[0,1]
+```
+
+**提示：**
+
+- `2 <= nums.length <= 10^4`
+- `-10^9 <= nums[i] <= 10^9`
+- `-10^9 <= target <= 10^9`
+- 只会存在一个有效答案
+
+#### 代码（Java）
+
+```java
+class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        // 哈希表：key=数值，value=下标
+        Map<Integer, Integer> map = new HashMap<>();
+
+        for (int i = 0; i < nums.length; i++) {
+            // 计算配对值
+            int complement = target - nums[i];
+
+            // 检查配对值是否已存在
+            if (map.containsKey(complement)) {
+                // 找到了！返回两个下标
+                return new int[] { map.get(complement), i };
+            }
+
+            // 没找到，把当前元素存入哈希表
+            map.put(nums[i], i);
+        }
+
+        // 题目保证有解，这里不会执行到
+        return new int[] {};
+    }
+}
+```
+
+#### 代码（Python）
+
+```python
+class Solution:
+    def twoSum(self, nums: List[int], target: int) -> List[int]:
+        # 哈希表：key=数值，value=下标
+        hash_map = {}
+
+        for i, num in enumerate(nums):
+            # 计算配对值
+            complement = target - num
+
+            # 检查配对值是否已存在
+            if complement in hash_map:
+                # 找到了！返回两个下标
+                return [hash_map[complement], i]
+
+            # 没找到，把当前元素存入哈希表
+            hash_map[num] = i
+
+        # 题目保证有解，这里不会执行到
+        return []
+```
+
+#### 讲解
+
+**1. 问题分析**
+
+题目要求在数组中找到两个数，使它们的和等于 `target`。最直观的方法是两层循环暴力枚举，时间复杂度 O(n²)，但这不是最优解。
+
+**2. 核心思想：哈希表查找配对值**
+
+关键观察：如果 `nums[i] + nums[j] = target`，那么 `nums[j] = target - nums[i]`。
+
+我们可以：
+1. 遍历数组，对于每个元素 `nums[i]`
+2. 计算它的「配对值」：`complement = target - nums[i]`
+3. 用哈希表 O(1) 时间查找配对值是否存在
+4. 如果存在，直接返回；如果不存在，把当前元素存入哈希表
+
+**3. 为什么边遍历边存？**
+
+这样可以避免使用同一个元素两次。例如 `[3,3], target=6`：
+- 遍历到第一个 3 时，哈希表为空，找不到配对值，存入 `{3: 0}`
+- 遍历到第二个 3 时，配对值 3 已在哈希表中，返回 `[0, 1]`
+
+**4. 复杂度分析**
+
+- **时间复杂度**：O(n)，只需遍历一次数组
+- **空间复杂度**：O(n)，哈希表最多存储 n 个元素
+
+**5. 总结**
+
+这道题是哈希表的经典入门题，核心技巧是：**把「查找配对」问题转化为「哈希表查询」问题**，将 O(n) 的查找优化为 O(1)。
+
+
+
+
+
+
+
+
 
 
 
