@@ -1310,6 +1310,180 @@ class Solution:
 
 这个修正后的 Java 代码应该能够顺利通过你遇到的超出时间限制的测试用例。
 
+---
+
+#### Python 基础知识补充
+
+##### 1. 集合（Set）基础
+
+Python 的 `set` 相当于 Java 的 `HashSet`，是**无序且不重复**的集合。
+
+```python
+# ===== 创建集合 =====
+s = set()                    # 空集合
+s = {1, 2, 3}                # 初始化（注意：{} 空的是字典，不是集合）
+s = set([1, 2, 2, 3])        # 从列表创建，自动去重：{1, 2, 3}
+s = set(nums)                # 从数组创建，自动去重
+
+# ===== 基本操作 =====
+len(s)                       # 集合大小
+1 in s                       # 判断元素是否存在（O(1)）
+s.add(4)                     # 添加元素
+s.remove(1)                  # 删除元素（不存在会报错）
+s.discard(1)                 # 删除元素（不存在不报错）
+
+# ===== 去重功能 =====
+nums = [1, 2, 2, 3, 3, 3]
+unique = set(nums)           # {1, 2, 3} - 自动去重！
+
+# ===== 遍历集合 =====
+for num in s:                # 遍历每个元素（顺序不确定）
+    print(num)
+```
+
+##### 2. `if not nums` 判断空值
+
+Python 中空值判断非常简洁：
+
+```python
+# ===== 列表 =====
+nums = []
+if not nums:                 # ✅ 推荐：判断空列表
+if len(nums) == 0:           # 也可以，但不简洁
+if nums == []:               # 不推荐
+
+# ===== 集合 =====
+s = set()
+if not s:                    # ✅ 判断空集合
+
+# ===== 字符串 =====
+s = ""
+if not s:                    # ✅ 判断空字符串
+
+# ===== None 值 =====
+x = None
+if x is None:                # ✅ 判断 None
+if not x:                    # 也可以，None 被视为 False
+```
+
+**对比 Java**：
+```java
+// Java
+if (nums == null || nums.length == 0) { }
+
+// Python
+if not nums:                 # 一行搞定！
+```
+
+##### 3. `in` 运算符
+
+`in` 是 Python 最常用的运算符之一，判断元素是否在容器中。
+
+```python
+# ===== 列表 =====
+nums = [1, 2, 3]
+3 in nums                    # True
+5 in nums                    # False
+
+# ===== 集合（O(1)查找）=====
+s = {1, 2, 3}
+2 in s                       # True
+5 in s                       # False
+
+# ===== 字典（判断key）=====
+d = {'a': 1, 'b': 2}
+'a' in d                     # True
+1 in d                       # False（只判断key，不判断value）
+
+# ===== 字符串 =====
+s = "hello"
+'ll' in s                    # True
+'xy' in s                    # False
+```
+
+**对比 Java**：
+```java
+// Java
+list.contains(3)
+set.contains(3)
+map.containsKey("a")
+
+// Python
+3 in list
+3 in set
+'a' in map
+```
+
+##### 4. `max()` 函数
+
+```python
+max(1, 5, 3)                 # 5
+max([1, 5, 3])               # 5
+max({1, 5, 3})               # 5
+
+# 本题中的应用
+longest = max(longest, current)  # 取两者较大值
+```
+
+**对比 Java**：
+```java
+// Java
+Math.max(a, b)
+
+// Python
+max(a, b)
+```
+
+##### 5. 本题代码逐行解析
+
+```python
+class Solution:
+    def longestConsecutive(self, nums: List[int]) -> int:
+        # 1. 判断空数组
+        # 相当于 Java: if (nums == null || nums.length == 0)
+        if not nums:
+            return 0
+
+        # 2. 创建集合并去重
+        # 相当于 Java: Set<Integer> numSet = new HashSet<>(); for (int n : nums) numSet.add(n);
+        num_set = set(nums)   # set(nums) 自动完成去重
+
+        # 3. 初始化最长长度
+        longest_streak = 0
+
+        # 4. 遍历去重后的集合
+        # 相当于 Java: for (int num : numSet)
+        for num in num_set:
+            # 判断是否是序列起点：num-1 不在集合中
+            # 相当于 Java: if (!numSet.contains(num - 1))
+            if (num - 1) not in num_set:
+                current_num = num
+                current_streak = 1
+
+                # 向右扩展序列
+                # 相当于 Java: while (numSet.contains(currentNum + 1))
+                while (current_num + 1) in num_set:
+                    current_num += 1
+                    current_streak += 1
+
+                # 更新最长长度
+                longest_streak = max(longest_streak, current_streak)
+
+        return longest_streak
+```
+
+##### 6. Python vs Java 对照表
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 创建哈希集合 | `new HashSet<>()` | `set()` |
+| 添加元素 | `set.add(x)` | `s.add(x)` |
+| 判断是否存在 | `set.contains(x)` | `x in s` |
+| 判断不存在 | `!set.contains(x)` | `x not in s` |
+| 判断空数组 | `nums == null \|\| nums.length == 0` | `if not nums` |
+| 取最大值 | `Math.max(a, b)` | `max(a, b)` |
+| 遍历集合 | `for (int x : set)` | `for x in s` |
+
 
 
 
