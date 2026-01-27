@@ -4128,6 +4128,168 @@ class Solution:
 
 核心错误在于 `left = (int)hashmap.get(s.charAt(right)) + 1;` 这一行。它没有考虑 `left` 只能单调递增的特性。正确的逻辑应该是 `left = Math.max(left, charIndexMap.get(currentChar) + 1);` 来确保 `left` 不会回退，并且只在重复字符在当前窗口内时才移动 `left`。同时，`put` 操作应该在 `if` 语句之外，确保每次都更新字符的最新位置。
 
+---
+
+#### Python 基础知识补充
+
+##### 1. 字符串基础操作
+
+```python
+# ===== 创建字符串 =====
+s = "hello"
+s = str(123)                # "123"
+
+# ===== 访问字符 =====
+s[0]                        # 'h'（第一个字符）
+s[-1]                       # 'o'（最后一个字符）
+s[1:3]                      # 'el'（切片）
+
+# ===== 字符串长度 =====
+len(s)                       # 5
+
+# ===== 遍历字符串 =====
+for c in s:                  # 遍历每个字符
+    print(c)
+
+for i, c in enumerate(s):   # 同时获取索引和字符
+    print(i, c)
+
+# ===== 对比 Java =====
+# Java: s.length()
+# Python: len(s)
+
+# Java: s.charAt(i)
+# Python: s[i]
+```
+
+##### 2. 字典操作
+
+```python
+# ===== 创建字典 =====
+char_index_map = {}
+char_index_map = {'a': 0, 'b': 1}
+
+# ===== 检查key是否存在 =====
+'a' in char_index_map        # True
+'x' in char_index_map        # False
+
+# ===== 获取value =====
+char_index_map['a']          # 0（不存在会报错）
+char_index_map.get('a')      # 0（不存在返回 None）
+char_index_map.get('x', -1)  # -1（不存在返回默认值）
+
+# ===== 添加/更新 =====
+char_index_map['a'] = 5      # 添加或更新
+char_index_map['c'] = 2      # 添加新键值对
+
+# ===== 对比 Java =====
+# Java: map.containsKey(key)
+# Python: key in map
+
+# Java: map.get(key)
+# Python: map[key] 或 map.get(key)
+```
+
+##### 3. 滑动窗口模板
+
+```python
+def sliding_window(s):
+    left = 0
+    window_map = {}          # 记录窗口内字符的索引
+    max_len = 0
+
+    for right in range(len(s)):
+        c = s[right]
+
+        # 处理重复字符：收缩左边界
+        if c in window_map and window_map[c] >= left:
+            left = window_map[c] + 1
+
+        # 更新字符位置
+        window_map[c] = right
+
+        # 更新结果
+        max_len = max(max_len, right - left + 1)
+
+    return max_len
+```
+
+##### 4. 本题代码逐行解析
+
+```python
+class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
+        if not s:                    # 相当于 Java: if (s == null || s.length() == 0)
+            return 0
+
+        char_index_map = {}         # 相当于 Java: Map<Character, Integer> map = new HashMap<>();
+        left = 0
+        max_sub_len = 0
+
+        for right in range(len(s)):  # 相当于 Java: for (int right = 0; right < s.length(); right++)
+            current_char = s[right]  # 相当于 Java: char currentChar = s.charAt(right)
+
+            # 检查重复字符（必须在当前窗口内才算重复）
+            if current_char in char_index_map and char_index_map[current_char] >= left:
+                left = char_index_map[current_char] + 1
+
+            # 更新字符最新位置
+            char_index_map[current_char] = right
+
+            # 更新最长长度
+            max_sub_len = max(max_sub_len, right - left + 1)
+
+        return max_sub_len
+```
+
+##### 5. 条件判断的细节
+
+```python
+# ===== 复杂条件 =====
+if c in char_index_map and char_index_map[c] >= left:
+    pass
+
+# 含义：
+# 1. c in char_index_map → 检查字符是否出现过
+# 2. char_index_map[c] >= left → 检查上次出现的位置是否在当前窗口内
+# 两个条件都满足，才是"当前窗口内的重复字符"
+```
+
+##### 6. Java vs Python 对照表
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 获取字符 | `s.charAt(i)` | `s[i]` |
+| 获取长度 | `s.length()` | `len(s)` |
+| 检查key存在 | `map.containsKey(key)` | `key in map` |
+| 获取value | `map.get(key)` | `map[key]` 或 `map.get(key)` |
+| 更新map | `map.put(key, value)` | `map[key] = value` |
+| 取最大值 | `Math.max(a, b)` | `max(a, b)` |
+| 判空字符串 | `s == null \|\| s.length() == 0` | `if not s` |
+
+##### 7. 更简洁的 Python 写法
+
+```python
+class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
+        # 使用 get() 方法，默认值设为 -1
+        # 这样重复字符不在窗口内时，left 不会更新
+        char_map = {}
+        left = max_len = 0
+
+        for right, c in enumerate(s):
+            # 如果字符重复且在窗口内，移动左边界
+            if c in char_map and char_map[c] >= left:
+                left = char_map[c] + 1
+
+            char_map[c] = right
+            max_len = max(max_len, right - left + 1)
+
+        return max_len
+```
+
+**技巧**：`enumerate(s)` 同时获取索引和字符，比 `range(len(s))` 更 Pythonic。
+
 
 
 
