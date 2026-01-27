@@ -2221,6 +2221,157 @@ class Solution:
 
 这个过程清晰地展示了双指针法如何有效地探索所有可能的容器组合，并通过每次淘汰较短的边来保证不会错过最优解，从而在 O(N) 时间复杂度内找到最大盛水量。
 
+---
+
+#### Python 基础知识补充
+
+##### 1. `while` 循环
+
+本题使用 `while` 循环而非 `for` 循环，因为左右指针移动不固定：
+
+```python
+# ===== while 循环基本语法 =====
+while 条件:
+    # 循环体
+    # 需要手动更新条件相关变量，否则死循环！
+
+# ===== 本题应用 =====
+while left < right:
+    # 处理逻辑
+    if height[left] < height[right]:
+        left += 1      # 手动移动左指针
+    else:
+        right -= 1     # 手动移动右指针
+
+# ===== 对比 Java =====
+# Java: while (left < right) { }
+# Python: while left < right:（无括号，用冒号）
+```
+
+##### 2. `min()` 和 `max()` 函数
+
+Python 内置函数，比 Java 的 `Math.min/max` 更简洁：
+
+```python
+# ===== 基本用法 =====
+min(3, 5)                    # 3
+max(3, 5)                    # 5
+min(1, 2, 3, 4)              # 1（支持多个参数）
+max([1, 2, 3, 4])            # 4（支持列表）
+
+# ===== 本题应用 =====
+h = min(height[left], height[right])   # 取较小的高度
+max_area = max(max_area, current_area) # 更新最大值
+
+# ===== 对比 Java =====
+# Java: Math.min(a, b)  Math.max(a, b)
+# Python: min(a, b)     max(a, b)
+```
+
+##### 3. 左右指针模式
+
+与283题的快慢指针不同，本题使用**左右指针**（相向而行）：
+
+```python
+# ===== 左右指针模板 =====
+def two_pointers(nums):
+    left = 0
+    right = len(nums) - 1
+
+    while left < right:
+        # 根据条件处理
+        if 某条件:
+            left += 1
+        else:
+            right -= 1
+```
+
+**两种双指针模式对比**：
+
+| 模式 | 初始位置 | 移动方向 | 典型题目 |
+|------|----------|----------|----------|
+| 快慢指针 | 都在开头 | 同向移动 | 移动零、删除重复 |
+| 左右指针 | 两端 | 相向移动 | 盛水容器、两数之和II |
+
+##### 4. 变量命名规范
+
+Python 使用**蛇形命名法**（snake_case），Java 使用驼峰命名法：
+
+```python
+# ===== Python 命名规范 =====
+max_area = 0                 # 蛇形命名：单词用下划线连接
+current_area = 0
+left_pointer = 0
+
+# ===== Java 命名规范 =====
+# int maxArea = 0;           // 驼峰命名：首字母小写，后续单词首字母大写
+# int currentArea = 0;
+```
+
+##### 5. 本题代码逐行解析
+
+```python
+class Solution:
+    def maxArea(self, height: List[int]) -> int:
+        n = len(height)                      # 相当于 Java: int n = height.length;
+
+        if n < 2:                            # 边界检查
+            return 0
+
+        max_area = 0                         # 记录最大面积
+        left = 0                             # 左指针，从最左边开始
+        right = n - 1                        # 右指针，从最右边开始
+
+        while left < right:                  # 相当于 Java: while (left < right)
+            # 计算当前容器的高度和宽度
+            h = min(height[left], height[right])  # 高度取较小值
+            w = right - left                      # 宽度 = 右指针 - 左指针
+
+            current_area = h * w             # 当前面积
+            max_area = max(max_area, current_area)  # 更新最大面积
+
+            # 移动较矮的那一边（贪心策略）
+            if height[left] < height[right]:
+                left += 1                    # 相当于 Java: left++;
+            else:
+                right -= 1                   # 相当于 Java: right--;
+
+        return max_area
+```
+
+##### 6. 更简洁的写法
+
+```python
+class Solution:
+    def maxArea(self, height: List[int]) -> int:
+        left, right = 0, len(height) - 1    # 同时初始化两个变量
+        max_area = 0
+
+        while left < right:
+            # 一行计算面积并更新最大值
+            max_area = max(max_area, min(height[left], height[right]) * (right - left))
+
+            # 移动较矮的指针
+            if height[left] < height[right]:
+                left += 1
+            else:
+                right -= 1
+
+        return max_area
+```
+
+##### 7. Java vs Python 对照表
+
+| 操作 | Java | Python |
+|------|------|--------|
+| while 循环 | `while (left < right) { }` | `while left < right:` |
+| 取最小值 | `Math.min(a, b)` | `min(a, b)` |
+| 取最大值 | `Math.max(a, b)` | `max(a, b)` |
+| 自增 | `left++` | `left += 1` |
+| 自减 | `right--` | `right -= 1` |
+| 同时赋值 | 需要分开写 | `a, b = 0, n-1` |
+| 命名规范 | camelCase | snake_case |
+
 
 
 
