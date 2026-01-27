@@ -565,6 +565,187 @@ class Solution:
 
 希望这个极尽详细的讲解和代码能帮助你完全理解并掌握这道算法题！
 
+---
+
+#### Python 基础知识补充
+
+##### 1. 列表（List）基础
+
+Python 的列表相当于 Java 的 ArrayList，是最常用的数据结构。
+
+```python
+# ===== 创建列表 =====
+arr = []                    # 空列表
+arr = [1, 2, 3]             # 初始化
+arr = [0] * 26              # 创建长度26、全为0的列表：[0, 0, 0, ..., 0]
+
+# ===== 访问元素 =====
+arr[0]                      # 第一个元素
+arr[-1]                     # 最后一个元素（Python特有！）
+arr[-2]                     # 倒数第二个元素
+
+# ===== 常用操作 =====
+len(arr)                    # 获取长度
+arr.append(x)               # 末尾添加元素
+arr.pop()                   # 删除并返回最后一个元素
+arr[i] += 1                 # 修改指定位置的值
+
+# ===== 列表不能作为字典的key =====
+d = {}
+d[[1,2,3]] = 'value'        # ❌ 报错！列表是可变的，不能作为key
+d[tuple([1,2,3])] = 'value' # ✅ 转为元组就可以了
+```
+
+##### 2. 元组（Tuple）基础
+
+元组是**不可变**的列表，可以作为字典的 key。
+
+```python
+# ===== 创建元组 =====
+t = (1, 2, 3)               # 直接创建
+t = tuple([1, 2, 3])        # 从列表转换
+
+# ===== 为什么本题要用 tuple？=====
+char_counts = [1, 0, 0, 0, 1, 0, ..., 1]  # 这是列表
+key = tuple(char_counts)                   # 转为元组，才能作为字典的key
+```
+
+##### 3. 字典（Dict）基础
+
+Python 的字典相当于 Java 的 HashMap。
+
+```python
+# ===== 创建字典 =====
+d = {}                      # 空字典
+d = {'a': 1, 'b': 2}        # 初始化
+
+# ===== 基本操作 =====
+d['a']                      # 获取值（key不存在会报错！）
+d.get('a', 0)               # 获取值，不存在返回默认值0（推荐！）
+d['c'] = 3                  # 添加或修改
+'a' in d                    # 判断key是否存在
+
+# ===== 遍历 =====
+for key in d:               # 遍历所有key
+for key, value in d.items():# 遍历所有键值对
+for value in d.values():    # 遍历所有value
+
+# ===== 获取所有值 =====
+d.values()                  # 返回所有value的视图
+list(d.values())            # 转为列表
+```
+
+##### 4. defaultdict 详解
+
+`defaultdict` 是字典的增强版，访问不存在的 key 时**自动创建默认值**。
+
+```python
+from collections import defaultdict
+
+# ===== 普通字典的问题 =====
+d = {}
+d['a'].append(1)            # ❌ KeyError! 'a'不存在
+
+# 必须先检查或初始化
+d = {}
+if 'a' not in d:
+    d['a'] = []
+d['a'].append(1)            # ✅ 但是很麻烦
+
+# ===== defaultdict 解决方案 =====
+d = defaultdict(list)       # 默认值是空列表 []
+d['a'].append(1)            # ✅ 自动创建 d['a'] = []，然后 append
+d['b'].append(2)
+print(d)                    # {'a': [1], 'b': [2]}
+
+# ===== defaultdict 的参数是「工厂函数」=====
+# 调用这个函数会返回默认值
+list()                      # 返回 []
+int()                       # 返回 0
+str()                       # 返回 ""
+
+defaultdict(list)           # 默认值是 list() 即 []
+defaultdict(int)            # 默认值是 int() 即 0
+defaultdict(str)            # 默认值是 str() 即 ""
+```
+
+##### 5. ord() 函数
+
+`ord()` 获取字符的 ASCII 码值，相当于 Java 中的 `(int)char`。
+
+```python
+ord('a')                    # 97
+ord('b')                    # 98
+ord('z')                    # 122
+
+# 计算字符在数组中的索引
+ord('a') - ord('a')         # 0 → char_counts[0] 对应 'a'
+ord('e') - ord('a')         # 4 → char_counts[4] 对应 'e'
+ord('z') - ord('a')         # 25 → char_counts[25] 对应 'z'
+```
+
+##### 6. 本题代码逐行解析
+
+```python
+from collections import defaultdict
+
+class Solution:
+    def groupAnagrams(self, strs: List[str]) -> List[List[str]]:
+        # 创建默认值为空列表的字典
+        # 相当于 Java: Map<Key, List<String>> map = new HashMap<>();
+        anagram_groups = defaultdict(list)
+
+        for s in strs:
+            # 创建长度26的计数数组，全部初始化为0
+            # 相当于 Java: int[] charCounts = new int[26];
+            char_counts = [0] * 26
+
+            # 遍历字符串中的每个字符，统计频率
+            for c in s:
+                char_counts[ord(c) - ord('a')] += 1
+
+            # 列表转元组，作为字典的key
+            # 相当于 Java: String key = Arrays.toString(charCounts);
+            key = tuple(char_counts)
+
+            # 将字符串加入对应分组
+            # defaultdict 自动处理 key 不存在的情况
+            anagram_groups[key].append(s)
+
+        # 返回所有分组
+        # 相当于 Java: return new ArrayList<>(map.values());
+        return list(anagram_groups.values())
+```
+
+##### 7. 排序法（更简洁的写法）
+
+```python
+from collections import defaultdict
+
+class Solution:
+    def groupAnagrams(self, strs: List[str]) -> List[List[str]]:
+        anagram_groups = defaultdict(list)
+
+        for s in strs:
+            # sorted(s) 返回排序后的字符列表 ['a','e','t']
+            # ''.join() 将列表连接成字符串 "aet"
+            key = ''.join(sorted(s))
+            anagram_groups[key].append(s)
+
+        return list(anagram_groups.values())
+```
+
+##### 8. Java vs Python 对照表
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 创建哈希表 | `new HashMap<>()` | `{}` 或 `defaultdict(list)` |
+| 创建数组 | `new int[26]` | `[0] * 26` |
+| 获取字符ASCII | `(int)c` 或 `c - 'a'` | `ord(c)` |
+| 数组转字符串key | `Arrays.toString(arr)` | `tuple(arr)` |
+| 获取或默认值 | `map.getOrDefault(k, new ArrayList<>())` | `defaultdict` 自动处理 |
+| 返回所有值 | `new ArrayList<>(map.values())` | `list(d.values())` |
+
 
 
 
