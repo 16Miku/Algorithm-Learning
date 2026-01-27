@@ -1805,6 +1805,150 @@ class Solution:
 
 这个过程清晰地展示了优化后的双指针法如何通过一次遍历和必要的交换，在原地且保持相对顺序的情况下将零移动到末尾。
 
+---
+
+#### Python 基础知识补充
+
+##### 1. Python 交换两个变量
+
+Python 支持**一行交换**，不需要临时变量：
+
+```python
+# ===== Python 交换（推荐）=====
+a, b = b, a                  # 一行搞定！
+
+# ===== 本题中的应用 =====
+nums[left], nums[right] = nums[right], nums[left]
+
+# ===== Java 需要临时变量 =====
+# int temp = nums[left];
+# nums[left] = nums[right];
+# nums[right] = temp;
+```
+
+**原理**：Python 会先计算右边的元组 `(b, a)`，然后解包赋值给左边的 `a, b`。
+
+##### 2. `range()` 函数
+
+`range()` 生成一个整数序列，常用于 `for` 循环：
+
+```python
+# ===== 基本用法 =====
+range(5)                     # 0, 1, 2, 3, 4（不包含5）
+range(1, 6)                  # 1, 2, 3, 4, 5
+range(0, 10, 2)              # 0, 2, 4, 6, 8（步长为2）
+range(5, 0, -1)              # 5, 4, 3, 2, 1（倒序）
+
+# ===== 对比 Java =====
+# Java: for (int i = 0; i < n; i++)
+# Python:
+for i in range(n):
+    pass
+
+# Java: for (int i = n-1; i >= 0; i--)
+# Python:
+for i in range(n-1, -1, -1):
+    pass
+```
+
+##### 3. `len()` 函数
+
+获取容器的长度：
+
+```python
+nums = [1, 2, 3, 4, 5]
+n = len(nums)                # 5
+
+s = "hello"
+n = len(s)                   # 5
+
+# 对比 Java
+# Java: nums.length（数组）或 list.size()（列表）
+# Python: len(nums)（统一用 len）
+```
+
+##### 4. 函数返回 `None`
+
+本题函数签名是 `-> None`，表示**原地修改**，不返回值：
+
+```python
+def moveZeroes(self, nums: List[int]) -> None:
+    """
+    Do not return anything, modify nums in-place instead.
+    """
+    # 直接修改 nums，不需要 return
+```
+
+**对比 Java**：
+```java
+// Java: void 表示无返回值
+public void moveZeroes(int[] nums) { }
+```
+
+##### 5. 本题代码逐行解析
+
+```python
+class Solution:
+    def moveZeroes(self, nums: List[int]) -> None:
+        n = len(nums)                    # 相当于 Java: int n = nums.length;
+
+        if n == 0 or n == 1:             # 相当于 Java: if (n == 0 || n == 1)
+            return
+
+        left = 0                         # 慢指针：指向下一个非零元素应放置的位置
+
+        for right in range(n):           # 相当于 Java: for (int right = 0; right < n; right++)
+            if nums[right] != 0:         # 找到非零元素
+                if left != right:        # 需要交换
+                    # Python 一行交换
+                    nums[left], nums[right] = nums[right], nums[left]
+                left += 1                # 相当于 Java: left++;
+```
+
+##### 6. 更简洁的写法
+
+```python
+class Solution:
+    def moveZeroes(self, nums: List[int]) -> None:
+        left = 0
+        for right in range(len(nums)):
+            if nums[right]:              # 非零值在 Python 中为 True
+                nums[left], nums[right] = nums[right], nums[left]
+                left += 1
+```
+
+**注意**：`if nums[right]:` 等价于 `if nums[right] != 0:`，因为：
+- `0` 在 Python 中是 `False`
+- 非零数在 Python 中是 `True`
+
+##### 7. Java vs Python 对照表
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 获取数组长度 | `nums.length` | `len(nums)` |
+| for 循环 | `for (int i = 0; i < n; i++)` | `for i in range(n):` |
+| 交换两个元素 | 需要 temp 变量 | `a, b = b, a` |
+| 判断非零 | `if (nums[i] != 0)` | `if nums[i]:` 或 `if nums[i] != 0:` |
+| 无返回值 | `void` | `-> None` |
+| 或运算 | `\|\|` | `or` |
+
+##### 8. 双指针模式总结
+
+```python
+# 快慢指针模板（本题使用）
+def two_pointers(nums):
+    slow = 0                         # 慢指针
+    for fast in range(len(nums)):    # 快指针遍历
+        if 满足条件(nums[fast]):
+            # 处理 nums[slow] 和 nums[fast]
+            slow += 1
+```
+
+这种模式常用于：
+- 移动零
+- 删除重复元素
+- 移除指定元素
+
 
 
 
