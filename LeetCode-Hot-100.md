@@ -9448,6 +9448,270 @@ while p1:  # 应该用 p2（后半部分可能更短）
 """
 ```
 
+#### 12. Python 函数与类方法详解（重要基础）
+
+##### (1) 普通函数 vs 类方法
+
+```python
+# 普通函数（不在类里面）
+def add(a, b):
+    return a + b
+
+result = add(1, 2)  # 直接调用
+
+
+# 类方法（在类里面）
+class Calculator:
+    def add(self, a, b):  # 必须有 self 参数
+        return a + b
+
+calc = Calculator()      # 先创建对象
+result = calc.add(1, 2)  # 通过对象调用
+```
+
+**Java 对比：**
+```java
+// Java 普通方法（必须在类里面）
+public class Calculator {
+    public int add(int a, int b) {  // 不需要写 this 参数
+        return a + b;
+    }
+}
+
+Calculator calc = new Calculator();
+int result = calc.add(1, 2);
+```
+
+##### (2) `self` 是什么？
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val      # self.val 是实例属性
+        self.next = next
+
+# self 就是"当前对象"，相当于 Java 的 this
+# 但 Python 必须显式写出来，Java 可以省略
+```
+
+**图解 `self`：**
+```python
+node1 = ListNode(1)  # 创建对象时，self 指向 node1
+node2 = ListNode(2)  # 创建对象时，self 指向 node2
+
+# 当调用 node1 的方法时
+# self 就是 node1 这个对象
+```
+
+**Java 对比：**
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+
+    public ListNode(int val) {
+        this.val = val;    // this 可以省略
+        this.next = null;
+    }
+}
+```
+
+##### (3) `__init__` 构造方法
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        """
+        __init__ 是构造方法，创建对象时自动调用
+        - 双下划线开头和结尾的方法叫"魔术方法"或"特殊方法"
+        - __init__ 用于初始化对象的属性
+        """
+        self.val = val
+        self.next = next
+
+# 创建对象
+node = ListNode(5)        # 调用 __init__，val=5, next=None
+node = ListNode(5, other) # 调用 __init__，val=5, next=other
+```
+
+**Java 对比：**
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+
+    // Java 构造方法名必须和类名相同
+    public ListNode(int val) {
+        this.val = val;
+        this.next = null;
+    }
+
+    // Java 支持构造方法重载
+    public ListNode(int val, ListNode next) {
+        this.val = val;
+        this.next = next;
+    }
+}
+```
+
+**Python 用默认参数代替重载：**
+```python
+# Python 没有方法重载，用默认参数实现类似效果
+class ListNode:
+    def __init__(self, val=0, next=None):  # 默认参数
+        self.val = val
+        self.next = next
+
+# 多种调用方式
+ListNode()           # val=0, next=None
+ListNode(5)          # val=5, next=None
+ListNode(5, other)   # val=5, next=other
+ListNode(val=5)      # 关键字参数
+ListNode(next=other) # 只传 next
+```
+
+##### (4) LeetCode 中的 `Solution` 类
+
+```python
+class Solution:
+    def twoSum(self, nums: List[int], target: int) -> List[int]:
+        # self 是 Solution 对象
+        # 但在这道题里我们不需要用到 self
+        hash_map = {}
+        for i, num in enumerate(nums):
+            if target - num in hash_map:
+                return [hash_map[target - num], i]
+            hash_map[num] = i
+        return []
+
+# LeetCode 后台调用方式
+solution = Solution()
+result = solution.twoSum([2, 7, 11, 15], 9)
+```
+
+**为什么 LeetCode 要用类？**
+```python
+# 1. 统一接口，方便测试系统调用
+# 2. 可以在类中定义辅助方法
+
+class Solution:
+    def isPalindrome(self, head):
+        # 主方法
+        ...
+        reversed_head = self._reverse(head)  # 调用辅助方法
+        ...
+
+    def _reverse(self, head):
+        # 辅助方法，用 self. 调用
+        ...
+```
+
+##### (5) 方法调用时 `self` 的传递
+
+```python
+class Solution:
+    def method1(self):
+        print("method1")
+        self.method2()  # 调用同一个类的其他方法，必须用 self.
+
+    def method2(self):
+        print("method2")
+
+s = Solution()
+s.method1()  # 输出: method1, method2
+
+# 调用过程：
+# s.method1() 实际上是 Solution.method1(s)
+# Python 自动把 s 传给 self
+```
+
+**Java 对比：**
+```java
+public class Solution {
+    public void method1() {
+        System.out.println("method1");
+        method2();  // Java 可以直接调用，不需要 this.
+        // 或者 this.method2();  也可以
+    }
+
+    public void method2() {
+        System.out.println("method2");
+    }
+}
+```
+
+##### (6) 类型注解（Type Hints）
+
+```python
+# Python 3.5+ 支持类型注解，但不强制
+def twoSum(self, nums: List[int], target: int) -> List[int]:
+    #              ↑ 参数类型        ↑ 参数类型    ↑ 返回类型
+    pass
+
+# 常见类型注解
+from typing import List, Optional, Dict, Tuple
+
+def func1(self, nums: List[int]) -> int:           # 列表
+    pass
+
+def func2(self, head: Optional[ListNode]) -> bool: # 可能为 None
+    pass
+
+def func3(self, d: Dict[str, int]) -> None:        # 字典，无返回值
+    pass
+```
+
+**Java 对比：**
+```java
+// Java 必须声明类型
+public List<Integer> twoSum(int[] nums, int target) {
+    ...
+}
+```
+
+**Python 类型注解是可选的：**
+```python
+# 这两种写法都可以
+def twoSum(self, nums: List[int], target: int) -> List[int]:
+    pass
+
+def twoSum(self, nums, target):  # 不写类型注解也行
+    pass
+```
+
+##### (7) Java vs Python 函数/方法对照表
+
+| 概念 | Java | Python |
+|------|------|--------|
+| 当前对象 | `this`（可省略） | `self`（必须写） |
+| 构造方法 | 与类名相同 | `__init__` |
+| 方法重载 | 支持多个同名方法 | 不支持，用默认参数 |
+| 调用其他方法 | `method()` 或 `this.method()` | 必须 `self.method()` |
+| 类型声明 | 强制 | 可选（类型注解） |
+| 访问修饰符 | `public/private/protected` | 约定 `_` 或 `__` 开头 |
+
+##### (8) 常见错误
+
+```python
+# 错误1：忘记 self 参数
+class Solution:
+    def twoSum(nums, target):  # 错！缺少 self
+        pass
+
+# 错误2：忘记用 self. 调用其他方法
+class Solution:
+    def method1(self):
+        method2()  # 错！应该是 self.method2()
+
+    def method2(self):
+        pass
+
+# 错误3：忘记用 self. 访问实例属性
+class ListNode:
+    def __init__(self, val):
+        val = val  # 错！这只是局部变量，应该是 self.val = val
+```
+
 
 
 
