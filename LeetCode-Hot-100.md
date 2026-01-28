@@ -5033,7 +5033,220 @@ def fixed_window_match(s, p):
     return result
 ```
 
+#### 9. 灵神写法详解：最简洁的 Counter 解法
 
+```python
+from collections import Counter
+from typing import List
+
+class Solution:
+    def findAnagrams(self, s: str, p: str) -> List[int]:
+        cnt_p = Counter(p)  # 统计 p 的每种字母的出现次数
+        cnt_s = Counter()   # 统计 s 的长为 len(p) 的子串 t 的每种字母的出现次数
+        ans = []
+
+        for right, c in enumerate(s):
+            cnt_s[c] += 1   # 右端点字母进入窗口
+
+            left = right - len(p) + 1
+            if left < 0:    # 窗口长度不足 len(p)
+                continue
+
+            if cnt_s == cnt_p:  # t 和 p 的每种字母的出现次数都相同
+                ans.append(left)  # t 左端点下标加入答案
+
+            cnt_s[s[left]] -= 1  # 左端点字母离开窗口
+
+        return ans
+```
+
+**这个写法的精妙之处：**
+
+##### (1) 用 `left = right - len(p) + 1` 计算左边界
+
+```python
+# 传统写法：维护 left 指针，手动移动
+left = 0
+for right in range(n):
+    if right - left + 1 > m:
+        left += 1
+
+# 灵神写法：直接用公式计算 left
+for right, c in enumerate(s):
+    left = right - len(p) + 1  # 窗口大小固定为 len(p)
+```
+
+**数学推导：**
+```
+窗口大小 = right - left + 1 = len(p)
+所以：left = right - len(p) + 1
+```
+
+| right | len(p) | left = right - len(p) + 1 | 窗口 |
+|-------|--------|---------------------------|------|
+| 0 | 3 | -2 | 还没形成完整窗口 |
+| 1 | 3 | -1 | 还没形成完整窗口 |
+| 2 | 3 | 0 | s[0:3] 第一个完整窗口 |
+| 3 | 3 | 1 | s[1:4] |
+| 4 | 3 | 2 | s[2:5] |
+
+##### (2) 用 `if left < 0: continue` 跳过不完整窗口
+
+```python
+left = right - len(p) + 1
+if left < 0:    # 窗口还没形成，跳过后续逻辑
+    continue
+
+# Java 对比思维
+# if (right - left + 1 < m) continue;  // 窗口不够大
+```
+
+**为什么这样写更简洁？**
+- 不需要单独处理"窗口形成前"和"窗口形成后"两种情况
+- 统一用 `continue` 跳过，代码更清晰
+
+##### (3) Counter 直接比较：`cnt_s == cnt_p`
+
+```python
+# Counter 比较的底层逻辑
+Counter("abc") == Counter("cba")  # True
+
+# 等价于检查：
+# 1. 两个 Counter 的键集合相同
+# 2. 每个键对应的值相同
+
+# 注意：Counter 中值为 0 的键不影响比较
+Counter({'a': 1, 'b': 0}) == Counter({'a': 1})  # True!
+# 因为 Counter 访问不存在的键返回 0
+```
+
+##### (4) 先检查再移出：顺序很重要！
+
+```python
+for right, c in enumerate(s):
+    cnt_s[c] += 1           # 1. 右端点进入
+
+    left = right - len(p) + 1
+    if left < 0:
+        continue
+
+    if cnt_s == cnt_p:      # 2. 检查（此时窗口大小 = len(p)）
+        ans.append(left)
+
+    cnt_s[s[left]] -= 1     # 3. 左端点移出（为下一轮做准备）
+```
+
+**执行顺序图解（以 s="cba", p="ab" 为例）：**
+
+```
+right=0, c='c':
+  cnt_s['c'] += 1  →  cnt_s = {'c': 1}
+  left = 0 - 2 + 1 = -1 < 0  →  continue
+
+right=1, c='b':
+  cnt_s['b'] += 1  →  cnt_s = {'c': 1, 'b': 1}
+  left = 1 - 2 + 1 = 0
+  检查: cnt_s {'c':1,'b':1} != cnt_p {'a':1,'b':1}
+  移出: cnt_s['c'] -= 1  →  cnt_s = {'c': 0, 'b': 1}
+
+right=2, c='a':
+  cnt_s['a'] += 1  →  cnt_s = {'c': 0, 'b': 1, 'a': 1}
+  left = 2 - 2 + 1 = 1
+  检查: cnt_s {'b':1,'a':1} == cnt_p {'a':1,'b':1}  ✓
+  ans.append(1)
+  移出: cnt_s['b'] -= 1
+```
+
+##### (5) 为什么不需要删除计数为 0 的键？
+
+```python
+# 之前的写法需要删除
+if window[left_char] == 0:
+    del window[left_char]
+
+# 灵神写法不需要，因为：
+Counter({'a': 1, 'b': 0}) == Counter({'a': 1})  # True!
+
+# Counter 比较时会忽略值为 0 的键
+# 所以不删除也不影响正确性
+```
+
+##### (6) 完整执行过程演示
+
+**输入：s = "cbaebabacd", p = "abc"**
+
+```
+cnt_p = Counter({'a': 1, 'b': 1, 'c': 1})
+cnt_s = Counter()
+ans = []
+
+right=0, c='c': cnt_s={'c':1}, left=-2 < 0, continue
+right=1, c='b': cnt_s={'c':1,'b':1}, left=-1 < 0, continue
+right=2, c='a': cnt_s={'c':1,'b':1,'a':1}, left=0
+                cnt_s == cnt_p ✓ → ans=[0]
+                移出 s[0]='c': cnt_s={'c':0,'b':1,'a':1}
+right=3, c='e': cnt_s={'c':0,'b':1,'a':1,'e':1}, left=1
+                cnt_s != cnt_p
+                移出 s[1]='b': cnt_s={'c':0,'b':0,'a':1,'e':1}
+right=4, c='b': cnt_s={..,'b':1}, left=2
+                cnt_s != cnt_p
+                移出 s[2]='a': cnt_s={..,'a':0}
+right=5, c='a': cnt_s={..,'a':1}, left=3
+                cnt_s != cnt_p (有'e')
+                移出 s[3]='e': cnt_s={..,'e':0}
+right=6, c='b': cnt_s={..,'b':2}, left=4
+                cnt_s != cnt_p (b多了)
+                移出 s[4]='b': cnt_s={..,'b':1}
+right=7, c='a': cnt_s={..,'a':2}, left=5
+                cnt_s != cnt_p (a多了)
+                移出 s[5]='a': cnt_s={..,'a':1}
+right=8, c='c': cnt_s={..,'c':1}, left=6
+                cnt_s={'a':1,'b':1,'c':1} == cnt_p ✓ → ans=[0,6]
+                移出 s[6]='b': cnt_s={..,'b':0}
+right=9, c='d': cnt_s={..,'d':1}, left=7
+                cnt_s != cnt_p
+                移出 s[7]='a'
+
+最终 ans = [0, 6]
+```
+
+##### (7) 两种写法对比
+
+| 对比项 | matched_count 写法 | Counter 直接比较写法 |
+|--------|-------------------|---------------------|
+| 代码行数 | ~25 行 | ~15 行 |
+| 时间复杂度 | O(n) | O(26n) ≈ O(n) |
+| 空间复杂度 | O(26) = O(1) | O(26) = O(1) |
+| 可读性 | 逻辑清晰但代码长 | 简洁直观 |
+| 适用场景 | 字符集大时更优 | 字符集小（26字母）时推荐 |
+
+**为什么 Counter 比较是 O(26)？**
+```python
+# Counter 比较需要遍历所有键
+# 最多 26 个小写字母，所以是 O(26)
+# 每次循环都比较，总共 n 次，所以是 O(26n)
+# 但 26 是常数，所以仍然是 O(n)
+```
+
+##### (8) 灵神写法的核心思想总结
+
+```python
+"""
+固定窗口 + Counter 直接比较
+
+核心技巧：
+1. left = right - window_size + 1  直接计算左边界
+2. if left < 0: continue           跳过不完整窗口
+3. cnt_s == cnt_p                  Counter 直接比较
+4. 先检查，再移出左端点            为下一轮做准备
+
+这种写法的优点：
+- 不需要维护 left 指针
+- 不需要手动判断窗口大小
+- 不需要删除计数为 0 的键
+- 代码最简洁
+"""
+```
 
 
 
