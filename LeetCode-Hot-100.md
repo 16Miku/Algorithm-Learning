@@ -8413,7 +8413,277 @@ class Solution {
 
 
 
-#### 双指针法-C++ 
+#### Python 解法（迭代法）
+
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        pre = None      # 前一个节点，初始为 None
+        cur = head      # 当前节点，从头开始
+
+        while cur:      # 遍历整个链表
+            nxt = cur.next    # 1. 保存下一个节点
+            cur.next = pre    # 2. 反转指针
+            pre = cur         # 3. pre 前进
+            cur = nxt         # 4. cur 前进
+
+        return pre      # pre 指向新的头节点
+```
+
+#### Python 解法（递归法）
+
+```python
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        # 递归终止条件：空链表或只有一个节点
+        if not head or not head.next:
+            return head
+
+        # 递归反转后面的链表
+        new_head = self.reverseList(head.next)
+
+        # 反转当前节点
+        head.next.next = head  # 让下一个节点指向自己
+        head.next = None       # 断开原来的指向
+
+        return new_head        # 返回新的头节点
+```
+
+---
+
+### Python 基础知识补充
+
+#### 1. 链表反转的核心思想：改变指针方向
+
+```
+原链表：1 -> 2 -> 3 -> 4 -> 5 -> None
+反转后：None <- 1 <- 2 <- 3 <- 4 <- 5
+
+每一步都是把 cur.next 从指向后面改为指向前面
+```
+
+#### 2. 迭代法四步曲（必须按顺序）
+
+```python
+while cur:
+    nxt = cur.next    # 步骤1：保存下一个节点（否则会丢失）
+    cur.next = pre    # 步骤2：反转指针方向
+    pre = cur         # 步骤3：pre 向前移动
+    cur = nxt         # 步骤4：cur 向前移动
+```
+
+**为什么顺序不能变？**
+```python
+# 错误示范：先移动 cur 再保存 nxt
+cur = cur.next        # cur 已经移动了
+nxt = cur.next        # 这时候 nxt 保存的是错误的节点！
+
+# 错误示范：先反转再保存 nxt
+cur.next = pre        # cur.next 已经改变了
+nxt = cur.next        # nxt 变成了 pre，链表断开！
+```
+
+#### 3. 图解迭代过程
+
+```
+初始状态：
+pre = None
+cur = 1 -> 2 -> 3 -> None
+
+第1轮：
+nxt = 2
+1.next = None (原来指向2，现在指向pre=None)
+pre = 1
+cur = 2
+
+状态：None <- 1    2 -> 3 -> None
+      pre        cur
+
+第2轮：
+nxt = 3
+2.next = 1 (原来指向3，现在指向pre=1)
+pre = 2
+cur = 3
+
+状态：None <- 1 <- 2    3 -> None
+             pre       cur
+
+第3轮：
+nxt = None
+3.next = 2 (原来指向None，现在指向pre=2)
+pre = 3
+cur = None
+
+状态：None <- 1 <- 2 <- 3
+                       pre    cur=None
+
+循环结束，返回 pre = 3
+```
+
+#### 4. `Optional[ListNode]` 类型注解
+
+```python
+# Optional[X] 表示类型可以是 X 或者 None
+from typing import Optional
+
+def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    # head 可以是 ListNode 类型，也可以是 None
+    # 返回值也可以是 ListNode 或 None
+    pass
+
+# 等价于
+from typing import Union
+def reverseList(self, head: Union[ListNode, None]) -> Union[ListNode, None]:
+    pass
+
+# Java 对比：Java 的引用类型天然可以为 null，不需要特别声明
+# public ListNode reverseList(ListNode head)
+```
+
+#### 5. 多重赋值简化代码
+
+```python
+# 标准写法（4行）
+nxt = cur.next
+cur.next = pre
+pre = cur
+cur = nxt
+
+# Python 多重赋值（1行）
+cur.next, pre, cur = pre, cur, cur.next
+
+# 注意：右边的值在赋值前全部计算好，所以不会有顺序问题
+# 相当于：
+# temp1 = pre
+# temp2 = cur
+# temp3 = cur.next
+# cur.next = temp1
+# pre = temp2
+# cur = temp3
+```
+
+**最简洁的 Python 写法：**
+```python
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        pre, cur = None, head
+        while cur:
+            cur.next, pre, cur = pre, cur, cur.next
+        return pre
+```
+
+#### 6. 递归法详解
+
+```python
+def reverseList(self, head):
+    # 递归终止条件
+    if not head or not head.next:
+        return head
+
+    # 递归调用：先反转后面的部分
+    new_head = self.reverseList(head.next)
+
+    # 反转当前节点的指向
+    head.next.next = head  # 让后一个节点指向自己
+    head.next = None       # 断开自己指向后一个节点
+
+    return new_head
+```
+
+**递归过程图解（以 1->2->3 为例）：**
+```
+调用栈展开：
+reverseList(1)
+  -> reverseList(2)
+       -> reverseList(3)  # 终止条件：3.next 为 None，返回 3
+
+回溯过程：
+reverseList(3) 返回 3
+
+reverseList(2)：
+  new_head = 3
+  head.next.next = head  即 3.next = 2
+  head.next = None       即 2.next = None
+  状态：3 -> 2 -> None
+  返回 new_head = 3
+
+reverseList(1)：
+  new_head = 3
+  head.next.next = head  即 2.next = 1
+  head.next = None       即 1.next = None
+  状态：3 -> 2 -> 1 -> None
+  返回 new_head = 3
+```
+
+#### 7. 迭代 vs 递归对比
+
+| 对比项 | 迭代法 | 递归法 |
+|--------|--------|--------|
+| 时间复杂度 | O(n) | O(n) |
+| 空间复杂度 | O(1) | O(n) 递归栈 |
+| 代码简洁度 | 中等 | 简洁 |
+| 理解难度 | 容易 | 较难 |
+| 推荐场景 | 面试首选 | 理解递归思想 |
+
+#### 8. 本题代码逐行解析（带 Java 对照）
+
+```python
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        pre = None              # ListNode pre = null;
+        cur = head              # ListNode cur = head;
+
+        while cur:              # while (cur != null)
+            nxt = cur.next      # ListNode nxt = cur.next;
+            cur.next = pre      # cur.next = pre;
+            pre = cur           # pre = cur;
+            cur = nxt           # cur = nxt;
+
+        return pre              # return pre;
+```
+
+#### 9. Java vs Python 对照表（本题相关）
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 初始化为空 | `ListNode pre = null;` | `pre = None` |
+| 循环条件 | `while (cur != null)` | `while cur:` |
+| 保存下一节点 | `ListNode nxt = cur.next;` | `nxt = cur.next` |
+| 多重赋值 | 不支持，需要分开写 | `a, b = b, a` |
+| 类型注解 | 强制类型声明 | `Optional[ListNode]`（可选） |
+
+#### 10. 常见错误总结
+
+```python
+# 错误1：忘记保存 next 节点
+while cur:
+    cur.next = pre      # cur.next 被覆盖了！
+    pre = cur
+    cur = cur.next      # cur.next 已经是 pre 了，死循环！
+
+# 错误2：返回 cur 而不是 pre
+while cur:
+    ...
+return cur              # 错！cur 最后是 None
+
+# 错误3：循环条件写成 cur.next
+while cur.next:         # 最后一个节点不会被处理
+    ...
+
+# 错误4：递归时忘记断开原指针
+head.next.next = head   # 正确：让后一个指向自己
+# 忘记写 head.next = None  # 错误：会形成环！
+```
+
+
+
+#### 双指针法-C++
 
 
 
