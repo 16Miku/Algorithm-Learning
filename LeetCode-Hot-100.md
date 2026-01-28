@@ -9184,6 +9184,270 @@ class Solution:
 
 通过这两个示例，可以看出快慢指针 + 反转链表的方法能够正确地判断回文，并且满足 O(1) 空间复杂度的要求。
 
+---
+
+### Python 基础知识补充
+
+#### 1. 本题的三个核心技巧
+
+```python
+"""
+回文链表的 O(1) 空间解法需要掌握三个技巧：
+1. 快慢指针找中点
+2. 反转链表
+3. 比较两个链表
+
+这三个技巧是链表题的基础，必须熟练掌握！
+"""
+```
+
+#### 2. 快慢指针找中点
+
+```python
+# 快慢指针找中点模板
+slow = fast = head
+while fast.next and fast.next.next:
+    slow = slow.next
+    fast = fast.next.next
+# 循环结束后，slow 指向中点（奇数）或中点左边（偶数）
+```
+
+**图解：**
+```
+奇数长度：1 -> 2 -> 3 -> 2 -> 1
+                 ↑
+               slow（中点）
+
+偶数长度：1 -> 2 -> 2 -> 1
+              ↑
+            slow（中点左边）
+```
+
+**为什么用 `fast.next and fast.next.next`？**
+```python
+# 这种写法让 slow 停在中点或中点左边
+while fast.next and fast.next.next:
+    slow = slow.next
+    fast = fast.next.next
+
+# 另一种写法让 slow 停在中点或中点右边
+while fast and fast.next:
+    slow = slow.next
+    fast = fast.next.next
+
+# 本题用第一种，因为我们需要 slow.next 作为后半部分的起点
+```
+
+#### 3. 断开链表的重要性
+
+```python
+# 断开前后两部分
+second_half_head = slow.next
+slow.next = None  # 关键！断开连接
+
+# 为什么要断开？
+# 1. 让前半部分成为独立链表，方便比较时知道何时结束
+# 2. 如果不断开，比较时会一直循环下去
+```
+
+**图解断开过程：**
+```
+断开前：1 -> 2 -> 2 -> 1 -> None
+            slow
+
+断开后：
+前半部分：1 -> 2 -> None
+后半部分：2 -> 1 -> None
+```
+
+#### 4. 简洁的 Python 写法
+
+```python
+class Solution:
+    def isPalindrome(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        if not head or not head.next:
+            return True
+
+        # 1. 快慢指针找中点
+        slow = fast = head
+        while fast.next and fast.next.next:
+            slow = slow.next
+            fast = fast.next.next
+
+        # 2. 反转后半部分
+        pre = None
+        cur = slow.next
+        while cur:
+            cur.next, pre, cur = pre, cur, cur.next
+
+        # 3. 比较前后两部分
+        while pre:  # pre 是反转后的后半部分头节点
+            if head.val != pre.val:
+                return False
+            head = head.next
+            pre = pre.next
+
+        return True
+```
+
+#### 5. 方法一：转数组（简单但空间 O(n)）
+
+```python
+class Solution:
+    def isPalindrome(self, head: Optional[ListNode]) -> bool:
+        # 把链表值存入数组
+        vals = []
+        while head:
+            vals.append(head.val)
+            head = head.next
+
+        # 判断数组是否回文
+        return vals == vals[::-1]
+```
+
+**Python 切片判断回文：**
+```python
+# vals[::-1] 表示反转列表
+[1, 2, 2, 1][::-1]  # [1, 2, 2, 1]，相等，是回文
+[1, 2, 3][::-1]     # [3, 2, 1]，不相等，不是回文
+
+# 这种写法简洁但空间复杂度是 O(n)
+```
+
+#### 6. `_reverse_list` 方法命名规范
+
+```python
+class Solution:
+    def isPalindrome(self, head):
+        ...
+        reversed_head = self._reverse_list(second_half)
+        ...
+
+    def _reverse_list(self, head):  # 下划线开头表示"私有"方法
+        """辅助函数：反转链表"""
+        pre = None
+        cur = head
+        while cur:
+            cur.next, pre, cur = pre, cur, cur.next
+        return pre
+```
+
+**Python 命名规范：**
+```python
+# 单下划线开头：约定俗成的"私有"方法，外部不应直接调用
+def _helper(self):
+    pass
+
+# 双下划线开头：Python 会进行名称改写，更强的"私有"
+def __private(self):
+    pass
+
+# Java 对比
+# private ListNode reverseList(ListNode head) { ... }
+```
+
+#### 7. 本题代码逐行解析（带 Java 对照）
+
+```python
+class Solution:
+    def isPalindrome(self, head: Optional[ListNode]) -> bool:
+        # 边界条件
+        if not head or not head.next:       # if (head == null || head.next == null)
+            return True                      #     return true;
+
+        # 快慢指针找中点
+        slow = fast = head                   # ListNode slow = head, fast = head;
+        while fast.next and fast.next.next:  # while (fast.next != null && fast.next.next != null)
+            slow = slow.next                 #     slow = slow.next;
+            fast = fast.next.next            #     fast = fast.next.next;
+
+        # 反转后半部分
+        second_half = slow.next              # ListNode secondHalf = slow.next;
+        slow.next = None                     # slow.next = null;
+
+        pre = None                           # ListNode pre = null;
+        cur = second_half                    # ListNode cur = secondHalf;
+        while cur:                           # while (cur != null)
+            cur.next, pre, cur = pre, cur, cur.next  # 多重赋值
+
+        # 比较
+        p1, p2 = head, pre                   # ListNode p1 = head, p2 = pre;
+        while p2:                            # while (p2 != null)
+            if p1.val != p2.val:             #     if (p1.val != p2.val)
+                return False                 #         return false;
+            p1 = p1.next                     #     p1 = p1.next;
+            p2 = p2.next                     #     p2 = p2.next;
+
+        return True                          # return true;
+```
+
+#### 8. Java vs Python 对照表（本题相关）
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 判断空或单节点 | `head == null \|\| head.next == null` | `not head or not head.next` |
+| 同时初始化 | `ListNode slow = head, fast = head;` | `slow = fast = head` |
+| 循环条件 | `fast.next != null && fast.next.next != null` | `fast.next and fast.next.next` |
+| 断开链表 | `slow.next = null;` | `slow.next = None` |
+| 私有方法 | `private ListNode reverseList()` | `def _reverse_list(self):` |
+| 数组反转判断 | 需要手动双指针 | `vals == vals[::-1]` |
+
+#### 9. 三种解法对比
+
+| 解法 | 时间复杂度 | 空间复杂度 | 难度 | 推荐度 |
+|------|-----------|-----------|------|--------|
+| 转数组 + 双指针 | O(n) | O(n) | 简单 | 笔试可用 |
+| 转数组 + 切片 | O(n) | O(n) | 最简单 | 笔试首选 |
+| 快慢指针 + 反转 | O(n) | O(1) | 较难 | 面试首选 |
+
+#### 10. 常见错误总结
+
+```python
+# 错误1：忘记断开链表
+second_half = slow.next
+# slow.next = None  # 忘记这行！
+# 后果：比较时前半部分会一直遍历到后半部分
+
+# 错误2：快慢指针循环条件写错
+while fast and fast.next:  # 这样 slow 会停在中点右边
+    ...
+# 应该用 while fast.next and fast.next.next
+
+# 错误3：比较时用错指针
+while p1:  # 应该用 p2（后半部分可能更短）
+    if p1.val != p2.val:
+        return False
+    ...
+
+# 错误4：忘记处理边界条件
+# if not head or not head.next:  # 忘记这行
+#     return True
+# 后果：空链表或单节点链表会出错
+```
+
+#### 11. 算法模式总结：快慢指针找中点
+
+```python
+"""
+快慢指针找中点是链表题的核心技巧
+
+应用场景：
+1. 回文链表（本题）
+2. 链表排序（归并排序需要找中点）
+3. 重排链表
+4. 删除链表中间节点
+
+两种写法的区别：
+写法1：while fast.next and fast.next.next
+       slow 停在中点（奇数）或中点左边（偶数）
+
+写法2：while fast and fast.next
+       slow 停在中点（奇数）或中点右边（偶数）
+
+选择哪种取决于题目需求！
+"""
+```
+
 
 
 
