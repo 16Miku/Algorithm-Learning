@@ -7959,7 +7959,247 @@ N_1A 和 N_1B 尽管值都是1，但它们是不同的节点对象。
 
 **结果：** `N_8` (值为 8)，与题目示例输出一致。
 
-这个演示清晰地展示了两个指针如何通过遍历对方链表来“弥补”长度差，最终在相交点相遇。如果链表不相交，它们会同时变成 `null`，然后返回 `null`。
+这个演示清晰地展示了两个指针如何通过遍历对方链表来"弥补"长度差，最终在相交点相遇。如果链表不相交，它们会同时变成 `null`，然后返回 `null`。
+
+---
+
+### Python 基础知识补充
+
+#### 1. Python 中的链表节点定义
+
+```python
+# Python 链表节点定义
+class ListNode:
+    def __init__(self, x):
+        self.val = x       # 节点的值
+        self.next = None   # 指向下一个节点的指针
+
+# Java 对比
+# public class ListNode {
+#     int val;
+#     ListNode next;
+#     ListNode(int x) {
+#         val = x;
+#         next = null;
+#     }
+# }
+```
+
+**关键区别：**
+| 特性 | Java | Python |
+|------|------|--------|
+| 构造函数 | `ListNode(int x)` | `__init__(self, x)` |
+| 空指针 | `null` | `None` |
+| 访问属性 | `node.val` | `node.val`（相同） |
+| 类型声明 | 需要声明类型 | 不需要 |
+
+#### 2. `is` vs `==`：身份比较 vs 值比较
+
+```python
+# is：比较两个对象是否是同一个对象（内存地址相同）
+# ==：比较两个对象的值是否相等
+
+a = ListNode(5)
+b = ListNode(5)
+c = a
+
+a == b      # 取决于 __eq__ 方法，默认比较 id
+a is b      # False，a 和 b 是不同的对象
+a is c      # True，a 和 c 指向同一个对象
+
+# 本题中使用 is 比较节点
+while pA is not pB:  # 比较是否是同一个节点对象
+    ...
+```
+
+**Java 对比：**
+```java
+// Java 中 == 对于对象就是比较引用（内存地址）
+while (pA != pB) {  // 比较是否是同一个对象
+    ...
+}
+
+// Java 中 equals() 才是比较值
+// pA.equals(pB)  // 比较值（如果重写了 equals）
+```
+
+**重要：链表题中必须用 `is` 而不是 `==`**
+```python
+# 错误写法
+while pA != pB:      # 可能会调用 __eq__，比较值而非对象
+
+# 正确写法
+while pA is not pB:  # 明确比较对象身份
+```
+
+#### 3. `not` 关键字：判断空值
+
+```python
+# Python 中判断空值
+if not headA or not headB:
+    return None
+
+# 等价于
+if headA is None or headB is None:
+    return None
+
+# Java 对比
+# if (headA == null || headB == null) {
+#     return null;
+# }
+```
+
+**Python 中的"假值"（Falsy）：**
+```python
+# 以下值在布尔上下文中都是 False
+None        # 空值
+False       # 布尔假
+0           # 数字零
+""          # 空字符串
+[]          # 空列表
+{}          # 空字典
+set()       # 空集合
+
+# 所以 not None 等于 True
+not None    # True
+not 0       # True
+not []      # True
+```
+
+#### 4. 三元表达式：条件赋值
+
+```python
+# Python 三元表达式
+pA = headB if pA is None else pA.next
+
+# 等价于
+if pA is None:
+    pA = headB
+else:
+    pA = pA.next
+
+# Java 对比（三元运算符）
+# pA = (pA == null) ? headB : pA.next;
+```
+
+**语法对比：**
+```python
+# Python: 值1 if 条件 else 值2
+result = "yes" if x > 0 else "no"
+
+# Java:   条件 ? 值1 : 值2
+# String result = (x > 0) ? "yes" : "no";
+```
+
+#### 5. 本题代码逐行解析（带 Java 对照注释）
+
+```python
+class Solution:
+    def getIntersectionNode(self, headA: ListNode, headB: ListNode) -> ListNode:
+        # 边界条件：任一链表为空，不可能相交
+        if not headA or not headB:    # if (headA == null || headB == null)
+            return None                # return null;
+
+        # 初始化双指针
+        pA = headA                     # ListNode pA = headA;
+        pB = headB                     # ListNode pB = headB;
+
+        # 循环直到两指针相遇
+        while pA is not pB:            # while (pA != pB)
+            # pA 走到末尾就跳到 B 的头部，否则继续前进
+            pA = headB if pA is None else pA.next  # pA = (pA == null) ? headB : pA.next;
+
+            # pB 走到末尾就跳到 A 的头部，否则继续前进
+            pB = headA if pB is None else pB.next  # pB = (pB == null) ? headA : pB.next;
+
+        # 返回相交节点（或 None）
+        return pA                      # return pA;
+```
+
+#### 6. 链表遍历的基本模式
+
+```python
+# 模式1：遍历整个链表
+current = head
+while current:              # while current is not None
+    print(current.val)
+    current = current.next
+
+# 模式2：遍历到倒数第二个节点
+current = head
+while current.next:         # 当 current.next 不为空时
+    current = current.next
+
+# 模式3：双指针遍历
+slow = fast = head
+while fast and fast.next:   # 快指针能走两步
+    slow = slow.next
+    fast = fast.next.next
+```
+
+**Java 对比：**
+```java
+// 模式1
+ListNode current = head;
+while (current != null) {
+    System.out.println(current.val);
+    current = current.next;
+}
+
+// 模式2
+ListNode current = head;
+while (current.next != null) {
+    current = current.next;
+}
+
+// 模式3
+ListNode slow = head, fast = head;
+while (fast != null && fast.next != null) {
+    slow = slow.next;
+    fast = fast.next.next;
+}
+```
+
+#### 7. Java vs Python 链表操作对照表
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 空指针 | `null` | `None` |
+| 判断空 | `node == null` | `node is None` 或 `not node` |
+| 判断非空 | `node != null` | `node is not None` 或 `node` |
+| 比较对象 | `pA != pB` | `pA is not pB` |
+| 三元表达式 | `条件 ? 值1 : 值2` | `值1 if 条件 else 值2` |
+| 逻辑或 | `\|\|` | `or` |
+| 逻辑与 | `&&` | `and` |
+| 逻辑非 | `!` | `not` |
+
+#### 8. 算法思想总结：双指针消除长度差
+
+```python
+"""
+双指针法找相交节点
+
+核心思想：
+- 链表 A 长度 = a + c（a 是独有部分，c 是公共部分）
+- 链表 B 长度 = b + c
+- 指针 pA 走：a + c + b = a + b + c
+- 指针 pB 走：b + c + a = a + b + c
+- 两者走的总长度相同，会在相交点相遇！
+
+图解：
+A:     a1 -> a2 -> c1 -> c2 -> c3
+                   ↑
+B: b1 -> b2 -> b3 -┘
+
+pA 路径：a1 -> a2 -> c1 -> c2 -> c3 -> b1 -> b2 -> b3 -> c1（相遇）
+pB 路径：b1 -> b2 -> b3 -> c1 -> c2 -> c3 -> a1 -> a2 -> c1（相遇）
+
+如果不相交：
+- pA 走完 A + B，到达 None
+- pB 走完 B + A，到达 None
+- 两者同时到达 None，返回 None
+"""
+```
 
 
 
