@@ -4955,22 +4955,237 @@ class Solution:
         return result
 ```
 
-**Counter 的特点：**
+**Counter 详解：从零开始理解计数器**
+
+##### 什么是 Counter？
+
+Counter 是 Python `collections` 模块中的一个类，专门用于**统计元素出现次数**。它本质上是一个特殊的字典，键是元素，值是出现次数。
+
+```python
+# Java 中统计字符频率需要手动写
+Map<Character, Integer> map = new HashMap<>();
+for (char c : s.toCharArray()) {
+    map.put(c, map.getOrDefault(c, 0) + 1);
+}
+
+# Python 用 Counter 一行搞定
+from collections import Counter
+cnt = Counter(s)
+```
+
+##### Counter 的创建方式
+
 ```python
 from collections import Counter
 
-# 创建
-cnt = Counter("aabbc")     # Counter({'a': 2, 'b': 2, 'c': 1})
+# 方式1：从字符串创建（统计每个字符出现次数）
+cnt1 = Counter("aabbc")
+print(cnt1)  # Counter({'a': 2, 'b': 2, 'c': 1})
 
-# 直接比较（非常方便！）
-Counter("abc") == Counter("cba")  # True，因为字符频率相同
+# 方式2：从列表创建（统计每个元素出现次数）
+cnt2 = Counter([1, 1, 2, 3, 3, 3])
+print(cnt2)  # Counter({3: 3, 1: 2, 2: 1})
 
-# 访问不存在的键返回 0（不会报错）
-cnt['z']                   # 0，不是 KeyError
+# 方式3：创建空 Counter，后续手动添加
+cnt3 = Counter()
+cnt3['a'] += 1
+cnt3['b'] += 2
+print(cnt3)  # Counter({'b': 2, 'a': 1})
 
-# 删除计数为 0 的键
-cnt['c'] -= 1              # cnt['c'] = 0
-del cnt['c']               # 删除键 'c'
+# 方式4：直接用字典形式创建
+cnt4 = Counter({'a': 3, 'b': 1})
+print(cnt4)  # Counter({'a': 3, 'b': 1})
+```
+
+**Java 对比：**
+```java
+// Java 没有直接等价的类，需要用 HashMap
+Map<Character, Integer> cnt = new HashMap<>();
+for (char c : "aabbc".toCharArray()) {
+    cnt.put(c, cnt.getOrDefault(c, 0) + 1);
+}
+// cnt = {a=2, b=2, c=1}
+```
+
+##### Counter 的基本操作
+
+```python
+from collections import Counter
+
+cnt = Counter("aabbc")  # Counter({'a': 2, 'b': 2, 'c': 1})
+
+# 1. 访问元素计数
+cnt['a']      # 2
+cnt['b']      # 2
+
+# 2. 访问不存在的键 → 返回 0（不会报错！）
+cnt['z']      # 0  （普通字典会报 KeyError）
+
+# 3. 修改计数
+cnt['a'] += 1   # cnt['a'] 变成 3
+cnt['a'] -= 1   # cnt['a'] 变成 2
+
+# 4. 添加新元素
+cnt['d'] = 5    # 直接赋值
+cnt['e'] += 1   # 从 0 开始加 1
+
+# 5. 删除元素
+del cnt['c']    # 删除键 'c'
+```
+
+**与普通字典的关键区别：**
+```python
+# 普通字典：访问不存在的键会报错
+d = {'a': 1}
+d['z']          # KeyError: 'z'
+
+# Counter：访问不存在的键返回 0
+cnt = Counter({'a': 1})
+cnt['z']        # 0 （不报错）
+
+# 这个特性让 Counter 非常适合计数场景
+cnt['new_key'] += 1  # 可以直接加，不需要先判断键是否存在
+```
+
+##### Counter 的比较操作（本题核心）
+
+```python
+from collections import Counter
+
+# Counter 可以直接用 == 比较
+cnt1 = Counter("abc")   # Counter({'a': 1, 'b': 1, 'c': 1})
+cnt2 = Counter("cba")   # Counter({'c': 1, 'b': 1, 'a': 1})
+cnt3 = Counter("aab")   # Counter({'a': 2, 'b': 1})
+
+cnt1 == cnt2    # True  （字符种类和数量都相同）
+cnt1 == cnt3    # False （数量不同）
+
+# 比较原理：检查所有键的值是否相等
+# 相当于 Java 中：
+# cnt1.equals(cnt2)  // 但 Java 的 HashMap 也能这样比较
+```
+
+**重要特性：值为 0 的键不影响比较**
+```python
+cnt1 = Counter({'a': 1, 'b': 1})
+cnt2 = Counter({'a': 1, 'b': 1, 'c': 0})  # 多了个值为 0 的 'c'
+
+cnt1 == cnt2    # True！
+
+# 原因：Counter 比较时会忽略值为 0 的键
+# 这就是为什么灵神写法不需要 del 删除计数为 0 的键
+```
+
+**底层原理：**
+```python
+# Counter 继承自 dict，但重写了 __eq__ 方法
+# 比较时会跳过值为 0 的键
+
+# 伪代码实现：
+def __eq__(self, other):
+    for key in set(self.keys()) | set(other.keys()):
+        if self[key] != other[key]:  # 不存在的键返回 0
+            return False
+    return True
+```
+
+##### Counter 的常用方法
+
+```python
+from collections import Counter
+
+cnt = Counter("aabbbc")  # Counter({'b': 3, 'a': 2, 'c': 1})
+
+# 1. most_common(n)：返回出现次数最多的 n 个元素
+cnt.most_common(2)      # [('b', 3), ('a', 2)]
+cnt.most_common()       # [('b', 3), ('a', 2), ('c', 1)] 全部按频率排序
+
+# 2. elements()：返回所有元素的迭代器（按计数重复）
+list(cnt.elements())    # ['a', 'a', 'b', 'b', 'b', 'c']
+
+# 3. total()：返回所有计数的总和（Python 3.10+）
+cnt.total()             # 6
+
+# 4. 转换为普通字典
+dict(cnt)               # {'a': 2, 'b': 3, 'c': 1}
+
+# 5. 获取所有键/值
+list(cnt.keys())        # ['a', 'b', 'c']
+list(cnt.values())      # [2, 3, 1]
+list(cnt.items())       # [('a', 2), ('b', 3), ('c', 1)]
+```
+
+##### Counter 的运算操作
+
+```python
+from collections import Counter
+
+cnt1 = Counter({'a': 3, 'b': 1})
+cnt2 = Counter({'a': 1, 'b': 2})
+
+# 加法：合并计数
+cnt1 + cnt2     # Counter({'a': 4, 'b': 3})
+
+# 减法：相减（只保留正数）
+cnt1 - cnt2     # Counter({'a': 2})  # 'b' 变成负数被丢弃
+
+# 交集：取最小值
+cnt1 & cnt2     # Counter({'a': 1, 'b': 1})
+
+# 并集：取最大值
+cnt1 | cnt2     # Counter({'a': 3, 'b': 2})
+```
+
+##### Counter vs 数组：两种计数方式对比
+
+```python
+# 方式1：用数组（适合字符集固定且小的情况）
+def count_with_array(s):
+    counts = [0] * 26
+    for c in s:
+        counts[ord(c) - ord('a')] += 1
+    return counts
+
+# 方式2：用 Counter（更通用、更简洁）
+def count_with_counter(s):
+    return Counter(s)
+
+# 对比
+s = "aabbc"
+count_with_array(s)    # [2, 2, 1, 0, 0, ..., 0] 长度26的数组
+count_with_counter(s)  # Counter({'a': 2, 'b': 2, 'c': 1})
+```
+
+| 对比项 | 数组 `[0] * 26` | Counter |
+|--------|----------------|---------|
+| 适用场景 | 只有小写字母 | 任意可哈希元素 |
+| 空间 | 固定 26 | 只存储出现的元素 |
+| 访问速度 | O(1) | O(1) |
+| 比较速度 | O(26) | O(字符种类数) |
+| 代码简洁度 | 需要 ord() 转换 | 直接使用 |
+| Java 对应 | `int[26]` | `HashMap` |
+
+##### 本题中 Counter 的使用总结
+
+```python
+from collections import Counter
+
+# 1. 统计目标字符串的字符频率
+cnt_p = Counter(p)      # 相当于 Java 的 HashMap 统计
+
+# 2. 创建空 Counter 用于滑动窗口
+cnt_s = Counter()       # 相当于 new HashMap<>()
+
+# 3. 字符进入窗口
+cnt_s[c] += 1           # 相当于 map.put(c, map.getOrDefault(c, 0) + 1)
+
+# 4. 字符离开窗口
+cnt_s[s[left]] -= 1     # 相当于 map.put(c, map.get(c) - 1)
+                        # 不需要删除值为 0 的键！
+
+# 5. 比较两个 Counter
+if cnt_s == cnt_p:      # 相当于遍历比较两个 HashMap
+    ans.append(left)
 ```
 
 #### 7. Java vs Python 对照表
