@@ -10954,6 +10954,248 @@ class Solution:
 *   返回 `dummy_head.next`，即 `N_1_l1`。
 *   最终合并后的链表为：`1 -> 1 -> 2 -> 3 -> 4 -> 4`，与示例输出一致。
 
+---
+
+### Python 基础知识补充
+
+#### 1. 哨兵节点（Dummy Head）模式
+
+```python
+# 创建哨兵节点，简化边界处理
+dummy_head = ListNode(-1)  # 值可以是任意数，不重要
+current = dummy_head       # current 指向哨兵节点
+
+# 这样做的好处：
+# 1. 不需要单独处理第一个节点
+# 2. 所有节点都用统一的方式处理
+# 3. 最后返回 dummy_head.next 即可
+```
+
+**图解哨兵节点的作用：**
+```
+不使用哨兵：需要特殊处理第一个节点
+if not result_head:
+    result_head = smaller_node
+else:
+    current.next = smaller_node
+
+使用哨兵：统一处理
+current.next = smaller_node  # 没有特殊情况！
+```
+
+#### 2. Python 的真值判断（简化条件）
+
+```python
+# Python 中 None 和空对象在布尔上下文中为 False
+
+# 判断链表不为空
+while l1 and l2:  # 相当于 while l1 is not None and l2 is not None
+    pass
+
+# 判断链表不为空
+if l1:            # 相当于 if l1 is not None
+    pass
+
+# Java 对比
+// while (l1 != null && l2 != null)
+// if (l1 != null)
+```
+
+#### 3. Python 的三元表达式
+
+```python
+# 处理剩余链表的三种写法
+
+# 写法1：if-else
+if l1:
+    current.next = l1
+elif l2:
+    current.next = l2
+
+# 写法2：三元表达式（简洁）
+current.next = l1 if l1 else l2
+
+# 写法3：利用 or 运算符（更简洁）
+current.next = l1 or l2
+
+# 解释：如果 l1 非空则用 l1，否则用 l2
+# 但要注意：如果 l2 也为空，结果是 None，这正是我们想要的
+```
+
+**Java 对比：**
+```java
+// Java 三元运算符
+current.next = (l1 != null) ? l1 : l2;
+```
+
+#### 4. 递归解法（更简洁但空间复杂度更高）
+
+```python
+class Solution:
+    def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
+        # 递归终止条件
+        if not l1:
+            return l2
+        if not l2:
+            return l1
+
+        # 选择较小的节点作为头，递归合并剩余部分
+        if l1.val <= l2.val:
+            l1.next = self.mergeTwoLists(l1.next, l2)
+            return l1
+        else:
+            l2.next = self.mergeTwoLists(l1, l2.next)
+            return l2
+```
+
+**递归图解：**
+```
+l1 = 1 -> 2 -> 4
+l2 = 1 -> 3 -> 4
+
+mergeTwoLists(l1, l2)
+├── 比较 1 和 1，l1 <= l2
+├── l1.next = mergeTwoLists(2->4, 1->3->4)
+│   ├── 比较 2 和 1，l2 < l1
+│   ├── l2.next = mergeTwoLists(2->4, 3->4)
+│   │   ├── 比较 2 和 3，l1 < l2
+│   │   ├── l1.next = mergeTwoLists(4, 3->4)
+│   │   │   ├── 比较 4 和 3，l2 < l1
+│   │   │   ├── l2.next = mergeTwoLists(4, 4)
+│   │   │   │   ├── 比较 4 和 4，l1 <= l2
+│   │   │   │   ├── l1.next = mergeTwoLists(None, 4)
+│   │   │   │   │   └── l1 为空，返回 l2(4)
+│   │   │   │   └── 返回 l1(4) -> 4
+│   │   │   └── 返回 l2(3) -> 4 -> 4
+│   │   └── 返回 l1(2) -> 3 -> 4 -> 4
+│   └── 返回 l2(1) -> 2 -> 3 -> 4 -> 4
+└── 返回 l1(1) -> 1 -> 2 -> 3 -> 4 -> 4
+```
+
+#### 5. 迭代 vs 递归对比
+
+| 对比项 | 迭代法 | 递归法 |
+|--------|--------|--------|
+| 时间复杂度 | O(m+n) | O(m+n) |
+| 空间复杂度 | O(1) | O(m+n) 递归栈 |
+| 代码简洁度 | 中等 | 很简洁 |
+| 面试推荐 | 首选 | 理解递归思想 |
+
+#### 6. 本题代码逐行解析（带 Java 对照）
+
+```python
+class Solution:
+    def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
+        # 创建哨兵节点
+        dummy_head = ListNode(-1)   # ListNode dummyHead = new ListNode(-1);
+        current = dummy_head         # ListNode current = dummyHead;
+
+        # 比较合并
+        while l1 and l2:             # while (l1 != null && l2 != null)
+            if l1.val <= l2.val:     # if (l1.val <= l2.val)
+                current.next = l1    #     current.next = l1;
+                l1 = l1.next         #     l1 = l1.next;
+            else:                    # else
+                current.next = l2    #     current.next = l2;
+                l2 = l2.next         #     l2 = l2.next;
+            current = current.next   # current = current.next;
+
+        # 处理剩余部分
+        current.next = l1 or l2      # current.next = (l1 != null) ? l1 : l2;
+
+        return dummy_head.next      # return dummyHead.next;
+```
+
+#### 7. Java vs Python 对照表（本题相关）
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 判断非空 | `l1 != null` | `l1` 或 `l1 is not None` |
+| 判断都非空 | `l1 != null && l2 != null` | `l1 and l2` |
+| 三元表达式 | `条件 ? 值1 : 值2` | `值1 if 条件 else 值2` |
+| or 运算符 | `\|\|`（逻辑或） | `or`（可返回非布尔值） |
+| 空值 | `null` | `None` |
+
+#### 8. Python 的 `or` 运算符特殊用法
+
+```python
+# Python 的 or 返回第一个"真值"，而不是严格的 True/False
+
+result = l1 or l2
+# 如果 l1 非空，返回 l1
+# 如果 l1 为空（None），返回 l2
+
+# 更多的例子
+0 or 5          # 5（0 是假值）
+0 or None or 3  # 3
+"hello" or "world"  # "hello"
+None or [] or "hi"  # "hi"
+
+# Java 的 || 只返回 boolean
+// boolean result = (l1 != null) || (l2 != null);
+// 不能用 || 返回对象！
+```
+
+#### 9. 算法模式总结：双指针合并有序序列
+
+```python
+"""
+合并两个有序序列的通用模板
+
+适用于：
+- 合并两个有序链表（本题）
+- 合并两个有序数组
+- 归并排序的合并步骤
+
+核心步骤：
+1. 创建哨兵节点（可选，但推荐）
+2. 双指针同时遍历
+3. 比较选择较小的
+4. 处理剩余部分
+"""
+
+def merge_sorted(list1, list2):
+    dummy = ListNode(-1)
+    cur = dummy
+
+    while list1 and list2:
+        if list1.val <= list2.val:
+            cur.next = list1
+            list1 = list1.next
+        else:
+            cur.next = list2
+            list2 = list2.next
+        cur = cur.next
+
+    cur.next = list1 or list2
+    return dummy.next
+```
+
+#### 10. 常见错误总结
+
+```python
+# 错误1：忘记移动 current 指针
+while l1 and l2:
+    current.next = l1
+    l1 = l1.next
+    # 忘记 current = current.next！
+# 后果：链表只有两个节点，后面的都丢失了
+
+# 错误2：循环条件写错
+while l1.next and l2.next:  # 错！这样会漏掉最后一个节点
+# 应该用 while l1 and l2
+
+# 错误3：返回 dummy_head 而不是 dummy_head.next
+return dummy_head  # 错！返回的是哨兵节点
+# 应该用 return dummy_head.next
+
+# 错误4：递归时忘记返回节点
+if l1.val <= l2.val:
+    l1.next = self.mergeTwoLists(l1.next, l2)
+    # 忘记 return l1！
+# 后果：最终返回 None
+```
+
 
 
 
