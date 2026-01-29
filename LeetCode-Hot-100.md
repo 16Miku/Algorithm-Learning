@@ -11783,6 +11783,271 @@ class Solution:
 
 这个过程完美模拟了竖式加法，逐位处理，并正确处理了进位和链表长度不一致的情况。
 
+---
+
+### Python 基础知识补充
+
+#### 1. 本题的核心思想：模拟竖式加法
+
+```python
+"""
+竖式加法回顾：
+    3 4 2
+  + 4 6 5
+  -------
+    8 0 7
+
+从右往左（个位到高位）逐位相加，满10进1
+
+链表存储是逆序的（个位在前），所以可以直接从头遍历！
+l1: 2 -> 4 -> 3  (代表 342)
+l2: 5 -> 6 -> 4  (代表 465)
+
+逐位相加：
+2 + 5 = 7，进位 0
+4 + 6 = 10，当前位 0，进位 1
+3 + 4 + 1(进位) = 8，进位 0
+
+结果：7 -> 0 -> 8 (代表 807)
+"""
+```
+
+#### 2. Python 整数除法和取模
+
+```python
+# 整数除法：//（向下取整）
+10 // 3    # 3
+7 // 2     # 3
+-7 // 2    # -4（向下取整，不是向零取整）
+
+# 取模：%
+10 % 3     # 1
+7 % 2      # 1
+
+# 本题应用：
+total = 15
+carry = total // 10   # 1（进位）
+digit = total % 10    # 5（当前位数字）
+
+# Java 对比
+// int carry = total / 10;  // Java 整数除法
+// int digit = total % 10;  // Java 取模
+```
+
+**Python 的 divmod() 函数：**
+```python
+# 同时获取商和余数
+carry, digit = divmod(total, 10)
+
+# 等价于
+carry = total // 10
+digit = total % 10
+
+# 更简洁的写法
+carry, digit = divmod(x + y + carry, 10)
+```
+
+#### 3. 循环条件的巧妙设计
+
+```python
+# 本题循环条件
+while l1 or l2 or carry:
+    ...
+
+# 这个条件覆盖了所有情况：
+# 1. l1 和 l2 都有节点
+# 2. 只有 l1 有节点
+# 3. 只有 l2 有节点
+# 4. l1 和 l2 都为空，但还有进位
+
+# Java 对比
+// while (l1 != null || l2 != null || carry != 0)
+```
+
+**为什么 `carry` 也要放在条件里？**
+```python
+# 例如：[9,9] + [1] = [0,0,1]
+# 9 + 1 = 10，当前位 0，进位 1
+# 9 + 0 + 1 = 10，当前位 0，进位 1
+# 此时 l1 和 l2 都为空，但 carry = 1
+# 需要再创建一个节点存储这个进位！
+```
+
+#### 4. 三元表达式获取节点值
+
+```python
+# 获取节点值，如果节点为空则取 0
+x = l1.val if l1 else 0
+y = l2.val if l2 else 0
+
+# 等价于
+if l1:
+    x = l1.val
+else:
+    x = 0
+
+# Java 对比
+// int x = (l1 != null) ? l1.val : 0;
+```
+
+#### 5. 简洁的 Python 写法
+
+```python
+class Solution:
+    def addTwoNumbers(self, l1: Optional[ListNode], l2: Optional[ListNode]) -> Optional[ListNode]:
+        dummy = cur = ListNode(0)
+        carry = 0
+
+        while l1 or l2 or carry:
+            x = l1.val if l1 else 0
+            y = l2.val if l2 else 0
+
+            carry, digit = divmod(x + y + carry, 10)
+            cur.next = ListNode(digit)
+            cur = cur.next
+
+            l1 = l1.next if l1 else None
+            l2 = l2.next if l2 else None
+
+        return dummy.next
+```
+
+#### 6. 更简洁的写法（利用 or）
+
+```python
+class Solution:
+    def addTwoNumbers(self, l1: Optional[ListNode], l2: Optional[ListNode]) -> Optional[ListNode]:
+        dummy = cur = ListNode(0)
+        carry = 0
+
+        while l1 or l2 or carry:
+            val = (l1.val if l1 else 0) + (l2.val if l2 else 0) + carry
+            carry, digit = divmod(val, 10)
+
+            cur.next = ListNode(digit)
+            cur = cur.next
+
+            l1 = l1 and l1.next  # 如果 l1 存在，移动到下一个；否则保持 None
+            l2 = l2 and l2.next
+
+        return dummy.next
+```
+
+**`l1 and l1.next` 的技巧：**
+```python
+# l1 and l1.next 的含义：
+# - 如果 l1 为 None，返回 None（短路求值）
+# - 如果 l1 不为 None，返回 l1.next
+
+# 等价于
+l1 = l1.next if l1 else None
+```
+
+#### 7. 本题代码逐行解析（带 Java 对照）
+
+```python
+class Solution:
+    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:
+        # 创建哨兵节点
+        dummy_head = ListNode(0)      # ListNode dummyHead = new ListNode(0);
+        current = dummy_head          # ListNode current = dummyHead;
+        carry = 0                     # int carry = 0;
+
+        # 循环处理
+        while l1 or l2 or carry:      # while (l1 != null || l2 != null || carry != 0)
+            x = l1.val if l1 else 0   # int x = (l1 != null) ? l1.val : 0;
+            y = l2.val if l2 else 0   # int y = (l2 != null) ? l2.val : 0;
+
+            total = x + y + carry     # int sum = x + y + carry;
+            carry = total // 10       # carry = sum / 10;
+            digit = total % 10        # int digit = sum % 10;
+
+            current.next = ListNode(digit)  # current.next = new ListNode(digit);
+            current = current.next          # current = current.next;
+
+            if l1:                    # if (l1 != null)
+                l1 = l1.next          #     l1 = l1.next;
+            if l2:                    # if (l2 != null)
+                l2 = l2.next          #     l2 = l2.next;
+
+        return dummy_head.next        # return dummyHead.next;
+```
+
+#### 8. Java vs Python 对照表（本题相关）
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 整数除法 | `/`（整数间） | `//` |
+| 取模 | `%` | `%` |
+| 同时取商和余数 | 需要两行 | `divmod(a, b)` |
+| 三元表达式 | `条件 ? 值1 : 值2` | `值1 if 条件 else 值2` |
+| 循环条件 | `l1 != null \|\| l2 != null \|\| carry != 0` | `l1 or l2 or carry` |
+| 短路求值移动指针 | 不支持 | `l1 = l1 and l1.next` |
+
+#### 9. 常见错误总结
+
+```python
+# 错误1：忘记处理最后的进位
+while l1 or l2:  # 错！应该是 while l1 or l2 or carry
+    ...
+# 后果：[9,9] + [1] 会输出 [0,0] 而不是 [0,0,1]
+
+# 错误2：移动指针时没有判断空
+while l1 or l2 or carry:
+    ...
+    l1 = l1.next  # 错！如果 l1 为 None 会报错
+    l2 = l2.next
+# 应该用 if l1: l1 = l1.next
+
+# 错误3：忘记移动 current 指针
+current.next = ListNode(digit)
+# current = current.next  # 忘记这行！
+# 后果：所有节点都连到同一个位置，结果只有一个节点
+
+# 错误4：返回 dummy_head 而不是 dummy_head.next
+return dummy_head  # 错！返回的是哨兵节点
+```
+
+#### 10. 算法模式总结：逐位处理 + 进位
+
+```python
+"""
+逐位处理 + 进位模板
+
+适用于：
+- 两数相加（本题）
+- 字符串相加（415题）
+- 二进制求和（67题）
+- 大数相乘
+
+核心步骤：
+1. 创建哨兵节点
+2. 循环条件包含进位
+3. 取值时处理空节点
+4. 计算和、进位、当前位
+5. 创建新节点
+6. 移动指针
+"""
+
+def add_template(l1, l2):
+    dummy = cur = ListNode(0)
+    carry = 0
+
+    while l1 or l2 or carry:
+        x = l1.val if l1 else 0
+        y = l2.val if l2 else 0
+
+        carry, digit = divmod(x + y + carry, 10)
+
+        cur.next = ListNode(digit)
+        cur = cur.next
+
+        l1 = l1.next if l1 else None
+        l2 = l2.next if l2 else None
+
+    return dummy.next
+```
+
 
 
 
