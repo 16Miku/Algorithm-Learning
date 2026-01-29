@@ -10497,6 +10497,243 @@ class Solution:
 
 这个演示清晰地展示了快慢指针如何先在环中相遇，然后通过将一个指针重置回头部，并让两个指针以相同速度前进，最终在环的入口处再次相遇，从而找到环的起始节点。
 
+---
+
+### Python 基础知识补充
+
+#### 1. 本题的核心算法：Floyd 判圈算法
+
+```python
+"""
+Floyd 判圈算法（龟兔赛跑算法）分两个阶段：
+
+阶段一：判断是否有环（快慢指针相遇）
+- 快指针每次走 2 步，慢指针每次走 1 步
+- 如果有环，快慢指针一定会在环内相遇
+- 如果无环，快指针会先到达 None
+
+阶段二：找环的入口（数学推导的结论）
+- 一个指针从头出发，一个指针从相遇点出发
+- 两个指针都每次走 1 步
+- 它们相遇的地方就是环的入口
+"""
+```
+
+#### 2. 数学推导图解
+
+```
+设：
+a = 头节点到环入口的距离
+b = 环入口到相遇点的距离
+c = 相遇点到环入口的距离（沿环方向）
+环长 = b + c
+
+        a           b
+head -----> entry -----> meet
+              ↑           |
+              |___________|
+                    c
+
+相遇时：
+- slow 走了：a + b
+- fast 走了：a + b + k(b+c)  （k 是 fast 多绕的圈数，k >= 1）
+- fast 速度是 slow 的 2 倍：2(a + b) = a + b + k(b+c)
+
+推导：
+a + b = k(b + c)
+a = k(b + c) - b
+a = (k-1)(b + c) + c
+a = (k-1) * 环长 + c
+
+结论：a = c + 若干圈
+所以从 head 走 a 步 = 从 meet 走 c 步（+ 若干圈）
+两者会在环入口相遇！
+```
+
+#### 3. 简洁的 Python 写法
+
+```python
+class Solution:
+    def detectCycle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        slow = fast = head
+
+        # 阶段一：找相遇点
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+            if slow == fast:  # 相遇，有环
+                # 阶段二：找入口
+                fast = head
+                while slow != fast:
+                    slow = slow.next
+                    fast = fast.next
+                return slow  # 入口
+
+        return None  # 无环
+```
+
+#### 4. 使用哈希集合的简单解法（空间 O(n)）
+
+```python
+class Solution:
+    def detectCycle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        visited = set()  # 存储访问过的节点
+
+        while head:
+            if head in visited:  # 如果已访问过，说明是环入口
+                return head
+            visited.add(head)    # 标记为已访问
+            head = head.next
+
+        return None  # 无环
+```
+
+**两种解法对比：**
+
+| 解法 | 时间复杂度 | 空间复杂度 | 推荐场景 |
+|------|-----------|-----------|----------|
+| 哈希集合 | O(n) | O(n) | 笔试（代码简单） |
+| 快慢指针 | O(n) | O(1) | 面试（展示能力） |
+
+#### 5. `is` vs `==` 在链表中的使用
+
+```python
+# 判断两个节点是否是同一个对象
+if slow == fast:   # 可以用 ==
+if slow is fast:   # 更推荐用 is
+
+# 为什么推荐 is？
+# - is 比较的是对象身份（内存地址）
+# - == 可能会调用 __eq__ 方法
+# - 链表题中我们关心的是"是否是同一个节点"，用 is 更明确
+
+# 但实际上，对于 ListNode 对象：
+# - 如果没有重写 __eq__，== 默认也是比较 id
+# - 所以两种写法效果相同，但 is 语义更清晰
+```
+
+#### 6. 本题代码逐行解析（带 Java 对照）
+
+```python
+class Solution:
+    def detectCycle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        # 边界条件
+        if not head or not head.next:    # if (head == null || head.next == null)
+            return None                   #     return null;
+
+        # 阶段一：快慢指针找相遇点
+        slow = fast = head                # ListNode slow = head, fast = head;
+
+        while fast and fast.next:         # while (fast != null && fast.next != null)
+            slow = slow.next              #     slow = slow.next;
+            fast = fast.next.next         #     fast = fast.next.next;
+
+            if slow == fast:              #     if (slow == fast)
+                break                     #         break;
+
+        # 判断是否有环
+        if not fast or not fast.next:     # if (fast == null || fast.next == null)
+            return None                   #     return null;
+
+        # 阶段二：找环入口
+        fast = head                       # fast = head;
+        while slow != fast:               # while (slow != fast)
+            slow = slow.next              #     slow = slow.next;
+            fast = fast.next              #     fast = fast.next;
+
+        return slow                       # return slow;
+```
+
+#### 7. 141 vs 142 对比
+
+```python
+# 141. 环形链表：只判断是否有环
+def hasCycle(head):
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow == fast:
+            return True   # 有环
+    return False          # 无环
+
+# 142. 环形链表 II：找环的入口
+def detectCycle(head):
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow == fast:
+            # 多了这一步：找入口
+            fast = head
+            while slow != fast:
+                slow = slow.next
+                fast = fast.next
+            return slow   # 返回入口节点
+    return None           # 无环
+```
+
+#### 8. Java vs Python 对照表（本题相关）
+
+| 操作 | Java | Python |
+|------|------|--------|
+| 判断无环退出 | `fast == null \|\| fast.next == null` | `not fast or not fast.next` |
+| 快慢指针相遇 | `slow == fast` | `slow == fast` 或 `slow is fast` |
+| 布尔标记 | `boolean hasCycle = false;` | `has_cycle = False` |
+| 哈希集合 | `Set<ListNode> visited = new HashSet<>();` | `visited = set()` |
+| 集合包含 | `visited.contains(node)` | `node in visited` |
+| 集合添加 | `visited.add(node)` | `visited.add(node)` |
+
+#### 9. 常见错误总结
+
+```python
+# 错误1：阶段二忘记重置指针
+if slow == fast:
+    # fast = head  # 忘记这行！
+    while slow != fast:  # 永远不会执行，因为 slow == fast
+        ...
+
+# 错误2：循环条件写错
+while fast.next and fast.next.next:  # 错！应该是 fast and fast.next
+    ...
+# 如果 fast 本身是 None，访问 fast.next 会报错
+
+# 错误3：阶段二用错速度
+fast = head
+while slow != fast:
+    slow = slow.next
+    fast = fast.next.next  # 错！阶段二两个指针都应该走一步
+
+# 错误4：返回错误的节点
+return fast  # 其实 slow 和 fast 此时相等，返回哪个都行
+             # 但要确保是在相遇之后返回
+```
+
+#### 10. 算法模式总结：快慢指针的应用
+
+```python
+"""
+快慢指针在链表中的三大应用：
+
+1. 判断链表是否有环（141题）
+   - 快指针走2步，慢指针走1步
+   - 相遇则有环
+
+2. 找环的入口（142题，本题）
+   - 先找相遇点
+   - 再从头和相遇点同时走，相遇处即入口
+
+3. 找链表中点（234题回文链表用到）
+   - 快指针走2步，慢指针走1步
+   - 快指针到末尾时，慢指针在中点
+
+记忆口诀：
+- 判环：快2慢1，相遇有环
+- 找入口：头和相遇点，同速再相遇
+- 找中点：快到头，慢在中
+"""
+```
+
 
 
 
